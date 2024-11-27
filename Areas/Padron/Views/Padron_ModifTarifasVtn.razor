@@ -1,0 +1,172 @@
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Padron.Models
+@inject IJSRuntime JSRuntime
+@inject IMatToaster Toaster
+@inject PadronService padronService
+@inject NavigationManager NavManager
+
+@if (Visible) {
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@CerrarModal" Filas="@(new double[]{50, 50, 520})" Columnas="@(new double[]{.85})">
+        <Content>
+            <!-- ****** Re Procesar ****** -->
+            <div class="w-100 d-flex align-items-center m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+
+                <div class="mx-2 font-weight-bold" style="font-size: 1.1rem;"> Fecha: </div>
+                <input type="date" style="width:110px;" @bind-value="@Fecha1">
+                <div class="mx-2" style="font-size: 1.1rem;">-</div>
+                <input type="date" style="width:110px;" @bind-value="@Fecha2">
+
+                <MatButton Class="ml-5 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@Procesar">Procesar</MatButton>
+
+            </div>
+
+            <!-- ****** Filtro y Exportar ****** -->
+            <div class="m-1 p-2 border rounded bg-white d-flex align-items-center" style="grid-row: 2/3; grid-column: 1/2;">
+
+                <div class="mx-2 font-weight-bold" style="font-size: 1.1rem;"> Realizo: </div>
+                <select class="form-select form-select-lg" @onchange="FiltrarDatos" style="height:28px; margin-left:10px; width:210px">
+                    <option style="font-size: 1.2rem;" value="0" selected>TODOS</option>
+                    @foreach (int itemKey in cat_personal.Keys) {
+                        <option style="font-size: 1.2rem;" value="@itemKey">@cat_personal[itemKey]</option>
+                    }
+                </select>
+
+                <MatButton Class="ml-4" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+            </div>
+
+            <!-- ****** DataGrid ****** -->
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 3/4; grid-column: 1/2;">
+                <SfGrid @ref="dataGrid" DataSource="@datosGrid" AllowPaging="@allowPagesGrid" AllowSorting="true" AllowResizing="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridPageSettings PageSize="1000"></GridPageSettings>
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="55">
+                            <Template>
+                                @{
+                                    var data = (context as Padron_ModifTarifa);
+                                    <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Datos Generales" @onclick="@( e => MostrarEnConsultaGeneral(data))" disabled="@(data.Cuenta <= 0)">
+                                        <i class="fa fa-address-book-o" aria-hidden="true"></i>
+                                    </button>
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(Padron_ModifTarifa.Cuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Left" Width="90" />
+                        <GridColumn Field="@nameof(Padron_ModifTarifa.Localizacion)" HeaderText="Localizacion" TextAlign="TextAlign.Left" Width="110" />
+                        <GridColumn Field="@nameof(Padron_ModifTarifa.Usuario)" HeaderText="Usuario" TextAlign="TextAlign.Left" Width="190" />
+                        <GridColumn Field="@nameof(Padron_ModifTarifa.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Left" Width="140" />
+                        <GridColumn Field="@nameof(Padron_ModifTarifa.Valor_Ant)" HeaderText="Valor Ant" TextAlign="TextAlign.Left" Width="90" />
+                        <GridColumn Field="@nameof(Padron_ModifTarifa.Valor_Act)" HeaderText="Valor Act" TextAlign="TextAlign.Center" Width="90" />
+                        <GridColumn Field="@nameof(Padron_ModifTarifa.Realizo)" HeaderText="Realizo" TextAlign="TextAlign.Left" Width="190" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+
+    <BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+
+    @if (DatosGenerales_visible) {
+        <DatosGenerales_Dialog IdOficina="@OficinaActual.Id" Cuenta="@CuentaActual" CerrarVentana="@(e => DatosGenerales_visible = false)" />
+    }
+}
+
+@code {
+
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    public string Titulo = "";
+    public IEnlace OficinaActual = null;
+    SfGrid<Padron_ModifTarifa> dataGrid;
+    public List<Padron_ModifTarifa> datos;
+    public List<Padron_ModifTarifa> datosGrid;
+    Dictionary<int, string> cat_personal = new Dictionary<int, string>();
+
+    private bool allowPagesGrid = false, busyDialog = false;
+    private int idAutorizo = 0;
+    private bool DatosGenerales_visible = false;
+    private string CuentaActual = "0";
+
+
+    //******** Funciones Generales ********
+    private async Task Cerrar_Modal() {
+        this.datosGrid.Clear();
+        await CerrarModal.InvokeAsync("");
+    }
+    public async Task Inicializar(Padron_ModifTarifa[] _datos) {
+        if (_datos.Length > 3000) {
+            this.allowPagesGrid = true;
+        }
+        this.datos = _datos.ToList();
+        this.datosGrid = datos;
+        await Task.Delay(100);
+    }
+    public void Calcular_Catalogo() {
+        Dictionary<int, string> _cat_personal = new Dictionary<int, string>();
+        var i = 1;
+        foreach (Padron_ModifTarifa item in datos) {
+            if (!_cat_personal.ContainsValue(item.Realizo)) {
+                _cat_personal.Add(i, item.Realizo.ToUpper());
+                i += 1;
+            }
+        }
+        this.cat_personal = _cat_personal;
+    }
+    public async Task Procesar() {
+        busyDialog = true;
+        await Task.Delay(100);
+
+        this.datos.Clear();
+        this.datosGrid.Clear();
+
+        var tmpData = padronService.ObtenerModifiTarifas(OficinaActual, Fecha1.Year, Fecha1.Month).ToList();
+        if (tmpData == null) {
+            Toaster.Add("Hubo un error al procesar la petici�n, int�ntelo mas tarde.", MatToastType.Warning);
+        }
+        if (tmpData.Count <= 0) {
+            Toaster.Add("No hay datos disponibles, para este periodo.", MatToastType.Info);
+        }
+        this.datos = tmpData;
+        Calcular_Catalogo();
+        FiltrarDatos(new ChangeEventArgs { Value = 0 });
+
+        await Task.Delay(100);
+        busyDialog = false;
+    }
+    private void MostrarEnConsultaGeneral(Padron_ModifTarifa e) {
+        this.CuentaActual = e.Cuenta.ToString();
+        DatosGenerales_visible = true;
+    }
+    private async Task GenerarExcel() {
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private void FiltrarDatos(ChangeEventArgs e) {
+
+        idAutorizo = int.Parse(e.Value.ToString());
+
+        if (idAutorizo == 0) {
+            this.datosGrid = this.datos;
+        }
+        else {
+            var tmpList = new List<Padron_ModifTarifa>();
+            var tmpVal = cat_personal[idAutorizo];
+
+            foreach (Padron_ModifTarifa item in this.datos) {
+                if (item.Realizo == tmpVal) {
+                    tmpList.Add(item);
+                }
+            }
+            this.datosGrid = tmpList;
+        }
+    }
+
+}

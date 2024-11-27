@@ -1,0 +1,160 @@
+@using Sicem_Blazor.Facturacion.Models
+@inject FacturacionService facturacionService
+@inject IMatToaster MatToaster
+
+@if(Visible){
+    <VentanaSecundaria Titulo="@Titulo" Columnas="@ColumnasTemplate" Filas="@FilasTemplate" CerrarVentana="@CerrarModal">
+        <Content>
+
+            <div class="d-flex align-items-center border rounded p-2 mb-2 bg-white">
+                <div class="button bg-success px-3 py-2" @onclick="OnExportExcel_Click" >
+                    <i class="fa fa-file-excel mr-2"></i>
+                    <span>Exportar Historial</span>
+                </div>
+            </div>
+
+            <div class="border rounded p-2 mb-2 bg-white">
+                <SfGrid @ref="DataGrid" DataSource="@DatosGrid" AllowExcelExport="true" AllowResizing="true" Height="100%" Width="100%">
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="40">
+                            <Template>
+                                @{
+                                    var data = (context as FacturacionAnual);
+                                    if(data.Mes > 0 && data.Mes <= 12) {
+                                        <div class="d-flex p-1">
+                                            <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Detalle Facturas" @onclick="@( e => MostrarDetalles(data))" >
+                                                <i class="fa fa-th" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                    }
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(FacturacionAnual.Descripcion)" HeaderText="Mes" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(FacturacionAnual.Usuarios)" HeaderText="Usuarios" TextAlign="TextAlign.Center" Width="100" Format="n0" />
+                        <GridColumn Field="@nameof(FacturacionAnual.SubTotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionAnual.Iva)" HeaderText="IVA" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionAnual.Total)" HeaderText="Total Fact" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionAnual.Volumne)" HeaderText="Volumen m3 Cons" TextAlign="TextAlign.Center" Width="140" Format="n0" />
+                        <GridColumn Field="@nameof(FacturacionAnual.VolumneFact)" HeaderText="Volumen m3 Fact" TextAlign="TextAlign.Center" Width="140" Format="n0" />
+
+                    </GridColumns>
+                </SfGrid>
+            </div>
+            
+            <div class="border rounded p-2 mb-2 bg-white ">
+                <div style="height: 2.2rem;">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="...">
+                        <button type="button" class="btn @(GraficaActual == 1?"btn-secondary":"btn-primary")" @onclick="@(e => CambiarGraficaClick(1))">Importe Facturado</button>
+                        <button type="button" class="btn @(GraficaActual == 2?"btn-secondary":"btn-primary")" @onclick="@(e => CambiarGraficaClick(2))">Volumen Facturado</button>
+                    </div>
+                </div>
+                <div style="height: calc(100% - 2.2rem);">
+                    <SfChart Title="@TituloGrafica" Height="100%" Width="100%">
+                        <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+                        <ChartPrimaryYAxis LabelFormat="c2" />
+                        <ChartSeriesCollection>
+                            
+                            <ChartSeries DataSource="@DatosChart" XName="Descripcion" YName="Valor2" Type="ChartSeriesType.StackingLine" Visible="@(GraficaActual == 1)">
+                                <ChartMarker Visible="true">
+                                    <ChartDataLabel Visible="true"></ChartDataLabel>
+                                </ChartMarker>
+                            </ChartSeries>
+
+                            <ChartSeries DataSource="@DatosChart" XName="Descripcion" YName="Valor3" Type="ChartSeriesType.StackingLine" Visible="@(GraficaActual == 2)">
+                                <ChartMarker Visible="true">
+                                    <ChartDataLabel Visible="true"></ChartDataLabel>
+                                </ChartMarker>
+                            </ChartSeries>
+                        </ChartSeriesCollection>
+                    </SfChart>
+                </div>
+                
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+
+    <Facturacion_DetalleVtn @ref="FacturacionDetalleVtn" Visible="@FacturacionDetalle_Visible" OnClose="@(e => FacturacionDetalle_Visible = false)" />
+}
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos..." />
+
+@code {
+    [Parameter] public string Titulo {get;set;} = "Facturacion Anual";
+    [Parameter] public EventCallback OnClose {get;set;}
+    [Parameter] public int AnoFacturacion {get;set;} = DateTime.Now.Year;
+    [Parameter] public int Subsistema {get;set;} = 0;
+    [Parameter] public int Sector {get;set;} = 0;
+
+    [Parameter] public bool Visible {get;set;}
+    public Ruta Oficina {get; private set;}
+    private SfGrid<FacturacionAnual> DataGrid {get;set;}
+    private List<FacturacionAnual> DatosGrid {get;set;}
+    private List<ChartItem> DatosChart {get;set;}
+
+    private double[] ColumnasTemplate = new double[]{1100};
+    private double[] FilasTemplate = new double[]{50, .4, .4};
+    private bool busyDialog {get;set;} = false;
+    private Facturacion_DetalleVtn FacturacionDetalleVtn {get;set;}
+    private bool FacturacionDetalle_Visible {get;set;}
+    private int GraficaActual = 1;
+    private string TituloGrafica { get => GraficaActual == 1 ? "ANALISIS IMPORTE ANUAL": "ANALISIS VOLUMEN ANUAL"; }
+
+    public void Inicializar(List<FacturacionAnual> datos, Ruta oficina){
+        this.DatosGrid = datos;
+
+        if(this.DatosGrid.Count() > 0){
+            DatosChart = new List<ChartItem>();
+            this.DatosGrid.Where(item => item.Mes > 0 && item.Mes <= 12) .ToList().ForEach(item =>{
+                DatosChart.Add(new ChartItem(){
+                    Descripcion = item.Descripcion,
+                    Valor1 = item.Usuarios,
+                    Valor2 = item.Total,
+                    Valor3 = item.VolumneFact
+                });
+            });
+        }
+
+        this.Oficina = oficina;
+    }
+    private async Task CerrarModal(){
+        await OnClose.InvokeAsync(null);
+    }
+    private async Task OnExportExcel_Click(){
+        var _guid = Guid.NewGuid().ToString().Replace("-","").Substring(0,10);
+        var _titulo = Titulo.Replace(" - ",".").Replace(" ","_").ToString();
+        var _p = new ExcelExportProperties(){
+            FileName = $"{_titulo}-{_guid}.xlsx",
+            IncludeHiddenColumn = true
+        };
+        await DataGrid.ExportToExcelAsync(_p);
+    }
+
+    private async Task MostrarDetalles(FacturacionAnual e){
+        if(FacturacionDetalle_Visible){
+            return;            
+        }
+        this.busyDialog = true;
+        await Task.Delay(100);
+
+        var _tmpDatos = facturacionService.ObtenerFacturas(this.Oficina, this.AnoFacturacion, e.Mes, this.Subsistema, this.Sector).ToList();
+        if(_tmpDatos.Count() > 0){
+            FacturacionDetalle_Visible = true;
+            FacturacionDetalleVtn.Titulo = $"{Oficina.Oficina} - FACTURAS DE {e.Descripcion.ToUpper()} DEL {this.AnoFacturacion}";
+            FacturacionDetalleVtn.Inicializar(_tmpDatos, this.Oficina);
+        }else{
+            MatToaster.Add("No hay datos disponibles", MatToastType.Info);
+        }
+        await Task.Delay(100);
+        this.busyDialog = false;
+    }
+
+    private void CambiarGraficaClick(int val){
+        if(GraficaActual == val){
+            return;
+        }
+        GraficaActual = val;
+        StateHasChanged();
+    }
+
+}

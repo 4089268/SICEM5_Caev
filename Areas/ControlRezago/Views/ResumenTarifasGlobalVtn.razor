@@ -1,0 +1,65 @@
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.ControlRezago.Models
+@using Syncfusion.Blazor.Navigations
+
+@if(Visible){
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@CerrarModalClick" Filas="@(new double[] {.85 })" Columnas="@(new double[]{.85})">
+        <Content>
+            <div class="w-100 h-100">
+
+                <div class="m-1 p-2 border rounded bg-white" style="">
+                    <div class="w-100 d-flex align-items-center">
+                        <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                    </div>
+                </div>
+
+                <div class="m-1 p-2 border rounded bg-white" style="width:100%; height: calc(100% - 4rem);">
+                    <SfGrid @ref="DataGrid" DataSource="@DatosGrid" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true" RowHeight="22">
+                        <GridColumns>
+                            <GridColumn Field="@nameof(HistSaldoTarifa.Tarifa)"     HeaderText="Tarifa" TextAlign="TextAlign.Left" Width="200" />
+                            <GridColumn Field="@nameof(HistSaldoTarifa.Usu_0)"      HeaderText="Usu M.A. 0" TextAlign="TextAlign.Center" Width="115" Format="n0" />
+                            <GridColumn Field="@nameof(HistSaldoTarifa.Usu_1_2)"    HeaderText="Usu M.A. 1-2" TextAlign="TextAlign.Center" Width="115" Format="n0" />
+                            <GridColumn Field="@nameof(HistSaldoTarifa.Usu_3_5)"    HeaderText="Usu M.A. 3-5" TextAlign="TextAlign.Center" Width="115" Format="n0" />
+                            <GridColumn Field="@nameof(HistSaldoTarifa.Usu_6_10)"   HeaderText="Usu M.A. 6-10" TextAlign="TextAlign.Center" Width="115" Format="n0" />
+                            <GridColumn Field="@nameof(HistSaldoTarifa.Usu_11)"     HeaderText="Usu M.A. > 11" TextAlign="TextAlign.Center" Width="115" Format="n0" />
+                            <GridColumn Field="@nameof(HistSaldoTarifa.Usuarios)"   HeaderText="Usu Total" TextAlign="TextAlign.Center" Width="115" Format="n0" />
+
+                            <GridColumn Field="@nameof(HistSaldoTarifa.Imp_0)"      HeaderText="Imp M.A. 0" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                            <GridColumn Field="@nameof(HistSaldoTarifa.Imp_1_2)"    HeaderText="Imp M.A. 1-2" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                            <GridColumn Field="@nameof(HistSaldoTarifa.Imp_3_5)"    HeaderText="Imp M.A. 3-5" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                            <GridColumn Field="@nameof(HistSaldoTarifa.Imp_6_10)"   HeaderText="Imp M.A. 6-10" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                            <GridColumn Field="@nameof(HistSaldoTarifa.Imp_11)"     HeaderText="Imp M.A. > 11" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                            <GridColumn Field="@nameof(HistSaldoTarifa.Total)"      HeaderText="Imp Total" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                            
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+            </div>
+        </Content>
+    </VentanaSecundaria>
+}
+
+@code {
+    [Parameter] public bool Visible {get;set;} = false;
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    public IEnlace Enlace { get; set; }
+    public string Titulo = "RESUMEN HISTORIAL SALDOS POR TARIFAS";
+    
+    private SfGrid<HistSaldoTarifa> DataGrid {get;set;}
+    public List<HistSaldoTarifa> DatosGrid {get;set;}
+
+    //"******** Funciones ********"
+    public void Inicializar(IEnlace e, IEnumerable<HistSaldoTarifa> datos) {
+        this.Enlace = e;
+        Titulo = $"{Enlace.Nombre.ToUpper()} - RESUMEN HISTORIAL SALDOS POR TARIFAS";
+        this.DatosGrid = datos.OrderBy(item => item.IdTarifa).ToList();
+    }
+    private async Task CerrarModalClick(){
+        await CerrarModal.InvokeAsync(null);
+    }
+    private async Task GenerarExcel(){
+        await DataGrid.ExcelExport();
+    }
+
+
+}

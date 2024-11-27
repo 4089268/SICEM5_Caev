@@ -1,0 +1,172 @@
+@using Sicem_Blazor.Tarifas.Data
+@using Sicem_Blazor.Tarifas.Models
+@inject ITarifasService tarifasService
+@inject IMatToaster Toaster
+
+
+<VentanaSecundaria Titulo="Generar Catalogo" Filas="@gridFilas" Columnas="@gridColumnas" CerrarVentana="@CerrarModalClick">
+    <Content>
+
+        <div class="d-flex align-items-stretch border rounded bg-white p-2" style="grid-area: 1/1/2/3;">
+            <label class="my-auto mr-2">Año Base:</label>
+            <input class="mr-3 px-2" style="width: 8rem;" type="numeric" @bind="@Anio"/>
+
+            <label class="my-auto mr-2">Mes Base:</label>
+            <input class="mr-4 px-2" style="width: 8rem;" type="numeric" @bind="@Mes"/>
+
+            <label class="my-auto mr-2">Factor CFE:</label>
+            <input class="mr-3 px-2" style="width: 8rem;" type="numeric" @bind="@Factores.FactorCFE"/>
+
+            <label class="my-auto mr-2">Factor UMA:</label>
+            <input class="mr-3 px-2" style="width: 8rem;" type="numeric" @bind="@Factores.FactorUMA"/>
+
+            <label class="my-auto mr-2">Factor INCP:</label>
+            <input class="mr-3 px-2" style="width: 8rem;" type="numeric" @bind="@Factores.FactorINPC"/>
+
+            <button class="button px-4 mr-3" @onclick="GenerarNuevoCatalogo">Recalcular</button>
+
+            <button class="button px-4 bg-success" @onclick="AlmacenarCatalogoClick">Almacenar Catalogo</button>
+
+        </div>
+
+        <div class="border rounded bg-white p-2" style="grid-area: 2/1/3/2;">
+            <div class="h4 text-center p-2"> Catalogo Anterior (@_dateOld.ToString("MMMM yyyy")) </div>
+            <div style="height: calc(100% - 3.5rem);">
+            <SfGrid @ref="dataGrid" DataSource="@DatosCatalogo" TValue="CatTarifa" AllowResizing="true" AllowSorting="true" AllowFiltering="false"
+                AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true" AllowGrouping="true">
+                <GridGroupSettings ShowDropArea="false" Columns="@(new string[] { "TipoUsuario" })">
+                    <CaptionTemplate>
+                        @{
+                            var group = (context as CaptionTemplateContext);
+                            <div style="font-weight:700;">@group.Key</div>
+                        }
+                    </CaptionTemplate>
+                </GridGroupSettings>
+                <GridColumns>
+                    <GridColumn Field="@nameof(CatTarifa.TipoUsuario)" HeaderText="Tipo Usuario" TextAlign="TextAlign.Left" Width="120" />
+                    <GridColumn HeaderText="Rango" Width="120" TextAlign="TextAlign.Center">
+                        <Template>
+                        @{
+                            var data = (context as CatTarifa);
+                            <div style="width:100%; text-align:center;">
+                                <span>@(data.Hasta >= 900000 ? $"> {data.Desde} m3": $"{data.Desde} - {data.Hasta} m3" )</span>
+                            </div>
+                        }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(CatTarifa.Desde)" HeaderText="Desde" TextAlign="TextAlign.Right" Width="100" Visible="false" />
+                    <GridColumn Field="@nameof(CatTarifa.Hasta)" HeaderText="hasta" TextAlign="TextAlign.Right" Width="100" Visible="false" />
+                    <GridColumn Field="@nameof(CatTarifa.CostoBase)" HeaderText="Cuota Base" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                    <GridColumn Field="@nameof(CatTarifa.Costo)" HeaderText="Costo Adicional" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                </GridColumns>
+            </SfGrid>
+            </div>
+        </div>
+
+        <div class="border rounded bg-white p-2" style="grid-area: 2/2/3/3;">
+            <div class="h4 text-center p-2"> Catalogo Nuevo (@_dateNew.ToString("MMMM yyyy")) </div>
+            <div style="height: calc(100% - 3.5rem);">
+                <SfGrid @ref="dataGrid2" DataSource="@DatosCatalogo2" TValue="ITarifa" AllowResizing="true" AllowSorting="true" AllowFiltering="false"
+                    AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true" AllowGrouping="true">
+                    <GridGroupSettings ShowDropArea="false" Columns="@(new string[] { "TipoUsuario" })">
+                        <CaptionTemplate>
+                            @{
+                                var group = (context as CaptionTemplateContext);
+                                <div style="font-weight:700;">@group.Key</div>
+                            }
+                        </CaptionTemplate>
+                    </GridGroupSettings>
+                    <GridColumns>
+                        <GridColumn Field="@nameof(ITarifa.TipoUsuario)" HeaderText="Tipo Usuario" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn HeaderText="Rango" Width="120" TextAlign="TextAlign.Center">
+                            <Template>
+                            @{
+                                var data = (context as ITarifa);
+                                <div style="width:100%; text-align:center;">
+                                    <span>@(data.Hasta >= 900000 ? $"> {data.Desde} m3": $"{data.Desde} - {data.Hasta} m3" )</span>
+                                </div>
+                            }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(ITarifa.Desde)" HeaderText="Desde" TextAlign="TextAlign.Right" Width="100" Visible="false" />
+                        <GridColumn Field="@nameof(ITarifa.Hasta)" HeaderText="hasta" TextAlign="TextAlign.Right" Width="100" Visible="false" />
+                        <GridColumn Field="@nameof(ITarifa.CostoBase)" HeaderText="Cuota Base" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(ITarifa.Costo)" HeaderText="Costo Adicional" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+        </div>
+
+    </Content>
+</VentanaSecundaria>
+
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+
+@code {
+    [Parameter] public EventCallback OnClosed {get;set;}
+
+    [Parameter] public int Anio {get; set;} = 2022;
+    [Parameter] public int Mes {get; set;} = 2;
+    private DateTime _dateOld;
+    private DateTime _dateNew;
+
+    private SfGrid<CatTarifa> dataGrid {get;set;}
+    private List<CatTarifa> DatosCatalogo {get;set;}
+    private SfGrid<ITarifa> dataGrid2 {get;set;}
+    private List<ITarifa> DatosCatalogo2 {get;set;}
+
+    private double[] gridFilas = new double[]{40,.85};
+    private double[] gridColumnas = new double[]{.45, .45};
+    private bool busyDialog = false;
+    
+
+    private FactoresTarifarios Factores = new FactoresTarifarios();
+
+    protected override void OnParametersSet(){
+        _dateOld = new DateTime(Anio, Mes, 1 );
+        _dateNew = new DateTime(Anio, Mes, 1 );
+        _dateNew = _dateNew.AddMonths(1);
+        ObtenerCatalogoAnterior();
+        CalcularFactoresTarifarios();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender){
+            await GenerarNuevoCatalogo();
+            StateHasChanged();
+        }
+    }
+
+    public void ObtenerCatalogoAnterior(){
+        this.DatosCatalogo  = tarifasService.ObtenerCatalogoTarifas(Anio, Mes).OrderBy(item => item.Id_TipoUsuario).ToList();
+    }
+
+    public void CalcularFactoresTarifarios(){
+        Factores = tarifasService.ObtenerFactoresTarifarios(Anio, Mes);
+    }
+
+    private async Task GenerarNuevoCatalogo(){
+        busyDialog = true;
+        await Task.Delay(100);
+
+        DatosCatalogo2 = tarifasService.GenerarNuevoCatalogoTarifas(Anio, Mes, Factores).ToList();
+        
+        await Task.Delay(100);
+        busyDialog = false;
+
+    }
+    
+    public async void CerrarModalClick(){
+        await OnClosed.InvokeAsync(null);
+    }
+
+    public void AlmacenarCatalogoClick(){
+        var actualizado = tarifasService.ActualizarCatalogo( _dateNew.Year, _dateNew.Month, DatosCatalogo2 );
+        if(actualizado){
+            Toaster.Add("Catalogo agregado/actualizado con exito", MatToastType.Success);
+        }else{
+            Toaster.Add("Errpr al actualizar el catalogo, intentelo mas tarde", MatToastType.Danger);
+        }
+    }
+}

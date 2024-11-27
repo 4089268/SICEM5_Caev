@@ -1,0 +1,421 @@
+@page "/Facturacion"
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Charts
+@using Sicem_Blazor.Facturacion.Models
+@inject IMatToaster Toaster
+@inject FacturacionService facturacionService  
+@inject SicemService sicemService
+@inject IJSRuntime JSRuntime
+
+
+<div class="layout-page1">
+
+    <div class="title-page" style="grid-area:1/1/2/2;">FACTURACIÓN</div>
+
+    <div class="border rounded bg-white px-2 d-flex align-items-center" style="grid-area:2/1/3/2;">
+        <SeleccionarFecha fecha1="@Fecha1" fecha2="@Fecha2" ProcesarParam="@Procesar" MostrarPeriodos="false" />
+    </div>
+
+    @* ****** Acciones ****** *@
+    <div class="border rounded bg-white d-flex align-items-center" style="grid-area:3/1/4/2;">
+        <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" @onclick="ExportarExcel_Click">Exportar Excel</MatButton>
+        <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" Disabled="true">Generar Reporte</MatButton>
+    </div>
+
+    @* ****** DataGrid ****** *@
+    <div class="border rounded bg-white p-2 d-flex" style="grid-area:4/1/5/2;">
+        <SfGrid @ref="dataGrid" DataSource="@datosFacturacion" TValue="Facturacion_Oficina" AllowResizing="true" AllowSorting="true" AllowFiltering="false"
+                AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="100%" EnableHover="true">
+            <GridColumns>
+                <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="40">
+                    <Template>
+                        @{
+                            var data = (context as Facturacion_Oficina);
+                            if(data.Id_Oficina > 0 && data.Id_Oficina < 999) {
+                                @switch (data.Estatus) {
+                                    case 1:
+                                        <i class="fas fa-check-circle" style="color:green; font-size:1.5rem;"></i>
+                                        break;
+                                    case 2:
+                                        <i class="fas fa-exclamation-circle" style="color:red; font-size:1.5rem;"></i>
+                                        break;
+                                    default:
+                                        <div class="spinner-border p-2" role="status"> </div>
+                                        break;
+                                }
+                            }
+                        }
+                    </Template>
+                </GridColumn>
+
+                <GridColumn Field="@nameof(Facturacion_Oficina.Oficina)" HeaderText="Oficina" TextAlign="TextAlign.Left" Width="170" />
+                <GridColumn HeaderText="Domestico" TextAlign="TextAlign.Center" Width="110">
+                    <Template>
+                        @{
+                            var data = (context as Facturacion_Oficina);
+                            <div class="fact-item">
+                                <div class="usu">@data.Domestico_Usu.ToString("n0")</div>
+                                <div class="fac">@data.Domestico_Fact.ToString("c2")</div>
+                            </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Hotelero" TextAlign="TextAlign.Center" Width="110">
+                    <Template>
+                        @{
+                            var data = (context as Facturacion_Oficina);
+                            <div class="fact-item">
+                                <div class="usu">@data.Hotelero_Usu.ToString("n0")</div>
+                                <div class="fac">@data.Hotelero_Fact.ToString("c2")</div>
+                            </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Comercial" TextAlign="TextAlign.Center" Width="110">
+                    <Template>
+                        @{
+                            var data = (context as Facturacion_Oficina);
+                            <div class="fact-item">
+                                <div class="usu">@data.Comercial_Usu.ToString("n0")</div>
+                                <div class="fac">@data.Comercial_Fact.ToString("c2")</div>
+                            </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Industrial" TextAlign="TextAlign.Center" Width="110">
+                    <Template>
+                        @{
+                            var data = (context as Facturacion_Oficina);
+                            <div class="fact-item">
+                                <div class="usu">@data.Industrial_Usu.ToString("n0")</div>
+                                <div class="fac">@data.Industrial_Fact.ToString("c2")</div>
+                            </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Serv. Gen." TextAlign="TextAlign.Center" Width="110">
+                    <Template>
+                        @{
+                            var data = (context as Facturacion_Oficina);
+                            <div class="fact-item">
+                                <div class="usu">@data.ServGener_Usu.ToString("n0")</div>
+                                <div class="fac">@data.ServGener_Fact.ToString("c2")</div>
+                            </div>
+                        }
+                    </Template>
+                </GridColumn>
+
+                <GridColumn Field="@nameof(Facturacion_Oficina.Domestico_Usu)" HeaderText="Usu Domestico" TextAlign="TextAlign.Center" Width="115" Format="n0" Visible="false"/>
+                <GridColumn Field="@nameof(Facturacion_Oficina.Domestico_Fact)" HeaderText="Fact Domestico" TextAlign="TextAlign.Right" Width="115" Format="c2" Visible="false"/>
+                <GridColumn Field="@nameof(Facturacion_Oficina.Hotelero_Usu)" HeaderText="Usu Hotelero" TextAlign="TextAlign.Center" Width="115" Format="n0" Visible="false"/>
+                <GridColumn Field="@nameof(Facturacion_Oficina.Hotelero_Fact)" HeaderText="Fact Hotelero" TextAlign="TextAlign.Right" Width="115" Format="c2" Visible="false"/>
+                <GridColumn Field="@nameof(Facturacion_Oficina.Comercial_Usu)" HeaderText="Usu Comercial" TextAlign="TextAlign.Center" Width="115" Format="n0" Visible="false"/>
+                <GridColumn Field="@nameof(Facturacion_Oficina.Comercial_Fact)" HeaderText="Fact Comercial" TextAlign="TextAlign.Right" Width="115" Format="c2" Visible="false"/>
+                <GridColumn Field="@nameof(Facturacion_Oficina.Industrial_Usu)" HeaderText="Usu Industrial" TextAlign="TextAlign.Center" Width="115" Format="n0" Visible="false"/>
+                <GridColumn Field="@nameof(Facturacion_Oficina.Industrial_Fact)" HeaderText="Fact Industrial" TextAlign="TextAlign.Right" Width="115" Format="c2" Visible="false"/>
+                <GridColumn Field="@nameof(Facturacion_Oficina.ServGener_Usu)" HeaderText="Usu Serv Gen" TextAlign="TextAlign.Center" Width="115" Format="n0" Visible="false"/>
+                <GridColumn Field="@nameof(Facturacion_Oficina.ServGener_Fact)" HeaderText="Fact Serv Gen" TextAlign="TextAlign.Right" Width="115" Format="c2" Visible="false" />
+
+                <GridColumn Field="@nameof(Facturacion_Oficina.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                <GridColumn Field="@nameof(Facturacion_Oficina.Iva)" HeaderText="IVA" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                <GridColumn Field="@nameof(Facturacion_Oficina.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                <GridColumn Field="@nameof(Facturacion_Oficina.Usuarios)" HeaderText="Usuarios" TextAlign="TextAlign.Center" Width="120" Format="n0" />
+
+                <GridColumn HeaderText="Acciones" TextAlign="TextAlign.Left" Width="240">
+                    <Template>
+                        @{
+                            var data = (context as Facturacion_Oficina);
+                            if(data.Id_Oficina > 0 && data.Id_Oficina < 999) {
+                                <div class="d-flex p-1">
+                                    <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Facturacion Por Conceptos" disabled="@(data.Estatus != 1 )" @onclick=@( e => FacturacionConceptos_Click(data) ) >
+                                        <i class="fa fa-bookmark" aria-hidden="true"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Facturacion Anual" disabled="@(data.Estatus != 1 )" @onclick=@( e => FacturacionAnual_Click(data) ) >
+                                        <i class="fa fa-bookmark" aria-hidden="true"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Facturacion Por Localidades" disabled="@(data.Estatus != 1 )" @onclick=@( e => FacturacionLocalidades_Click(data) ) >
+                                        <i class="fa fa-bookmark" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            }
+                        }
+                    </Template>
+                </GridColumn>
+            </GridColumns>
+        </SfGrid>
+    </div>
+
+    <!--- ****** Graficas ****** -->
+    <div class="d-flex" style="grid-area:5/1/6/2;">
+        <div class="border rounded bg-white mr-1 d-flex flex-column align-items-center" style="width:100%; height:100%;">
+            <SfChart @ref="graficaFacturacion" Title="TARIFAS FACTURADAS">
+                <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+                <ChartPrimaryYAxis Visible="false" LabelFormat="c2" />
+                <ChartTooltipSettings Enable="true" Header="Usuarios" Format="<b>${series.name}</b> : ${point.y}" Shared="true"></ChartTooltipSettings>
+                <ChartLegendSettings Position="LegendPosition.Right" />
+                <ChartSeriesCollection>
+                    <ChartSeries DataSource="@datosGrafica" Name="Domestico" XName="Descripcion" YName="Valor1" Type="ChartSeriesType.StackingBar">
+                        <ChartMarker>
+                            <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Outer" />
+                        </ChartMarker>
+                    </ChartSeries>
+                    <ChartSeries DataSource="@datosGrafica" Name="Hotelero" XName="Descripcion" YName="Valor2" Type="ChartSeriesType.StackingBar">
+                        <ChartMarker>
+                            <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Outer" />
+                        </ChartMarker>
+                    </ChartSeries>
+                    <ChartSeries DataSource="@datosGrafica" Name="Comercial" XName="Descripcion" YName="Valor3" Type="ChartSeriesType.StackingBar">
+                        <ChartMarker>
+                            <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Outer" />
+                        </ChartMarker>
+                    </ChartSeries>
+                    <ChartSeries DataSource="@datosGrafica" Name="Industrial" XName="Descripcion" YName="Valor4" Type="ChartSeriesType.StackingBar">
+                        <ChartMarker>
+                            <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Outer" />
+                        </ChartMarker>
+                    </ChartSeries>
+                    <ChartSeries DataSource="@datosGrafica" Name="Serv. Gen." XName="Descripcion" YName="Valor5" Type="ChartSeriesType.StackingBar">
+                        <ChartMarker>
+                            <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Outer" />
+                        </ChartMarker>
+                    </ChartSeries>
+                </ChartSeriesCollection>
+            </SfChart>
+        </div>
+    </div>
+
+</div>
+
+<style type="text/css">
+    .fact-item{
+        display:flex;
+        flex-flow:column;
+        align-items:center;
+        justify-content:space-around;
+        height:3rem;
+    }
+    .fact-item .usu, .fact-item .fac{
+        text-align:center;
+        font-size:1rem;
+        height:2rem;
+    }
+</style>
+
+
+@* ****** Dialogos y ventanas secundarias ****** *@
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+<Facturacion_ConceptosVtn @ref="facturacionConceptos" Visible="@facturacionConceptos_Visible" CerrarModal="@( e => facturacionConceptos_Visible = false )" Fecha="@Fecha1" Subsistema="@Subsistema" Sector="@Sector" />
+<Facturacion_AnualVtn @ref="FacturacionAnualVtn" Visible="@FacturacionAnual_Visible" AnoFacturacion="@Fecha1.Year" Subsistema="@Subsistema" Sector="@Sector" OnClose="@( e => FacturacionAnual_Visible = false)"/>
+<Facturacion_LocalidadesVtn @ref="facturacionLocalidadesVtn" Fecha="@Fecha1" Subsistema="@Subsistema" Sector="@Sector" Visible="@FacturacionLocalidad_Visible" OnClose="@( e => FacturacionLocalidad_Visible = false)" />
+   
+@code{
+    private SfGrid<Facturacion_Oficina> dataGrid {get;set;}
+    private SfChart graficaFacturacion {get;set;}
+    private List<Facturacion_Oficina> datosFacturacion {get;set;}
+    private List<ChartItem> datosGrafica {get;set;}
+    private bool busyDialog = false;
+
+    private DateTime Fecha1, Fecha2;
+    private int Subsistema, Sector;
+    private Facturacion_ConceptosVtn facturacionConceptos {get;set;}
+    private Facturacion_AnualVtn FacturacionAnualVtn {get;set;}
+    private Facturacion_LocalidadesVtn facturacionLocalidadesVtn {get; set;}
+    private bool facturacionConceptos_Visible = false, FacturacionAnual_Visible = false, FacturacionLocalidad_Visible = false;
+    private IEnlace EnlaceSeleccionado;
+
+
+
+    //********* Funciones  *********
+    protected override void OnInitialized() {
+        var _now = DateTime.Now.AddMonths(-1);
+        this.Fecha1 = new DateTime(_now.Year, _now.Month, 1);
+        this.Fecha2 = new DateTime(_now.Year, _now.Month, DateTime.DaysInMonth(_now.Year, _now.Month));
+        this.Subsistema = 0;
+        this.Sector = 0;
+    }
+    public void Procesar(SeleccionarFechaEventArgs e) {
+        this.Fecha1 = e.Fecha1;
+        this.Fecha2 = e.Fecha2;
+        this.Subsistema = e.Subsistema;
+        this.Sector = e.Sector;
+
+        datosFacturacion = new List<Facturacion_Oficina>();
+        datosGrafica = new List<ChartItem>();
+        var enlaces = sicemService.ObtenerOficinasDelUsuario();
+        var oficinas = sicemService.ObtenerEnlaces().Where(item => enlaces.Select(i => i.Id).Contains(item.Id)).ToArray();
+        var tareas = new List<Task>();
+
+        foreach(Ruta oficina in oficinas){
+            var newItem = new Facturacion_Oficina(){
+                Estatus = 0,
+                Id_Oficina = oficina.Id,
+                Oficina = oficina.Oficina
+            };
+            this.datosFacturacion.Add(newItem);
+
+            var newChart = new ChartItem(){
+                Id = oficina.Id,
+                Descripcion = oficina.Oficina,
+                Valor1 = 0m,
+                Valor2 = 0m,
+                Valor3 = 0m,
+                Valor4 = 0m,
+                Valor5 = 0m
+            };
+            this.datosGrafica.Add(newChart);
+
+            tareas.Add(new Task( () => ProcesarConsulta(oficina)) );
+        }
+
+        //*** Fila total
+        if(oficinas.Length > 1){
+            var itemTotal = new Facturacion_Oficina(){
+                Estatus = 0,
+                Id_Oficina = 999,
+                Oficina = "TOTAL"
+            };
+            this.datosFacturacion.Add(itemTotal);
+        }
+
+        tareas.ForEach(item => item.Start());
+    }
+    private void ProcesarConsulta(Ruta oficina){
+        var result = facturacionService.ObtenerFacturacionOficina(oficina, this.Fecha1.Year, this.Fecha1.Month, this.Subsistema, this.Sector );
+
+        lock(datosFacturacion){
+            var itemList = this.datosFacturacion.Where(item=> item.Id_Oficina == oficina.Id).FirstOrDefault();
+            if(itemList != null){
+                itemList.Estatus = result.Estatus;
+                itemList.Domestico_Fact = result.Domestico_Fact;
+                itemList.Domestico_Usu = result.Domestico_Usu;
+                itemList.Hotelero_Fact = result.Hotelero_Fact;
+                itemList.Hotelero_Usu = result.Hotelero_Usu;
+                itemList.Comercial_Fact = result.Comercial_Fact;
+                itemList.Comercial_Usu = result.Comercial_Usu;
+                itemList.Industrial_Fact = result.Industrial_Fact;
+                itemList.Industrial_Usu = result.Industrial_Usu;
+                itemList.ServGener_Fact = result.ServGener_Fact;
+                itemList.ServGener_Usu = result.ServGener_Usu;
+                itemList.Subtotal = result.Subtotal;
+                itemList.Iva = result.Iva;
+                itemList.Total = result.Total;
+                itemList.Usuarios = result.Usuarios;
+            }
+            //**** Recalcular fila total
+            RecalcularTotal();
+            dataGrid.Refresh();
+        }
+
+        lock(datosGrafica){
+            //**** Procesar item grafica
+            var itemGraf = this.datosGrafica.Where(item => item.Id == oficina.Id).FirstOrDefault();
+            if(itemGraf != null){
+                itemGraf.Valor1 = result.Domestico_Fact;
+                itemGraf.Valor2 = result.Hotelero_Fact;
+                itemGraf.Valor3 = result.Comercial_Fact;
+                itemGraf.Valor4 = result.Industrial_Fact;
+                itemGraf.Valor5 = result.ServGener_Fact;
+            }
+            graficaFacturacion.RefreshLiveData();
+        }
+    }
+    private void RecalcularTotal(){
+        var filaTotal = this.datosFacturacion.Where(item => item.Id_Oficina == 999).FirstOrDefault();
+        if( filaTotal != null){
+            var _tmpDatos = this.datosFacturacion.Where(item => item.Id_Oficina > 0 && item.Id_Oficina < 999).ToList();
+            filaTotal.Domestico_Fact = _tmpDatos.Sum( item => item.Domestico_Fact);
+            filaTotal.Domestico_Usu = _tmpDatos.Sum( item => item.Domestico_Usu);
+            filaTotal.Hotelero_Fact = _tmpDatos.Sum( item => item.Hotelero_Fact);
+            filaTotal.Hotelero_Usu = _tmpDatos.Sum( item => item.Hotelero_Usu);
+            filaTotal.Comercial_Fact = _tmpDatos.Sum( item => item.Comercial_Fact);
+            filaTotal.Comercial_Usu = _tmpDatos.Sum( item => item.Comercial_Usu);
+            filaTotal.Industrial_Fact = _tmpDatos.Sum( item => item.Industrial_Fact);
+            filaTotal.Industrial_Usu = _tmpDatos.Sum( item => item.Industrial_Usu);
+            filaTotal.ServGener_Fact = _tmpDatos.Sum( item => item.ServGener_Fact);
+            filaTotal.ServGener_Usu = _tmpDatos.Sum( item => item.ServGener_Usu);
+            filaTotal.Subtotal = _tmpDatos.Sum( item => item.Subtotal);
+            filaTotal.Iva = _tmpDatos.Sum( item => item.Iva);
+            filaTotal.Total = _tmpDatos.Sum( item => item.Total);
+            filaTotal.Usuarios = _tmpDatos.Sum( item => item.Usuarios);
+        }
+    }
+    private async Task ExportarExcel_Click(){
+        var p = new ExcelExportProperties();
+        p.IncludeHiddenColumn = true;
+        await this.dataGrid.ExportToExcelAsync(p);
+    }
+
+    //*** Funciones Ventanas Secundarias
+    private async Task FacturacionConceptos_Click(Facturacion_Oficina context){
+        if(facturacionConceptos_Visible){
+            return;
+        }
+
+        this.busyDialog = true;
+        await Task.Delay(100);
+
+        Ruta oficina = sicemService.ObtenerEnlaces(context.Id_Oficina).FirstOrDefault();
+        var datos = facturacionService.ObtenerFacturacionConceptos(oficina, this.Fecha1.Year, this.Fecha1.Month, this.Subsistema, this.Sector);
+        
+        var catLocalidades = new Dictionary<int,string>();
+        var _localidades = sicemService.ObtenerCatalogoLocalidades(oficina.Id).Where(i => i.Id_Poblacion > 0).ToList();
+        catLocalidades.Add(0, "TODOS");
+        foreach( var loc in _localidades){
+            catLocalidades.Add(loc.Id_Poblacion, loc.Descripcion.ToUpper().Trim());
+        }
+
+        if(datos == null){
+            Toaster.Add("Error al procesar la consulta, intentelo mas tarde.", MatToastType.Warning);
+        }else{
+            facturacionConceptos_Visible = true;
+            facturacionConceptos.Titulo = $"CONCEPTOS FACTURADOS DEL {Fecha1.ToString("dd/MM/yyyy")} AL {Fecha2.ToString("dd/MM/yyyy")}  DE LA OFICINA {context.Oficina}";
+            facturacionConceptos.Inicializar(oficina, datos, catLocalidades);
+            
+            StateHasChanged();
+            await JSRuntime.InvokeVoidAsync("iniciarVentanaConceptos");
+        }
+
+        await Task.Delay(100);
+        this.busyDialog = false;
+    }
+    private async Task FacturacionAnual_Click(Facturacion_Oficina context){
+        if(FacturacionAnual_Visible || FacturacionAnualVtn == null){
+            return;
+        }
+
+        this.busyDialog = true;
+        await Task.Delay(100);
+
+        var _oficina = sicemService.ObtenerEnlaces(context.Id_Oficina).FirstOrDefault();
+        var _datos = facturacionService.ObtenerFacturacionAnual(_oficina, this.Fecha1.Year, this.Subsistema, this.Sector).ToList();
+        if(_datos.Count > 0){
+            FacturacionAnualVtn.Titulo = $"{_oficina.Oficina} - ANALISIS DE FACTURACION {this.Fecha1.Year}";
+            FacturacionAnual_Visible = true;
+            FacturacionAnualVtn.Inicializar(_datos, _oficina);
+        }
+
+        await Task.Delay(100);
+        this.busyDialog = false;
+    }
+    private async Task FacturacionLocalidades_Click(Facturacion_Oficina context){
+        if(FacturacionLocalidad_Visible){
+            return;
+        }
+
+        this.busyDialog = true;
+        await Task.Delay(100);
+
+        this.EnlaceSeleccionado  = sicemService.ObtenerEnlaces(context.Id_Oficina).FirstOrDefault();
+        var _datos = facturacionService.ObtenerFacturacionLocalidades(EnlaceSeleccionado, this.Fecha1.Year, this.Fecha1.Month, this.Subsistema, this.Sector).ToList();
+        if(_datos.Count > 0){
+            FacturacionLocalidad_Visible = true;
+            facturacionLocalidadesVtn.Inicializar(_datos, EnlaceSeleccionado);
+        }else{
+            Toaster.Add("Error al realizar la consulta", MatToastType.Warning);
+        }
+
+        await Task.Delay(100);
+        this.busyDialog = false;
+    }
+
+}

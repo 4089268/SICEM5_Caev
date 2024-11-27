@@ -1,0 +1,197 @@
+@using Syncfusion.Blazor.Grids
+@inject IJSRuntime JSRuntime
+
+@if (Visible) {
+    <VentanaSecundaria Titulo="@Titulo" Filas="@GridFilas" Columnas="@GridColumnas" CerrarVentana="@Cerrar_Modal">
+        <Content>
+            <div class="d-flex align-items-center m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+
+                <div class="ml-4 font-weight-bold" style="font-size: 1.1rem;"> Tipo Ajuste: </div>
+                <select class="form-select form-select-lg" @onchange="@((ChangeEventArgs e) => ComboBox_SelectionChanged("ajuste",e.Value))" style="height:28px; margin-left:10px; width:210px">
+                    <option style="font-size: 1.2rem;" value="." selected>TODOS</option>
+                    @foreach (string itemKey in cat_ajustes.Keys) {
+                        <option style="font-size: 1.2rem;" value="@itemKey">@cat_ajustes[itemKey]</option>
+                    }
+                </select>
+
+                <div class="ml-4 font-weight-bold" style="font-size: 1.1rem;"> Tipo Usuario: </div>
+                <select class="form-select form-select-lg" @onchange="@((ChangeEventArgs e) => ComboBox_SelectionChanged("tipoUsuario",e.Value))" style="height:28px; margin-left:10px; width:210px">
+                    <option style="font-size: 1.2rem;" value="-1" selected>TODOS</option>
+                    @foreach (int itemKey in cat_tipoUsuarios.Keys) {
+                        <option style="font-size: 1.2rem;" value="@itemKey">@cat_tipoUsuarios[itemKey]</option>
+                    }
+                </select>
+
+                <div class="ml-4 font-weight-bold" style="font-size: 1.1rem;"> Genero: </div>
+                <select class="form-select form-select-lg" @onchange="@((ChangeEventArgs e) => ComboBox_SelectionChanged("genero",e.Value))" style="height:28px; margin-left:10px; width:180px">
+                    <option style="font-size: 1.2rem;" value="." selected>TODOS</option>
+                    @foreach (string itemKey in cat_genero.Keys) {
+                        <option style="font-size: 1.2rem;" value="@itemKey">@cat_genero[itemKey]</option>
+                    }
+                </select>
+
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 3/4; grid-column: 1/2;">
+                <SfGrid @ref="DataGrid" DataSource="@DatosGrid" AllowPaging="@allowPagesGrid" AllowSorting="true" AllowResizing="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridPageSettings PageSize="1000"></GridPageSettings>
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="55">
+                            <Template>
+                                @{
+                                    var data = (context as Atencion_Descuento);
+                                    if (data.Contrato > 0) {
+                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Mostrar en Consulta General" @onclick="@( e => MostrarEnConsultaGeneral(data))">
+                                            <i class="fa fa-address-book-o" aria-hidden="true"></i>
+                                        </button>
+                                    }
+                                }
+                            </Template>
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(Atencion_Descuento.Folio)" HeaderText="Folio" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(Atencion_Descuento.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Center" Width="130" />
+                        <GridColumn Field="@nameof(Atencion_Descuento.Contrato)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(Atencion_Descuento.Nombre)" HeaderText="Nombre" TextAlign="TextAlign.Left" Width="210" />
+                        <GridColumn Field="@nameof(Atencion_Descuento.Tipo_Usuario)" HeaderText="Tipo Usuario" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Atencion_Descuento.Tipo_ajuste)" HeaderText="Tipo Ajuste" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Atencion_Descuento.MesesAdeudo)" HeaderText="M. A." TextAlign="TextAlign.Center" Width="80" />
+                        <GridColumn Field="@nameof(Atencion_Descuento.Adeudo_Inicial)" HeaderText="Adeudo Ini." TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                        <GridColumn Field="@nameof(Atencion_Descuento.Importe_Ajustado)" HeaderText="Imp. Ajustado" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                        <GridColumn Field="@nameof(Atencion_Descuento.Saldo_Cuenta)" HeaderText="Saldo Actual" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                        <GridColumn Field="@nameof(Atencion_Descuento.Genero)" HeaderText="Genero" TextAlign="TextAlign.Left" Width="210" />
+
+                    </GridColumns>
+                </SfGrid>
+            </div>
+            
+        </Content>
+    </VentanaSecundaria>
+
+    @if(DatosGenerales_visible){
+        <DatosGenerales_Dialog IdOficina="@Enlace.Id" Cuenta="@cuentaSeleccionada" CerrarVentana="@(e => DatosGenerales_visible = false)"/>
+    }
+}
+
+@code {
+
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    [Parameter] public int Nivel { get; set; } = 1;
+    public string Titulo {get;set;} = "";
+    private IEnlace Enlace {get;set;}
+
+    private List<double> GridFilas = new List<double>() { 50, 50, .80 };
+    private List<double> GridColumnas = new List<double>() { .85 };
+    
+    private SfGrid<Atencion_Descuento> DataGrid {get;set;}
+    private List<Atencion_Descuento> Datos {get;set;}
+    private List<Atencion_Descuento> DatosGrid {get;set;}
+
+    private Dictionary<string, string> cat_ajustes = new Dictionary<string, string>();
+    private Dictionary<int, string> cat_tipoUsuarios = new Dictionary<int, string>();
+    private Dictionary<string, string> cat_genero = new Dictionary<string, string>();
+
+    private int id_tipoUsuario_select = -1;
+    private string id_genero_select = "", id_ajuste_select = "";
+    private bool allowPagesGrid = false, DatosGenerales_visible = false;
+    private string cuentaSeleccionada = "0";
+
+    public void Inicializar(IEnumerable<Atencion_Descuento> datos, IEnlace e) {
+        this.Enlace = e;
+        
+        if (datos.Count() > 3000) {
+            this.allowPagesGrid = true;
+        }
+
+        this.Datos = datos.ToList();
+        this.DatosGrid = datos.ToList();
+        CalcularCatalogos();
+
+    }
+    private void CalcularCatalogos() {
+
+        cat_ajustes = new Dictionary<string, string>();
+        cat_tipoUsuarios = new Dictionary<int, string>();
+        cat_genero = new Dictionary<string, string>();
+
+        foreach (Atencion_Descuento item in Datos) {
+
+            if (!cat_ajustes.ContainsKey(item.Id_Ajuste)) {
+                cat_ajustes.Add(item.Id_Ajuste, item.Tipo_ajuste);
+            }
+
+            if (!cat_tipoUsuarios.ContainsKey(item.Id_TipoUsuario)) {
+                cat_tipoUsuarios.Add(item.Id_TipoUsuario, item.Tipo_Usuario);
+            }
+
+            if (!cat_genero.ContainsKey(item.Id_Genero)) {
+                cat_genero.Add(item.Id_Genero, item.Genero);
+            }
+
+        }
+
+    }
+    private void MostrarEnConsultaGeneral(Atencion_Descuento e) {
+
+        if(DatosGenerales_visible == true){
+            return;
+        }
+        this.cuentaSeleccionada = e.Contrato.ToString();
+        DatosGenerales_visible = true;
+
+    }
+    private async Task GenerarExcel() {
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private void ComboBox_SelectionChanged(string sender, object value) {
+
+        switch (sender) {
+            case "ajuste":
+                id_ajuste_select = value.ToString();
+                break;
+            case "tipoUsuario":
+                id_tipoUsuario_select = int.Parse(value.ToString());
+                break;
+            case "genero":
+                id_genero_select = value.ToString();
+                break;
+        }
+        FiltrarDatos();
+    }
+    private void FiltrarDatos() {
+        IEnumerable<Atencion_Descuento> tmpData = Datos;
+
+        if (id_ajuste_select.Length > 1) {
+            tmpData = tmpData.Where(item => item.Id_Ajuste == id_ajuste_select).ToArray<Atencion_Descuento>();
+        }
+        if (id_tipoUsuario_select >= 0) {
+            tmpData = tmpData.Where(item => item.Id_TipoUsuario == id_tipoUsuario_select).ToArray<Atencion_Descuento>();
+        }
+        if (id_genero_select.Length > 1) {
+            tmpData = tmpData.Where(item => item.Id_Genero == id_genero_select).ToArray<Atencion_Descuento>();
+        }
+
+        this.DatosGrid = tmpData.ToList();
+
+    }
+
+    private async Task Cerrar_Modal() {
+        this.DatosGrid = new List<Atencion_Descuento>();
+        this.allowPagesGrid = false;
+        await CerrarModal.InvokeAsync("");
+    }
+
+}

@@ -1,0 +1,174 @@
+﻿@using MatBlazor
+@inherits LayoutComponentBase
+@inject SicemService sicemService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager navigationManager
+@inject SessionService sessionService
+
+<div id="mainLayout">
+
+    <!--**** Header ****-->
+    <div id="header" class="px-2 py-1">
+
+        <!--**** Logos e Imagenes ****-->
+        <a class="h-100 mx-2" style="width: auto" href="http://www.caev.gob.mx/" target="_blank">
+            <img src="./img/header-logo-caev.png" class="h-100 mr-2" />
+        </a>
+
+        <a class="h-100 mr-2" style="width: 80px;" href="http://nerus.com.mx/Soluciones/Nerus.html" target="_blank">
+            <img src="./img/logo2.png" class="h-75 mt-2" />
+        </a>
+        
+        <div class="hiddenOnMovil d-flex flex-column align-items-start justify-content-around">
+            
+            <div class="mx-1 pl-1" style="font-size:1.3rem;">S I C E M</div>
+            <div class="mx-1" style="font-size:1rem;">(Sistema Central de Monitoreo)</div>
+            <div class="mx-1 pl-1" style="font-size:1rem;">Version 2.1.4</div>
+        </div>
+
+        <!--**** Dropdown Sesion Menu ****-->
+        <div class="p-1 hiddenOnMovil ml-auto">
+            @if (sicemService.Usuario != null) {
+                <div class="dropdown">
+                    <button @onclick="MostrarSesionMenu" class="dropbtn"><span>@sicemService.Usuario.Nombre</span> <i class="fas fa-angle-down"></i> </button>
+                    <div id="myDropdown" class="dropdown-content">
+                        <a @onclick="CerrarSesion">Cerrar Sesión</a>
+                    </div>
+                </div>
+            }
+        </div>
+
+    </div>
+
+    @if(!cargandoUsuario){
+        <!-- *** BarraSuperior *** -->
+        <div id="topBar" class="d-flex px-4 align-items-center">
+
+            <!-- *** Boton Menu para moviles *** -->
+            <div class="menu-area showOnMovil">
+                @if(mostrarMenu){
+                    <div class="link-btn" @onclick="@( e => MostrarMenuClick(false))">
+                        <span class="fa fa-close" />
+                    </div>
+                }else{
+                    <div class="link-btn" @onclick="@( e => MostrarMenuClick(true))">
+                        <span class="fa fa-bars" />
+                    </div>
+                }
+            </div>
+
+            @if (sicemService.Usuario != null) {
+                if (sicemService.Usuario.Administrador == true) {
+                    <div class="link-btn mr-4" @onclick="ConfigurarOficinas_Click">Configurar Oficinas</div>
+                }
+                @*
+                if (sicemService.Usuario.Administrador == true) {
+                    <div class="link-btn mr-4" @onclick="ConfigurarUsuaarios_Click">Configurar Usuarios</div>
+                }
+                <div class="link-btn mr-4">Oficinas Conectadas</div>
+                *@
+            }
+        </div>
+
+        <!-- *** Barra Izquierda *** -->
+        @if (sicemService.Usuario != null) {
+            <div id="sideBar" class="hiddenOnMovil">
+                <NavMenu MenuItemClick="@(e => MostrarMenuClick(false) )" />
+            </div>
+        }
+
+        <!-- *** Contenido *** -->
+        <div id="contentPage">
+            @Body
+        </div>
+
+    }else{
+        <SesionLoading />
+    }
+    
+
+</div>
+
+<!-- *** Ventanas Secundarias *** -->
+<ConfigurarOficinas @ref="@ConfigurarOficinas_vtn" Show="@ConfigurarOficinas_vtn_visible" CerrarModal="@(()=> ConfigurarOficinas_vtn_visible = false)" />
+<ConfigurarUsuarios @ref="ConfigurarUsuarios_vtn" Show="@ConfigurarUsuarios_vtn_visible" CerrarModal="@( () => ConfigurarUsuarios_vtn_visible = false)" />
+
+@code{
+    [CascadingParameter] private ConnectionInfo connectionInfo { get; set; }
+
+    private bool cargandoUsuario {get;set;} = true;
+    private bool mostrarMenu {get;set;} = false;
+
+    private ConfigurarOficinas ConfigurarOficinas_vtn;
+    private ConfigurarUsuarios ConfigurarUsuarios_vtn;
+    private bool ConfigurarOficinas_vtn_visible = false, ConfigurarUsuarios_vtn_visible = false;
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (firstRender) {
+            //*** Inicializar navigation manager
+            navigationManager.LocationChanged += LocationChanged;
+            await ComprobarUsuario();
+        }
+    }
+    private void LocationChanged(object sender, LocationChangedEventArgs e) {
+        var task = Task.Factory.StartNew( () => ComprobarUsuario());
+        task.Wait();
+    }
+    async Task MostrarSesionMenu() {
+        await JSRuntime.InvokeVoidAsync("ActiveToggleMenu", "#myDropdown", ".dropbtn");
+    }
+
+    private async Task ComprobarUsuario(){
+        cargandoUsuario = true;
+        if( !navigationManager.Uri.Contains("api") && ! navigationManager.Uri.Contains("Logearse")) {
+            //****** Obtener y validar token 
+            string token = await JSRuntime.InvokeAsync<string>("getStorage", "sicem");
+            if(token == null){
+                await CerrarSesion();
+            }else{
+                //****** Cargar el Usuario
+                if(!sicemService.CargarUsuarioToken(token)){
+                    await CerrarSesion();
+                }
+            }
+        }
+        cargandoUsuario = false;
+        StateHasChanged();
+    }
+
+    private async Task CerrarSesion(){
+        sicemService.CerrarSesion();
+        await JSRuntime.InvokeVoidAsync("setStorage", "sicem", "");
+        navigationManager.NavigateTo("/Logearse");
+    }
+    
+
+    //*** Funciones de ventanas secundarias
+    private async Task ConfigurarOficinas_Click(){
+        if(ConfigurarOficinas_vtn_visible) {
+            return;
+        }
+        else {
+            ConfigurarOficinas_vtn_visible = true;
+            await ConfigurarOficinas_vtn.Inicializar();
+        }
+    }
+    private async Task ConfigurarUsuaarios_Click(){
+        if (this.ConfigurarUsuarios_vtn_visible) {
+            return;
+        }
+        this.ConfigurarUsuarios_vtn_visible = true;
+        await ConfigurarUsuarios_vtn.Inicializar();
+        await Task.Delay(100);
+    }
+    private async Task MostrarMenuClick(bool val){
+        if(val){
+            this.mostrarMenu = true;
+            await JSRuntime.InvokeVoidAsync("RemoverCSSClass" , "#sideBar", "hiddenOnMovil");
+        }else{
+            await JSRuntime.InvokeVoidAsync("AgregarCSSClass" , "#sideBar", "hiddenOnMovil");            
+            this.mostrarMenu = false;
+        }
+    }
+}

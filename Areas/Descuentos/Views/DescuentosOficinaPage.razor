@@ -1,0 +1,321 @@
+@page "/DescuentosOficina/{IdOficinaParam}"
+@using System.Text
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Charts
+@using Sicem_Blazor.Descuentos.Models
+@inject IMatToaster Toaster
+@inject NavigationManager NavManager
+@inject DescuentosService descuentosService
+@inject SicemService sicemService
+
+<div class="title-page">@titulo</div>
+
+<SeleccionarFecha ProcesarParam="@Procesar" />
+
+@* ****** Grid Inputs y Graficas Donut ****** *@
+<div class="rec-grid-top">
+
+    @* *** Grid Inputs *** *@
+    <div class="d-flex flex-column border rounded bg-white mr-2 p-3" style="grid-area:1/1/2/2;">
+        <div class="d-flex ml-1 mt-1 mr-1 mb-3">
+            <div class="ml-1 font-weight-bold" style="font-size: 1.5rem;">@ObtnerValor(1) Descuentos Aplicados</div>
+        </div>
+        <div class="my-2" />
+        <div class="d-flex ml-1 mt-1 mr-1 mb-3">
+            <div class="ml-2 pr-1 font-weight-bold" style="font-size:1.3rem; min-width: 170px; text-align:left;">Conceptos Con IVA: </div>
+            <div style="width: 100%; max-width: 300px;"> <SfTextBox Readonly="true" Value="@ObtnerValor(2)" Placeholder='' CssClass="e-small pr-4 r" /> </div>
+        </div>
+        <div class="d-flex ml-1 mt-1 mr-1 mb-3">
+            <div class="ml-2 pr-1 font-weight-bold" style="font-size: 1.3rem; min-width: 170px; text-align:left;">IVA: </div>
+            <div style="width: 100%; max-width:300px;"> <SfTextBox Readonly="true" Value="@ObtnerValor(3)" Placeholder='' CssClass="e-small pr-4 r" /> </div>
+        </div>
+        <div class="d-flex ml-1 mt-1 mr-1 mb-3">
+            <div class="ml-2 pr-1 font-weight-bold" style="font-size: 1.3rem; min-width: 170px; text-align:left;">Aplicado Con IVA: </div>
+            <div style="width: 100%; max-width: 300px;"> <SfTextBox Readonly="true" Value="@ObtnerValor(4)" Placeholder='' CssClass="e-small pr-4 r" /> </div>
+        </div>
+        <div class="d-flex ml-1 mt-1 mr-1 mb-3">
+            <div class="ml-2 pr-1 font-weight-bold" style="font-size: 1.3rem; min-width: 170px; text-align:left;">Conceptos Sin IVA: </div>
+            <div style="width: 100%; max-width: 300px;"> <SfTextBox Readonly="true" Value="@ObtnerValor(5)" Placeholder='' CssClass="e-small pr-4 r" /> </div>
+        </div>
+        <div class="d-flex ml-1 mt-1 mr-1 mb-3">
+            <div class="ml-2 pr-1 font-weight-bold" style="font-size: 1.3rem; min-width: 170px; text-align:left;">Total: </div>
+            <div style="width: 100%; max-width: 300px;"> <SfTextBox Readonly="true" Value="@ObtnerValor(6)" Placeholder='' CssClass="e-small pr-4 r" /> </div>
+        </div>            
+    </div>
+
+    @* *** Graficas Donut *** *@
+    <div class="d-flex border rounded bg-white p-1" style="grid-area:1/2/2/3;">
+
+        <div style="width:50%;">
+            <SfAccumulationChart Title="Tarifas Descontadas" Height="250" Width="380" EnableSmartLabels="true">
+                <AccumulationChartSeriesCollection>
+                    <AccumulationChartSeries DataSource="@DatosGrafica_Tarifas" XName="Descripcion" YName="Valor1" Name="Tarifas" InnerRadius="20%" >
+                        <AccumulationDataLabelSettings Visible="true" Name="Descripcion" Position="AccumulationLabelPosition.Outside">
+                            <AccumulationChartConnector Type="ConnectorType.Curve" Length="20px" />
+                        </AccumulationDataLabelSettings>
+                    </AccumulationChartSeries>
+                </AccumulationChartSeriesCollection>
+                <AccumulationChartLegendSettings Visible="true" Position="LegendPosition.Bottom"></AccumulationChartLegendSettings>
+                <AccumulationChartTooltipSettings Enable="true" Format="${point.x} : <b>${point.y}%</b>"></AccumulationChartTooltipSettings>
+            </SfAccumulationChart>
+        </div>
+
+        <div style="width:50%;">
+            <SfAccumulationChart Title="Tipos de Calculo Descontado" Height="250" Width="380" EnableSmartLabels="true">
+                <AccumulationChartSeriesCollection>
+                    <AccumulationChartSeries DataSource="@DatosGrafica_Calculos" XName="Descripcion" YName="Valor1" Name="Calculos" InnerRadius="20%">
+                        <AccumulationDataLabelSettings Visible="true" Name="Descripcion" Position="AccumulationLabelPosition.Outside">
+                            <AccumulationChartConnector Type="ConnectorType.Curve" Length="20px" />
+                        </AccumulationDataLabelSettings>
+                    </AccumulationChartSeries>
+                </AccumulationChartSeriesCollection>
+                <AccumulationChartLegendSettings Visible="true" Position="LegendPosition.Bottom"></AccumulationChartLegendSettings>
+                <AccumulationChartTooltipSettings Enable="true" Format="${point.x} : <b>${point.y}%</b>"></AccumulationChartTooltipSettings>
+            </SfAccumulationChart>
+        </div>
+    </div>
+
+</div>
+
+@* ****** Botones ****** *@
+<div class="border rounded bg-white my-2 py-3 d-flex">
+    <div class="col-12 d-flex align-content-center justify-content-center">
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" OnClick="@Mostrar_Vtn_Conceptos">Detalle Conceptos</MatButton>
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" OnClick="@Mostrar_Vtn_Autorizo">Detalle Autorizacion </MatButton>
+    </div>
+</div>
+
+@* ****** Grafica Conceptos ****** *@
+<div class="border rounded bg-white my-2 p-1">
+    <SfChart Title="Descuentos por Conceptos" Width="100%" Height="380px">
+        <ChartPrimaryXAxis Title="Conceptos" ValueType="Syncfusion.Blazor.Charts.ValueType.Category" Minimum="0"/>
+        <ChartPrimaryYAxis LabelFormat="c2"/>
+        <ChartTooltipSettings Enable="true" Format="${point.x} : ${point.y}" />
+        <ChartSeriesCollection>
+            <ChartSeries DataSource="@DatosGrafica_Conceptos" XName="Descripcion" YName="Valor1" Width="0.5" ColumnWidth="0.5" Type="ChartSeriesType.Bar">
+                <ChartMarker>
+                    <ChartDataLabel Visible="true" />
+                </ChartMarker>
+            </ChartSeries>
+        </ChartSeriesCollection>
+
+    </SfChart>
+</div>
+
+<style type="text/css">
+    .rec-grid-top {
+        display: grid;
+        grid-template-columns: 1fr 770px;
+        grid-template-rows: 260px;
+        width: 100%;
+    }
+
+
+    .e-control.e-textbox {
+        font-size: 1.3rem !important;
+    }
+
+    .r .e-input {
+        text-align: right;
+    }
+</style>
+
+
+
+@* ****** Dialogos y ventanas secundarias ****** *@
+
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+
+<Descuentos_ConceptosVtn @ref="vtn_conceptos" Visible="@vtn_conceptos_visible" CerrarModal="@(()=> vtn_conceptos_visible = false)" Fecha1="@F1" Fecha2="@F2" Subsistema="@Subsistema" Sector="@Sector" />
+<Descuentos_AutorizoVtn @ref="vtn_autorizo" Visible="@vtn_autorizo_visible" CerrarModal="@(()=> vtn_autorizo_visible = false)" Fecha1="@F1" Fecha2="@F2" Subsistema="@Subsistema" Sector="@Sector" />
+
+
+@code{
+    [Parameter] public string IdOficinaParam { get; set; }
+    public IEnlace Oficina_Actual;
+    private string titulo = "DESCUENTOS";
+
+    bool busyDialog = false;
+    public DescuentosResumen datosResumen;
+    DateTime F1, F2;
+    int Subsistema, Sector;
+
+    public List<ChartItem> DatosGrafica_Tarifas = new List<ChartItem>();
+    public List<ChartItem> DatosGrafica_Calculos = new List<ChartItem>();
+    public List<ChartItem> DatosGrafica_Conceptos = new List<ChartItem>();
+
+    private bool vtn_conceptos_visible = false, vtn_autorizo_visible = false;
+    Descuentos_ConceptosVtn vtn_conceptos;
+    Descuentos_AutorizoVtn vtn_autorizo;
+
+
+    //********* Funciones  *********
+    protected override void OnInitialized() {
+        //*** Validar oficina para este usuario
+        if (!sicemService.ComprobarOficinaUsuario(int.TryParse(IdOficinaParam, out int tmpId) ? tmpId : -1, out Oficina_Actual)) {
+            Toaster.Add("Oficina no autorizada para este usuario.", MatToastType.Warning);
+            NavManager.NavigateTo("/");
+        }
+
+
+        this.titulo = $"DESCUENTOS {Oficina_Actual.Nombre.ToUpper()}";
+        this.F1 = DateTime.Parse("01/" + DateTime.Now.ToString("MM") + "/" + DateTime.Now.ToString("yyyy"));
+        this.F2 = DateTime.Parse(DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month).ToString() + "/" + DateTime.Now.ToString("MM") + "/" + DateTime.Now.ToString("yyyy"));
+        this.Subsistema = 0;
+        this.Sector = 0;
+    }
+    protected override async Task OnAfterRenderAsync(bool first){
+        var tmpE = new SeleccionarFechaEventArgs() {
+            Subsistema = this.Subsistema,
+            Sector = this.Sector,
+            Fecha1 = this.F1,
+            Fecha2 = this.F2
+        };
+        await Procesar(tmpE);
+    }
+
+    public async Task Procesar(SeleccionarFechaEventArgs e) {
+        this.busyDialog = true;
+        await Task.Delay(100);
+
+        this.F1 = e.Fecha1;
+        this.F2 = e.Fecha2;
+        this.Subsistema = e.Subsistema;
+        this.Sector = e.Sector;
+
+        var dateRange = new Sicem_Blazor.Data.DateRange(this.F1, this.F2);
+        datosResumen = descuentosService.ObtenerDescuentosResumen(Oficina_Actual, dateRange);
+        if (datosResumen != null) {
+            Procesar_Datos_Grafica();
+        }
+        else {
+            //*** Mostrar mensaje del httpclient
+            Toaster.Add("Error al llamar a la base de datos, intente m�s tarde.", MatToastType.Warning, "");
+        }
+        await Task.Delay(200);
+        this.busyDialog = false;
+    }
+    private void Procesar_Datos_Grafica() {
+
+        //****** Grafica Tarifas
+        var tmpChar1 = new List<ChartItem>();
+        foreach (DescuentosResumenItem item in datosResumen.Tarifas) {
+            tmpChar1.Add(new ChartItem {
+                Descripcion = item.Descripcion,
+                Valor1 = (decimal)System.Math.Round((item.Total / datosResumen.Total) * 100, 2)
+            });
+        }
+        DatosGrafica_Tarifas = tmpChar1;
+
+
+        //****** Grafica Calculos
+        var tmpChar2 = new List<ChartItem>();
+        foreach (DescuentosResumenItem item in datosResumen.Calculos) {
+            tmpChar2.Add(new ChartItem {
+                Descripcion = item.Descripcion,
+                Valor1 = (decimal)System.Math.Round((item.Total / datosResumen.Total) * 100, 2)
+            });
+        }
+        DatosGrafica_Calculos = tmpChar2;
+
+
+        //****** Grafica Conceptos
+        var tmpConceptos = new List<ChartItem>();
+        foreach (string xRow in datosResumen.Conceptos){
+            var xs = xRow.Split(";");
+
+            tmpConceptos.Add(new ChartItem() {
+                Descripcion = xs[0],
+                Valor1 = decimal.Parse(xs[1])
+            });
+        }
+        DatosGrafica_Conceptos = tmpConceptos.OrderBy((i) => i.Valor1).ToList<ChartItem>();
+
+    }
+    private string ObtnerValor(int i) {
+        if (datosResumen == null) {
+            return "";
+        }
+
+        var resCulture = new System.Globalization.CultureInfo("es-MX");
+        string res = "";
+
+        switch (i) {
+            case 1:
+                res = datosResumen.Usuarios.ToString();
+                break;
+
+            case 2:
+                res = datosResumen.Conc_Con_Iva.ToString("c2", resCulture);
+                break;
+            case 3:
+                res = datosResumen.Iva.ToString("c2", resCulture);
+                break;
+            case 4:
+                res = datosResumen.Apli_Con_Iva.ToString("c2", resCulture);
+                break;
+            case 5:
+                res = datosResumen.Conc_Sin_Iva.ToString("c2", resCulture);
+                break;
+            case 6:
+                res = datosResumen.Total.ToString("c2", resCulture);
+                break;
+
+            default:
+                res = "";
+                break;
+        }
+        return res;
+    }
+
+
+    //*** Funciones Ventanas Secundarias
+    private async Task Mostrar_Vtn_Conceptos() {
+        busyDialog = true;
+
+        if (!vtn_conceptos_visible) {
+            var dateRange = new Sicem_Blazor.Data.DateRange(F1, F2);
+            var tmpData = descuentosService.ObtenerDescuentosPorConceptos(Oficina_Actual, dateRange);
+
+            if (tmpData == null) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (tmpData.Count() <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            vtn_conceptos_visible = true;
+            await vtn_conceptos.Inicializar(tmpData, Oficina_Actual);
+        }
+
+        busyDialog = false;
+    }
+    private async Task Mostrar_Vtn_Autorizo() {
+        busyDialog = true;
+        if (!vtn_autorizo_visible) {
+            var dateRange = new Sicem_Blazor.Data.DateRange(F1, F2);
+            var tmpData = descuentosService.ObtenerDescuentosPorUsuarioAutorizo(Oficina_Actual, dateRange);
+
+            if (tmpData == null) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (tmpData.Count() <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            this.vtn_autorizo_visible = true;
+            await vtn_autorizo.Inicializar(tmpData, Oficina_Actual);
+        }
+        busyDialog = false;
+    }
+
+}

@@ -1,0 +1,282 @@
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.ControlRezago.Models
+@inject IJSRuntime JSRuntime
+@inject ControlRezagoService controlRezService 
+
+
+@if(Visible) {
+    <div class="busy-control">
+
+        <div id="draggable" class="SicemDialog-control" style="width:auto; height:auto;">
+        
+            @* *********** Cabecera *********** *@
+            <div class="SicemDialog-header">
+                <div>ANALISIS DE CARTERA </div>
+                <MatIcon @onclick="@Cerrar_Modal" Class="close-icon" style="margin-left: auto;" Icon="clear"></MatIcon>
+            </div>
+
+            @* *********** Contenido *********** *@
+        <div class="SicemDialog-content" style="@ObtnerDimensiones()">
+                
+                <div class="d-flex align-items-center m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                    
+                    <div class="d-flex mx-2 align-items-center" style="width:18rem;">
+                        <div class="font-weight-bold" style="width: 100%; text-transform: uppercase;">Meses Morosos:</div>
+                        <div style="width:auto;">
+                            <SfNumericTextBox Value="@mesesMorozo" TValue="int?" Format="n0" ShowSpinButton="false" CssClass="e-small w-100">
+                                <NumericTextBoxEvents TValue="int?" ValueChange="OnChange_Meses"></NumericTextBoxEvents>
+                            </SfNumericTextBox>
+                        </div>
+                    </div>
+
+                    <div class="d-flex mx-2 align-items-center" style="width:18rem;">
+                        <div class="font-weight-bold" style="width: 100%; text-transform: uppercase;">Saldo Moroso:</div>
+                        <div style="width:auto">
+                            <SfNumericTextBox Value="@saldoMorozo" TValue="double?" Format="c2" ShowSpinButton="false" CssClass="e-small w-100">
+                                <NumericTextBoxEvents TValue="double?" ValueChange="OnChange_Saldo"></NumericTextBoxEvents>
+                            </SfNumericTextBox>
+                        </div>                        
+                    </div>
+
+                    <div style="width:4rem;" />
+                    
+                    <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem; padding:0rem 4rem;" OnClick="@Procesar" >Procesar </MatButton>
+                </div>
+
+                <div class="d-flex align-items-center m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+
+                    @* *** Comobox Localidades *** *@
+                    <div class="d-flex mx-2 align-items-center" style="width:22rem;" >
+                        <div class="font-weight-bold" style="width:100%;"> LOCALIDAD: </div>
+                        <select class="form-select form-select-lg ml-1" @onchange="ComboBox_Localidad_Changed" style="height:28px; width:180px;">
+                            <option value="0" selected>TODOS</option>
+                            @foreach (var xKey in cat_localidades.Keys) {
+                                <option value="@xKey">@cat_localidades[xKey]</option>
+                            }
+                        </select>
+                    </div>
+
+                    @* *** Comobox Tarifas *** *@
+                    <div class="d-flex mx-2 align-items-center" style="width:19rem;">
+                        <div class="font-weight-bold" style="width:100%"> TIPO USUARIO: </div>
+                        <select class="form-select form-select-lg ml-1" @onchange="ComboBox_Tarifas_Changed" style="height:28px; width:160px;">
+                            <option value="0" selected>TODOS</option>
+                            @foreach (var xKey in cat_tarifas.Keys) {
+                                <option value="@xKey">@cat_tarifas[xKey]</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div style="width:4rem;" />
+
+                    <div class="w-100 d-flex align-items-center">
+                        <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                        <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" Disabled="true">Generar Reporte <i class="fa fa-file-pdf-o ml-2" aria-hidden="true"></i></MatButton>
+                    </div>
+                </div>
+
+
+                <div class="m-1 p-2 border rounded bg-white" style="grid-row: 3/4; grid-column: 1/2;">
+                    <SfGrid @ref="dataGrid" DataSource="@datosGrid_filtrados" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                        <GridColumns>
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.Localidad)" HeaderText="Localidad" TextAlign="TextAlign.Left" Width="120" />
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.Colonia)" HeaderText="Colonia" TextAlign="TextAlign.Left" Width="140" />
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.Tipo_Usuario)" HeaderText="Tipo Usuario" TextAlign="TextAlign.Left" Width="100" />
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.Sb)" HeaderText="Sb" TextAlign="TextAlign.Center" Width="50" />
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.Sector)" HeaderText="Sector" TextAlign="TextAlign.Center" Width="50" />
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.Imp_3_6_MESES)" HeaderText="Imp 3-6 Meses" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.Usu_3_6_MESES)" HeaderText="Usus 3-6 Meses" TextAlign="TextAlign.Center" Width="90" />
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.Imp_7_12_MESES)" HeaderText="Imp 7-12 Meses" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.Usu_7_12_MESES)" HeaderText="Usu 7-12 Meses" TextAlign="TextAlign.Center" Width="90" />
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.Imp_1_2_ANOS)" HeaderText="Imp 1-2 A�os" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.Usu_1_2_ANOS)" HeaderText="Usu 1-2 A�os" TextAlign="TextAlign.Center" Width="90" />
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.Imp_3_5_ANOS)" HeaderText="Imp 3-5 A�os" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.Usu_3_5_ANOS)" HeaderText="Usu 3-5 A�os" TextAlign="TextAlign.Center" Width="90" />
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.Imp_5_ANOS)" HeaderText="Imp >5 A�os" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.Usu_5_ANOS)" HeaderText="Usu >5 A�os" TextAlign="TextAlign.Center" Width="90" />
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.IMP_TOTAL)" HeaderText="Imp Total" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(ControlRezago_AnalisisCart_Detalle.USU_TOTAL)" HeaderText="Usu Total" TextAlign="TextAlign.Center" Width="90" />
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <BusyIndicator Busy="@busyIndicator" ContentText="CargandoDatos" />
+
+}
+
+@code {
+
+    #region  "******** Parametros ********"
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter]
+    public EventCallback CerrarModal { get; set; }
+    [Parameter]
+    public DateTime Fecha1 {get;set;}
+    [Parameter]
+    public DateTime Fecha2 {get;set;}
+    [Parameter]
+    public int Subsistema {get;set;}
+    [Parameter]
+    public int Sector {get;set;}
+
+    List<int> GridFilas = new List<int>(){50,50,540};
+    List<int> GridColumnas = new List<int>(){1150};
+    #endregion
+    #region "******** Funciones Base ********"
+    private async Task Cerrar_Modal() {
+        this.datosGrid = new ControlRezago_AnalisisCart_Detalle[]{};
+        await CerrarModal.InvokeAsync("");
+    }
+    private string ObtnerDimensiones() {
+        var xB = new System.Text.StringBuilder();
+        xB.Append("height: 100%; width:100%; ");
+        xB.Append("display:grid; ");
+        xB.Append("grid-template-rows: ");
+        foreach (int FilaH in GridFilas) {
+            xB.Append(string.Format("{0}px ", FilaH));
+        }
+        xB.Append("; ");
+
+        xB.Append("grid-template-columns: ");
+        foreach (int ColW in GridColumnas) {
+            xB.Append(string.Format("{0}px ", ColW));
+        }
+        xB.Append("; ");
+
+        return xB.ToString();
+    }
+    #endregion
+
+
+    //"******** Variables ********"
+
+    SfGrid<ControlRezago_AnalisisCart_Detalle> dataGrid;
+    public ControlRezago_AnalisisCart_Detalle[] datosGrid;
+    public ControlRezago_AnalisisCart_Detalle[] datosGrid_filtrados;
+    public Dictionary<int,string> cat_localidades = new Dictionary<int, string>();
+    public Dictionary<int,string> cat_tarifas = new Dictionary<int, string>();
+    public int Id_Oficina = 0;
+    private bool busyIndicator = false;
+    private int id_localidad_selected = 0, id_tarifa_selected = 0;
+    private int mesesMorozo = 12;
+    private double saldoMorozo= 700;
+
+    
+    //"******** Funciones Generales ********"
+    public async Task Inicializar(ControlRezago_AnalisisCart_Detalle[] datos) {
+        await JSRuntime.InvokeVoidAsync("ConfigurateDragg", null);
+
+        this.datosGrid = datos;
+
+        //*** Generar Catalogos
+        cat_localidades = new Dictionary<int, string>();
+        cat_tarifas = new Dictionary<int, string>();
+
+        foreach (var xItem in datosGrid){
+            if (!cat_localidades.ContainsKey(xItem.Id_Localidad)){
+                cat_localidades.Add(xItem.Id_Localidad, xItem.Localidad);
+            }
+
+            if (!cat_tarifas.ContainsKey(xItem.Id_Tarifa)) {
+                cat_tarifas.Add(xItem.Id_Tarifa, xItem.Tipo_Usuario);
+            }
+        }
+        this.datosGrid_filtrados = this.datosGrid;
+        busyIndicator = false;
+    }
+
+    private async Task Procesar() {
+        busyIndicator = true;
+
+        var tmpData = controlRezService.ControlRezago_AnalisisDetalle(Id_Oficina, 0, 0, this.mesesMorozo, this.saldoMorozo);
+        await Inicializar(tmpData);
+    }
+    private void FiltrarDatos(){
+
+        //*** Filtrar Localidades
+        var tmpList = new List<ControlRezago_AnalisisCart_Detalle>();
+        foreach(var item in datosGrid) {
+            if(this.id_localidad_selected <= 0) {
+                tmpList.Add(item);
+            }else{
+                if(item.Id_Localidad == this.id_localidad_selected) {
+                    tmpList.Add(item);
+                }
+            }
+        }
+
+        //*** Filtrar Tarifas
+        var tmpList2 = new List<ControlRezago_AnalisisCart_Detalle>();
+        foreach(var item in tmpList){
+            if(this.id_tarifa_selected <= 0) {
+                tmpList2.Add(item);
+            }
+            else {
+                if(item.Id_Tarifa == this.id_tarifa_selected) {
+                    tmpList2.Add(item);
+                }
+            }
+        }
+
+        datosGrid_filtrados = tmpList2.ToArray<ControlRezago_AnalisisCart_Detalle>();
+
+    }
+
+    private void ComboBox_Localidad_Changed(ChangeEventArgs e) {
+        int tmpId = int.Parse(e.Value.ToString());
+        this.id_localidad_selected = tmpId;
+        FiltrarDatos();
+    }
+    private void ComboBox_Tarifas_Changed(ChangeEventArgs e) {
+        int tmpId = int.Parse(e.Value.ToString());
+        this.id_tarifa_selected = tmpId;
+        FiltrarDatos();
+    }
+
+    public void OnChange_Meses(Syncfusion.Blazor.Inputs.ChangeEventArgs<int?> args) {
+        mesesMorozo = (int)args.Value;
+        StateHasChanged();
+    }
+    public void OnChange_Saldo(Syncfusion.Blazor.Inputs.ChangeEventArgs<double?> args) {
+        saldoMorozo = (double)args.Value;
+        StateHasChanged();
+    }
+
+    private async Task GenerarExcel(){
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private async Task GenerarPdf(){
+        string titulo = string.Format("Ingresos por Conceptos del {0} al {1}", this.Fecha1.ToString("dd/MM/yyyy"), this.Fecha2.ToString("dd/MM/yyyy"));
+        List<PdfHeaderFooterContent> xconts = new List<PdfHeaderFooterContent>();
+        xconts.Add(
+            new PdfHeaderFooterContent() {
+                Type = ContentType.Text,
+                Value = titulo,
+                Position = new PdfPosition() { X = 10, Y = 10 },
+                Style = new PdfContentStyle() {
+                    TextBrushColor = "#000000",
+                    FontSize = 13
+                }
+            }
+        );
+
+        await this.dataGrid.PdfExport(new PdfExportProperties {
+            PageOrientation = PageOrientation.Landscape,
+            Header = new PdfHeader {
+                Contents = xconts
+            },
+            FileName = string.Format("sicem_IngresosxDias{0}.pdf", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+}

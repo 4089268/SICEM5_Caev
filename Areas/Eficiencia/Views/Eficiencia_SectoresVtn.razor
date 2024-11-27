@@ -1,0 +1,201 @@
+@using Sicem_Blazor.Eficiencia.Data
+@using Sicem_Blazor.Eficiencia.Models
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.DropDowns
+@inject IJSRuntime JSRuntime
+@inject IEficienciaService eficienciaService
+
+@if (Visible) {
+    <div class="busy-control">
+
+        <div id="draggable" class="SicemDialog-control" style="width:auto; height:auto;">
+
+            @* *********** Cabecera *********** *@
+            <div class="SicemDialog-header">
+                <div>@titulo</div>
+                <MatIcon @onclick="@Cerrar_Modal" Class="close-icon" style="margin-left: auto;" Icon="clear"></MatIcon>
+            </div>
+
+            @* *********** Contenido *********** *@
+            <div class="SicemDialog-content" style="@ObtnerDimensiones()">
+
+                <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                    <div class="w-100 d-flex align-items-center">
+                        <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                        <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" Disabled="true">Generar Reporte <i class="fa fa-file-pdf-o ml-2" aria-hidden="true"></i></MatButton>
+                    </div>
+                </div>
+
+                <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                    <SfGrid @ref="dataGrid" DataSource="@datosGrid" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                        <GridColumns>
+                            <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="55">
+                                <Template>
+                                    @{
+                                        var data = (context as Eficiencia_Sectores);
+                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Ver detalle" @onclick="@( e => MostrarVentanaDetalle(data))">
+                                            <i class="fa fa-th" aria-hidden="true"></i>
+                                        </button>
+                                    }
+                                </Template>
+                            </GridColumn>
+                            <GridColumn Field="@nameof(Eficiencia_Sectores.Sector)" HeaderText="Sector" TextAlign="TextAlign.Left" Width="100" />
+                            <GridColumn Field="@nameof(Eficiencia_Sectores.Facturacion)" HeaderText="Facturado" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(Eficiencia_Sectores.Por_Fact)" HeaderText="% Fact." TextAlign="TextAlign.Center" Width="80" />
+                            <GridColumn Field="@nameof(Eficiencia_Sectores.Cobrado)" HeaderText="Cobrado" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(Eficiencia_Sectores.Por_Cobrado)" HeaderText="% Cobr." TextAlign="TextAlign.Center" Width="80" />
+                            <GridColumn Field="@nameof(Eficiencia_Sectores.Descontado)" HeaderText="Descontado" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(Eficiencia_Sectores.Por_Desc)" HeaderText="% Desc." TextAlign="TextAlign.Center" Width="80" />
+                            <GridColumn Field="@nameof(Eficiencia_Sectores.Anticipado)" HeaderText="Anticipado" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(Eficiencia_Sectores.Por_Ant)" HeaderText="% Ant." TextAlign="TextAlign.Center" Width="80" />
+                            <GridColumn Field="@nameof(Eficiencia_Sectores.Por_Efi)" HeaderText="Eficiencia" TextAlign="TextAlign.Center" Width="90" />
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+
+                <div class="m-1 p-2 border rounded bg-white" style="grid-row: 3/4; grid-column: 1/2;">
+                    <SfChart Title="" SubTitle="" @ref="grafiaIngresos" Width="auto" Height="122">
+                        <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" Interval="1" Visible="true" LabelFormat="c">
+                        </ChartPrimaryXAxis>
+                        <ChartPrimaryYAxis Title="" Visible="false" />
+                        <ChartTooltipSettings Enable="true" Header="" Shared="true" Format="${series.name} ${point.x} : ${point.y}%"></ChartTooltipSettings>
+                        <ChartLegendSettings Visible="false" Position="LegendPosition.Right"></ChartLegendSettings>
+                        <ChartZoomSettings EnableMouseWheelZooming="false" EnablePinchZooming="false" EnableSelectionZooming="true"></ChartZoomSettings>
+                        <ChartArea>
+                            <ChartAreaBorder Width="0"></ChartAreaBorder>
+                        </ChartArea>
+                        <ChartSeriesCollection>
+                            <ChartSeries XName="X" DataSource="@itemsGrafica" YName="Y1" Name="Eficiencia" Type="ChartSeriesType.Column">
+                                <ChartMarker Visible="true">
+                                </ChartMarker>
+                            </ChartSeries>
+                        </ChartSeriesCollection>
+                    </SfChart>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+    @*<Eficiencia_DetalleVtn @ref="@vtn_detalle" Visible="@vtn_detalle_visible" Cerrar_Modal="@Cerrar_Vtn_Detalle" />*@
+    <Eficiencia_DetalleVtn @ref="@vtn_detalle" Visible="@vtn_detalle_visible" CerrarModal="@(()=> vtn_detalle_visible = false)" />
+}
+
+@code {
+
+    #region  "******** Parametros ********"
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter]
+    public EventCallback CerrarModal { get; set; }
+    [Parameter]
+    public DateTime Fecha1 { get; set; }
+    [Parameter]
+    public DateTime Fecha2 { get; set; }
+    [Parameter]
+    public int Subsistema { get; set; }
+    [Parameter]
+    public int Sector { get; set; }
+
+    List<int> GridFilas = new List<int>() { 50, 460, 140 };
+    List<int> GridColumnas = new List<int>() { 1020 };
+    #endregion
+    #region "******** Funciones Base ********"
+    private async Task Cerrar_Modal() {
+        this.datosGrid = new Eficiencia_Sectores[] { };
+        await CerrarModal.InvokeAsync("");
+    }
+    private string ObtnerDimensiones() {
+        var xB = new System.Text.StringBuilder();
+        xB.Append("height: 100%; width:100%; ");
+        xB.Append("display:grid; ");
+        xB.Append("grid-template-rows: ");
+        foreach (int FilaH in GridFilas) {
+            xB.Append(string.Format("{0}px ", FilaH));
+        }
+        xB.Append("; ");
+
+        xB.Append("grid-template-columns: ");
+        foreach (int ColW in GridColumnas) {
+            xB.Append(string.Format("{0}px ", ColW));
+        }
+        xB.Append("; ");
+
+        return xB.ToString();
+    }
+    #endregion
+
+
+    //"******** Variables ********"
+
+    SfGrid<Eficiencia_Sectores> dataGrid;
+    SfChart grafiaIngresos;
+    int Id_Oficina = 0;
+    public Eficiencia_Sectores[] datosGrid;
+    public List<ChartData> itemsGrafica = new List<ChartData>();
+    private String titulo = "EFICIENCIA POR SECTORES";
+    private int Tipo = 0;
+
+    private bool busyDialog = false, vtn_detalle_visible = false;
+    Eficiencia_DetalleVtn vtn_detalle;
+
+
+    //"******** Funciones Generales ********"
+    public async Task Inicializar(Eficiencia_Sectores[] datos, string t, int tipo) {
+        await JSRuntime.InvokeVoidAsync("ConfigurateDragg", null);
+        this.titulo = t;
+        this.Tipo = tipo;
+        this.datosGrid = datos;
+        if (datosGrid.Length > 0) {
+            ProcesarDatosGrafica();
+        }
+    }
+
+    private void ProcesarDatosGrafica() {
+        itemsGrafica = new List<ChartData>();
+        foreach (Eficiencia_Sectores xItem in this.datosGrid) {
+            itemsGrafica.Add(new ChartData() {
+                X = xItem.Sector,
+                Y1 = (decimal)xItem.Por_Efi
+            });
+
+        }
+    }
+    private async Task GenerarExcel() {
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private async Task MostrarVentanaDetalle(Eficiencia_Sectores e) {
+        busyDialog = true;
+        if (!vtn_detalle_visible) {
+
+            int tmpSector = int.Parse(e.Sector.Replace("Sector ", ""));
+
+            Eficiencia_Detalle[] tmpData = eficienciaService.ObtenerEficienciaDetalleSector(Id_Oficina, this.Fecha1.Year, this.Fecha1.Month, Subsistema, tmpSector, Tipo);
+
+            if (tmpData == null) {
+                busyDialog = false;
+                return;
+            }
+            if (tmpData.Length <= 0) {
+                busyDialog = false;
+                return;
+            }
+            vtn_detalle_visible = true;
+            await vtn_detalle.Inicializar(tmpData);
+        }
+        busyDialog = false;
+    }
+    
+
+    public class ChartData {
+        public string X;
+        public decimal Y1;
+        public decimal Y2;
+    }
+
+}

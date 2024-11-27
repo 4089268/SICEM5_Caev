@@ -1,0 +1,32 @@
+@using Sicem_Blazor.Padron.Models
+<SfGrid @ref="DataGrid" DataSource="@DatosGrid" TValue="ResumenTarifa" AllowResizing="true" AllowSorting="true"  AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
+    <GridColumns> 
+        <GridColumn HeaderText="" TextAlign="TextAlign.Left" Width="40">
+            <Template>
+                @{
+                    var data = (context as ResumenTarifa);
+                    <div class="d-flex p-1">
+                        <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Detalle" @onclick=@( e => OnClick(data) )>
+                            <i class="fa fa-bookmark" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                }
+            </Template>
+        </GridColumn>
+        <GridColumn Field="@nameof(ResumenTarifa.Tarifa)" HeaderText="Tarifa" TextAlign="TextAlign.Left" Width="170" />
+        <GridColumn Field="@nameof(ResumenTarifa.Usuarios)" HeaderText="Usuarios" TextAlign="TextAlign.Center" Width="115" Format="n0" />
+        <GridColumn Field="@nameof(ResumenTarifa.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="125" Format="c2" />
+        <GridColumn Field="@nameof(ResumenTarifa.IVA)" HeaderText="IVA" TextAlign="TextAlign.Right" Width="125" Format="c2" />
+        <GridColumn Field="@nameof(ResumenTarifa.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="125" Format="c2" />
+    </GridColumns>
+</SfGrid>
+
+
+@code {
+    private SfGrid<ResumenTarifa> DataGrid {get;set;}
+    [Parameter] public List<ResumenTarifa> DatosGrid {get;set;}
+    [Parameter] public EventCallback<string> OnDetailClick {get;set;}
+    private async Task OnClick(ResumenTarifa e){
+        await OnDetailClick.InvokeAsync(e.Tarifa);
+    }
+}

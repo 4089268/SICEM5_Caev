@@ -1,0 +1,321 @@
+@page "/MicromedicionOfi/{IdOficinaParam}"
+@using System.Text
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Charts
+@using Sicem_Blazor.Micromedicion.Models
+@inject IMatToaster Toaster
+@inject MicromedicionService micromedicionService
+@inject SicemService sicemService
+@inject NavigationManager NavManager
+
+
+<div class="title-page">MICROMEDICION</div>
+
+<SeleccionarFecha ProcesarParam="@Procesar" MostrarPeriodos="@(false)" OcultarMes="true" />
+
+<div class="w-100" style="">
+
+    <div class="d-flex my-2 ">
+
+        <div class="d-flex flex-column p-2 mr-1 border rounded bg-white" style="width:62%;">
+
+            <div class="w-100 px-2 py-1 d-flex align-items-center" style="grid-row: 1/2; grid-column: 1/2;">
+                <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" @onclick="GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+            </div>
+
+            <div class="m-1 p-1" style="grid-row: 2/3; grid-column: 1/2; height:220px;">
+                <SfGrid @ref="dataGrid" DataSource="@datosGrid" AllowSorting="true" AllowResizing="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(Micromedicion_Item.Descripcion_Mes)" HeaderText="Mes" TextAlign="TextAlign.Left" Width="60" />
+                        <GridColumn Field="@nameof(Micromedicion_Item.Reales)" HeaderText="Reales" TextAlign="TextAlign.Right" Width="75" Format="n0" />
+                        <GridColumn Field="@nameof(Micromedicion_Item.Reales_Porc)" HeaderText="Por. Reales" TextAlign="TextAlign.Center" Width="65" />
+                        <GridColumn Field="@nameof(Micromedicion_Item.Promedios)" HeaderText="Promedios" TextAlign="TextAlign.Right" Width="75" Format="n0" />
+                        <GridColumn Field="@nameof(Micromedicion_Item.Promedios_Porc)" HeaderText="Por Prom" TextAlign="TextAlign.Center" Width="65" />
+                        <GridColumn Field="@nameof(Micromedicion_Item.Medidos)" HeaderText="Medidos" TextAlign="TextAlign.Right" Width="75" Format="n0" />
+                        <GridColumn Field="@nameof(Micromedicion_Item.Medidos_Porc)" HeaderText="Por Medidos" TextAlign="TextAlign.Center" Width="65" />
+                        <GridColumn Field="@nameof(Micromedicion_Item.Fijos)" HeaderText="Fijos" TextAlign="TextAlign.Right" Width="75" Format="n0" />
+                        <GridColumn Field="@nameof(Micromedicion_Item.Fijos_Porc)" HeaderText="Por Fijos" TextAlign="TextAlign.Center" Width="65" />
+                        <GridColumn Field="@nameof(Micromedicion_Item.Total)" HeaderText="Totales" TextAlign="TextAlign.Right" Width="75" Format="n0" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </div>
+
+        <div class="d-flex flex-column p-1 ml-1 border rounded bg-white" style="width:38%;">
+            <SfChart Title="" SubTitle="" Width="auto" Height="260">
+                <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" Interval="1">
+                </ChartPrimaryXAxis>
+                <ChartPrimaryYAxis Title="" Visible="true" Interval="20" Maximum="100" Minimum="0" />
+                <ChartTooltipSettings Enable="true" Header="Ingresos" Shared="true" Format="${point.x} ${series.name}: ${point.y}%"></ChartTooltipSettings>
+                <ChartLegendSettings Visible="false" Position="LegendPosition.Right"></ChartLegendSettings>
+                <ChartZoomSettings EnableMouseWheelZooming="false" EnablePinchZooming="false" EnableSelectionZooming="true"></ChartZoomSettings>
+                <ChartArea>
+                    <ChartAreaBorder Width="0"></ChartAreaBorder>
+                </ChartArea>
+                <ChartSeriesCollection>
+                    <ChartSeries XName="Descripcion" DashArray="5,1" DataSource="@DatosGrafica_Hist" YName="Valor" Name="Reales" Type="ChartSeriesType.Line">
+                        <ChartMarker Visible="true">
+                        </ChartMarker>
+                    </ChartSeries>
+                    <ChartSeries XName="Descripcion" DashArray="5,1" DataSource="@DatosGrafica_Hist" YName="Valor2" Name="Promedios" Type="ChartSeriesType.Line">
+                        <ChartMarker Visible="true">
+                        </ChartMarker>
+                    </ChartSeries>
+                </ChartSeriesCollection>
+            </SfChart>
+        </div>
+    </div>
+
+
+    @* *** Graficas *** *@
+    <div class="d-flex p-1 my-2 border rounded bg-white ">
+
+        <div style="width:33.33%;">
+            <SfAccumulationChart Title="COMPARACION GENERAL" Height="290">
+                <AccumulationChartSeriesCollection>
+                    <AccumulationChartSeries DataSource="@DatosGrafica_1" XName="Descripcion" YName="Valor" Name="" InnerRadius="40%" StartAngle="270" EndAngle="90">
+                        <AccumulationDataLabelSettings Visible="true" Name="Descripcion" Position="AccumulationLabelPosition.Outside">
+                            <AccumulationChartConnector Type="ConnectorType.Curve" Length="20px" />
+                        </AccumulationDataLabelSettings>
+                    </AccumulationChartSeries>
+                </AccumulationChartSeriesCollection>
+                <AccumulationChartLegendSettings Visible="false"></AccumulationChartLegendSettings>
+                <AccumulationChartTooltipSettings Enable="true" Format="${point.x} : <b>${point.y}%</b>"></AccumulationChartTooltipSettings>
+            </SfAccumulationChart>
+        </div>
+
+        <div style="width: 33.33%;">
+            <SfAccumulationChart Title="COMPARACION REALES GLOBAL" Height="290">
+                <AccumulationChartSeriesCollection>
+                    <AccumulationChartSeries DataSource="@DatosGrafica_2" XName="Descripcion" YName="Valor" Name="" InnerRadius="40%" StartAngle="270" EndAngle="90">
+                        <AccumulationDataLabelSettings Visible="true" Name="Descripcion" Position="AccumulationLabelPosition.Outside">
+                            <AccumulationChartConnector Type="ConnectorType.Curve" Length="20px" />
+                        </AccumulationDataLabelSettings>
+                    </AccumulationChartSeries>
+                </AccumulationChartSeriesCollection>
+                <AccumulationChartLegendSettings Visible="false"></AccumulationChartLegendSettings>
+                <AccumulationChartTooltipSettings Enable="true" Format="${point.x} : <b>${point.y}%</b>"></AccumulationChartTooltipSettings>
+            </SfAccumulationChart>
+        </div>
+
+        <div style="width: 33.33%;">
+            <SfAccumulationChart Title="COMPARACION MEDIDOS" Height="290">
+                <AccumulationChartSeriesCollection>
+                    <AccumulationChartSeries DataSource="@DatosGrafica_3" XName="Descripcion" YName="Valor" Name="" InnerRadius="40%" StartAngle="270" EndAngle="90">
+                        <AccumulationDataLabelSettings Visible="true" Name="Descripcion" Position="AccumulationLabelPosition.Outside">
+                            <AccumulationChartConnector Type="ConnectorType.Curve" Length="20px" />
+                        </AccumulationDataLabelSettings>
+                    </AccumulationChartSeries>
+                </AccumulationChartSeriesCollection>
+                <AccumulationChartLegendSettings Visible="false"></AccumulationChartLegendSettings>
+                <AccumulationChartTooltipSettings Enable="true" Format="${point.x} : <b>${point.y}%</b>"></AccumulationChartTooltipSettings>
+            </SfAccumulationChart>
+        </div>
+
+    </div>
+
+
+    @* ****** Botones ****** *@
+    <div class="border rounded bg-white my-2 py-3 d-flex">
+        <div class="col-12 d-flex align-content-center justify-content-center">
+            <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" OnClick="@Mostrar_Vtn_Anomalias"> Desglosar Anomalias</MatButton>
+            <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" OnClick="@Mostrar_Vtn_Padron">Resumen Padron</MatButton>
+        </div>
+    </div>
+
+
+</div>
+
+<style type="text/css">
+
+
+    .e-control.e-textbox {
+        font-size: 1.3rem !important;
+    }
+
+    .e-input {
+        padding-left: .75rem !important;
+        padding-right: .75rem !important;
+    }
+</style>
+
+@* ****** Dialogos y ventanas secundarias ****** *@
+
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+<Micromedicion_AnomaliasVtn @ref="@vnt_anomalias" Visible="@vtn_anomalias_visible" CerrarModal="@(()=> vtn_anomalias_visible = false)" />
+<Micromedicion_PadronVtn @ref="vnt_padron" Visible="@vtn_padron_visible" CerrarModal="@(()=> vtn_padron_visible = false)" />
+
+@code{
+    [Parameter] public string IdOficinaParam { get; set; }
+    bool busyDialog = false;
+    private SfGrid<Micromedicion_Item> dataGrid;
+    private Micromedicion_Item[] datosGrid;
+    public IEnlace OficinaActual;
+
+    public DateTime f1, f2;
+    public int Subsistema, Sector;
+
+
+    public List<ChartItem> DatosGrafica_1 { get; set; }
+    public List<ChartItem> DatosGrafica_2 { get; set; }
+    public List<ChartItem> DatosGrafica_3 { get; set; }
+    public List<ChartItem> DatosGrafica_Hist { get; set; }
+
+    private bool vtn_anomalias_visible = false, vtn_padron_visible = false;
+    private Micromedicion_AnomaliasVtn vnt_anomalias;
+    private Micromedicion_PadronVtn vnt_padron;
+
+    //********* Funciones  *********
+    protected override async Task OnInitializedAsync() {
+
+        //*** Validar Oficina
+        if (!sicemService.ComprobarOficinaUsuario(int.TryParse(IdOficinaParam, out int tmpId) ? tmpId : -1, out OficinaActual)) {
+            Toaster.Add("Oficina no autorizada para este usuario.", MatToastType.Warning);
+            NavManager.NavigateTo("/");
+        }
+
+        var tmpE = new SeleccionarFechaEventArgs() {
+            Subsistema = 0,
+            Sector = 0,
+            Fecha1 = DateTime.Parse("01/" + DateTime.Now.ToString("MM") + "/" + DateTime.Now.ToString("yyyy")),
+            Fecha2 = DateTime.Parse(DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month).ToString() + "/" + DateTime.Now.ToString("MM") + "/" + DateTime.Now.ToString("yyyy"))
+        };
+
+        this.f1 = tmpE.Fecha1;
+        this.f2 = tmpE.Fecha2;
+        this.Subsistema = tmpE.Subsistema;
+        this.Sector = tmpE.Sector;
+
+        await Procesar(tmpE);
+    }
+
+    public async Task Procesar(SeleccionarFechaEventArgs e) {
+        
+        await Task.Delay(100);
+        this.busyDialog = true;
+
+        this.f1 = e.Fecha1;
+        this.f2 = e.Fecha2;
+        this.Subsistema = e.Subsistema;
+        this.Sector = e.Sector;
+        this.datosGrid = micromedicionService.ObtenerMicromedicionResumen(OficinaActual, f1.Year, Subsistema, Sector).ToArray();
+        if (datosGrid != null) {
+            if(datosGrid.Length > 0) {
+                Procesar_Datos_Grafica();
+            }
+        }
+        else {Toaster.Add("Error al llamar a la base de datos, intente m�s tarde.", MatToastType.Warning, "");
+        }
+        await Task.Delay(100);
+        this.busyDialog = false;
+    }
+    private void Procesar_Datos_Grafica() {
+        DatosGrafica_1 = new List<ChartItem>();
+        DatosGrafica_2 = new List<ChartItem>();
+        DatosGrafica_3 = new List<ChartItem>();
+
+        Micromedicion_Item datosActual = null;
+
+        foreach (Micromedicion_Item xItem in datosGrid) {
+            if (xItem.Mes == this.f1.Month) {
+                datosActual = xItem;
+            }
+        }
+
+        if (datosActual != null) {
+
+            //****** Grafica Dona 1
+            var tmpChar1 = new List<ChartItem>();
+            tmpChar1.Add(new ChartItem{ Descripcion = "Medido", Valor1 = (decimal)datosActual.Medidos_Porc });
+            tmpChar1.Add(new ChartItem{ Descripcion = "Fijo", Valor1 = (decimal)datosActual.Fijos_Porc });
+            DatosGrafica_1 = tmpChar1;
+
+
+            //****** Grafica Dona 2
+            var tmpChar2 = new List<ChartItem>();
+            decimal porc = System.Math.Round(((decimal)datosActual.Reales / datosActual.Total) * 100, 2);
+
+            tmpChar2.Add(new ChartItem{ Descripcion = "Reales", Valor1 = porc });
+            tmpChar2.Add(new ChartItem{ Descripcion = "Otros", Valor1 = (decimal)(100 - porc) });
+            DatosGrafica_2 = tmpChar2;
+
+
+            //****** Grafica 3
+            var tmpChar3 = new List<ChartItem>();
+            tmpChar3.Add(new ChartItem{ Descripcion = "Reales", Valor1 = (decimal)datosActual.Reales_Porc });
+            tmpChar3.Add(new ChartItem{ Descripcion = "Promedios", Valor1 = (decimal)datosActual.Promedios_Porc });
+            DatosGrafica_3 = tmpChar3;
+        }
+
+        //****** Grafica Linea
+        var tmpList = new List<ChartItem>();
+        foreach (Micromedicion_Item xItem in datosGrid) {
+            try {
+                tmpList.Add(new ChartItem { Descripcion = xItem.Descripcion_Mes, Valor1 = (decimal)xItem.Reales_Porc, Valor2 = (decimal)xItem.Promedios_Porc });
+            }
+            catch (Exception) { tmpList.Add(new ChartItem { Descripcion = xItem.Descripcion_Mes, Valor1 = 0 }); }
+
+        }
+        DatosGrafica_Hist = tmpList.ToList<ChartItem>();
+
+    }
+    private async Task GenerarExcel() {
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+    //*** Funciones Ventanas Secundarias
+    private async Task Mostrar_Vtn_Anomalias() {
+        busyDialog = true;
+
+        if (!vtn_anomalias_visible) {
+            Micromedicion_Anomalia[] tmpData = micromedicionService.ObtenerMicromedicionAnomalias(OficinaActual, f1.Year, Subsistema, Sector).ToArray();
+
+            if (tmpData == null) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (tmpData.Length <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            vtn_anomalias_visible = true;
+            await vnt_anomalias.Inicializar(tmpData);
+
+        }
+
+        busyDialog = false;
+    }
+    private async Task Mostrar_Vtn_Padron() {
+        busyDialog = true;
+
+        if (!vtn_padron_visible) {
+            Micromedicion_Padron[] tmpData = micromedicionService.ObtenerMicromedicionResumenPadron(OficinaActual, f1.Year, f1.Month).ToArray();
+
+            if (tmpData == null) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (tmpData.Length <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            vtn_padron_visible = true;
+            await vnt_padron.Inicializar(tmpData);
+
+        }
+
+        busyDialog = false;
+    }
+
+
+}

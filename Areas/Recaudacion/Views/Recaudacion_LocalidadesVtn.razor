@@ -1,0 +1,131 @@
+@using Sicem_Blazor.Recaudacion.Models
+@using Sicem_Blazor.Recaudacion.Data
+@inject IRecaudacionService RecaudacionService
+@inject IMatToaster Toaster
+
+@if(Visible){
+    <VentanaSecundaria Titulo="@Titulo" Columnas="@ColumnasTemplate" Filas="@FilasTemplate" CerrarVentana="@CerrarModal">
+        <Content>
+
+            <div class="d-flex align-items-center border rounded p-2 mb-2 bg-white">
+                <div class="button bg-success px-3 py-2" @onclick="OnExportExcel_Click" >
+                    <i class="fa fa-file-excel mr-2"></i>
+                    <span>Exportar Historial</span>
+                </div>
+            </div>
+
+            <div class="border rounded p-2 mb-2 bg-white">
+                <SfGrid @ref="DataGrid" DataSource="@DatosGrid" AllowExcelExport="true" AllowResizing="true" Width="100%" Height="100%">
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Left" Width="40">
+                            <Template>
+                                @{
+                                    var data = (context as RecaudacionIngresosxPoblaciones);
+                                    <div class="d-flex p-1">
+                                        @*
+                                        <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Mostrar Colonias" @onclick=@( e => MostrarColonias_Click(data) ) >
+                                            <i class="fa fa-bookmark" aria-hidden="true"></i>
+                                        </button>
+                                        *@
+                                        <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Ingresos por Conceptos" @onclick=@( e => MostrarIngresosPorConceptos(data) ) >
+                                            <i class="fa fa-dollar" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(RecaudacionIngresosxPoblaciones.Localidad)" HeaderText="Localidad" TextAlign="TextAlign.Left" Width="260" />
+                        <GridColumn Field="@nameof(RecaudacionIngresosxPoblaciones.Facturado)" HeaderText="Ingresos Facturados" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn Field="@nameof(RecaudacionIngresosxPoblaciones.Cobrado)" HeaderText="Ingresos Cobrados" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(RecaudacionIngresosxPoblaciones.Recibos)" HeaderText="Recibos" TextAlign="TextAlign.Center" Width="140" Format="n0" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+
+    <Recaudacion_ColoniasVtn @ref="RecaudacionColoniasVtn" Enlace="@Enlace" Desde="@Desde" Hasta="@Hasta" Subsistema="@Subsistema" Sector="@Sector" Visible="@RecaudacionColonias_visible" OnClose="@( e => RecaudacionColonias_visible = false)" Titulo="@($"{Enlace.Nombre} - Recaudacion Por Colonias")"/>
+    <Recaudacion_IngresosxDias_detalle_conceptos @ref="ConceptosLocalidadesVtn" MostrarVentana="@ConceptosLocalidades_visible" CerrarModal="@(e => ConceptosLocalidades_visible = false)" />
+   
+}
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos..." />
+
+@code {
+    [Parameter] public EventCallback OnClose {get;set;}
+    [Parameter] public bool Visible {get;set;}
+    [Parameter] public DateTime Desde {get;set;}
+    [Parameter] public DateTime Hasta {get;set;}
+    [Parameter] public int Subsistema {get;set;}
+    [Parameter] public int Sector {get;set;}
+    public IEnlace Enlace {get;set;}
+    public string Titulo {get;set;} = "Recaudacion Por Localidades";
+
+    private SfGrid<RecaudacionIngresosxPoblaciones> DataGrid {get;set;}
+    private List<RecaudacionIngresosxPoblaciones> DatosGrid {get;set;}
+    private double[] ColumnasTemplate = new double[]{ .9};
+    private double[] FilasTemplate = new double[]{50, .8,};
+
+    private bool busyDialog  = false, RecaudacionColonias_visible = false, ConceptosLocalidades_visible = false;
+    private Recaudacion_ColoniasVtn RecaudacionColoniasVtn {get;set;}
+    private Recaudacion_IngresosxDias_detalle_conceptos ConceptosLocalidadesVtn;
+
+    public void Inicializar(IEnumerable<RecaudacionIngresosxPoblaciones> datos, IEnlace enlace){
+        this.Enlace = enlace;
+        this.DatosGrid = datos.ToList();
+
+        Titulo=$"{Enlace.Nombre} - Recaudacion Por Localidades";
+    }
+    private async Task CerrarModal(){
+        await OnClose.InvokeAsync(null);
+    }
+    private async Task OnExportExcel_Click(){
+        var _guid = Guid.NewGuid().ToString().Replace("-","").Substring(0,10);
+        var _titulo = Titulo.Replace(" - ",".").Replace(" ","_").ToString();
+        var _p = new ExcelExportProperties(){
+            FileName = $"{_titulo}-{_guid}.xlsx",
+            IncludeHiddenColumn = true
+        };
+        await DataGrid.ExportToExcelAsync(_p);
+    }
+
+    private async Task MostrarColonias_Click(RecaudacionIngresosxPoblaciones context){
+
+        Toaster.Add("NO IMPLEMENTADO", MatToastType.Danger);
+        await Task.Delay(100);
+        return;
+        /*
+        if(RecaudacionColonias_visible){
+            return;
+        }
+
+        busyDialog = true;
+        await Task.Delay(100);
+
+        var _datos = RecaudacionService.ObtenerRecaudacionColonias(Enlace, Desde, Hasta, Subsistema, Sector, context.Id_localidad).ToList();
+        if(_datos.Count() > 0){
+            RecaudacionColonias_visible = true;
+            RecaudacionColoniasVtn.Inicializar(_datos, context.Id_localidad, context.Localidad);
+        }else{
+            Toaster.Add("Error al realizar la consulta", MatToastType.Danger);
+        }
+
+        await Task.Delay(100);
+        busyDialog = false;
+        */
+    }
+
+    private async Task MostrarIngresosPorConceptos(RecaudacionIngresosxPoblaciones context){
+        if(ConceptosLocalidades_visible == true){
+            return;
+        }
+        var idLocalidad = context.Id_localidad;
+        var dateRange = new DateRange(Desde, Hasta, Subsistema, Sector);
+
+        var results = RecaudacionService.ObtenerIngresosConceptosPorLocalidadColonia(Enlace, dateRange, idLocalidad, 0);
+        ConceptosLocalidades_visible = true;
+        ConceptosLocalidadesVtn.Inicializar(results, context.Localidad);
+        await Task.Delay(100);
+    }
+
+}

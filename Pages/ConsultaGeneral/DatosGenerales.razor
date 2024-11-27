@@ -1,0 +1,129 @@
+﻿<div class="grid-dg">
+
+    <div class="grid-item" style="grid-area:1/1/2/3">
+        <div class="label"> Loc.</div>
+        <div class="d-flex">
+            <input type="text" value="@DatosConsultaGral.Localizacion" readonly style="width:100%;" />
+            @if(DatosConsultaGral.TieneUbicacion){
+                <div class="button ml-1 px-1" @onclick="MostrarUbicacion_Click"><i class="fa fa-map"></i></div>
+            }
+        </div>
+    </div>
+
+    <div class="grid-item" style="grid-area:1/3/2/4">
+        <div class="label"> Estatus</div>
+        <input type="text" value="@DatosConsultaGral.Estatus" readonly />
+    </div>
+
+    <div class="grid-item" style="grid-area:2/1/3/4">
+        <div class="label"> Nombre </div>
+        <input type="text" value="@DatosConsultaGral.Razon_social" readonly />
+    </div>
+
+    <div class="grid-item" style="grid-area:3/1/4/4">
+        <div class="label"> Nom. Comer.</div>
+        <input type="text" value="@DatosConsultaGral.Nom_comercial" readonly />
+    </div>
+
+    <div class="grid-item" style="grid-area:4/1/5/4">
+        <div class="label"> Díreccion</div>
+        <input type="text" value="@DatosConsultaGral.Direccion" readonly />
+    </div>
+
+    <div class="grid-item" style="grid-area:5/1/6/3">
+        <div class="label"> Colonia</div>
+        <input type="text" value="@DatosConsultaGral.Colonia" readonly />
+    </div>
+
+    <div class="grid-item" style="grid-area:5/3/6/4">
+        <div class="label"> Cod. Postal</div>
+        <input type="text" value="@DatosConsultaGral.Codigo_postal" readonly />
+    </div>
+
+    <div class="grid-item" style="grid-area:6/1/7/3">
+        <div class="label"> Poblacion</div>
+        <input type="text" value="@DatosConsultaGral.Poblacion" readonly />
+    </div>
+
+    <div class="grid-item" style="grid-area:6/3/7/4">
+        <div class="label"> Situación</div>
+        <input type="text" value="@DatosConsultaGral.Situacion_Toma" readonly />
+    </div>
+
+    <div class="grid-item" style="grid-area:7/1/8/2">
+        <div class="label"> R.F.C.</div>
+        <input type="text" value="@DatosConsultaGral.RFC" readonly />
+    </div>
+
+    <div class="grid-item" style="grid-area: 7/3/8/4">
+        <div class="label"> C.U.R.P.</div>
+        <input type="text" value="@DatosConsultaGral.CURP" readonly />
+    </div>
+
+    <div class="grid-item" style="grid-area: 8/1/9/2">
+        <div class="label"> Telefono</div>
+        <input type="text" value="@DatosConsultaGral.Telefono" readonly />
+    </div>
+
+    <div class="grid-item" style="grid-area: 8/2/9/3">
+        <div class="label"> Correo</div>
+        <input type="text" value="@DatosConsultaGral.Correo" readonly />
+    </div>
+
+    <div class="grid-item px-2" style="grid-area: 8/3/9/4">
+        <div class="d-flex" style="grid-area:1/1/2/3;">
+            @if(DatosConsultaGral.EnviarEstadoCuenta) {
+                <input class="mr-2 my-auto" type="checkbox" checked disabled />
+            }
+            else {
+                <input class="mr-2 my-auto" type="checkbox" disabled />
+            }           
+            <label class="my-auto">Enviar estado de cuenta</label>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .grid-dg {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-rows: 2.2rem 2.2rem 2.2rem 2.2rem 2.2rem 2.2rem 2.2rem 2.2rem;
+        grid-gap: 0.2rem 0.2rem;
+    }
+    .grid-dg .grid-item{
+        display: grid;
+        grid-template-columns: 7rem 1fr;
+        grid-template-rows: 1fr;
+        align-items:center;
+        height: 1.5rem;
+    }
+        .grid-dg .label{
+            grid-column: 1/2;
+            font-size:.9rem;
+            text-align:right;
+            padding-right:0.5rem;
+            font-weight: 600;
+        }
+        .grid-dg input[type=text] {
+            grid-column: 2/3;
+            font-size: 0.9rem;
+            border-radius: 0 !important;
+            box-shadow:none !important;
+        }
+        .grid-dg input[type=checkbox] {
+            box-shadow: none !important;
+        }
+</style>
+
+@code {
+    [Parameter] public ConsultaGralResponse DatosConsultaGral { get; set; }
+    [Parameter] public EventCallback OnUbicacionClick {get;set;}
+
+    private async Task MostrarUbicacion_Click(){
+        try{
+            await OnUbicacionClick.InvokeAsync("");
+        }catch(Exception){}
+    }
+}

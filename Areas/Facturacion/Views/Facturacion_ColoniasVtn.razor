@@ -1,0 +1,72 @@
+@using Sicem_Blazor.Facturacion.Models
+@inject FacturacionService facturacionService
+@inject IMatToaster MatToaster
+
+@if(Visible){
+    <VentanaSecundaria Titulo="@Titulo" Columnas="@ColumnasTemplate" Filas="@FilasTemplate" CerrarVentana="@CerrarModal">
+        <Content>
+
+            <div class="d-flex align-items-center border rounded p-2 mb-2 bg-white">
+                <div class="button bg-success px-3 py-2" @onclick="OnExportExcel_Click" >
+                    <i class="fa fa-file-excel mr-2"></i>
+                    <span>Exportar Historial</span>
+                </div>
+            </div>
+
+            <div class="border rounded p-2 mb-2 bg-white">
+                <SfGrid @ref="DataGrid" DataSource="@DatosGrid" AllowExcelExport="true" AllowResizing="true" Width="100%" Height="100%">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(FacturacionColonia.Colonia)" HeaderText="Localidad" TextAlign="TextAlign.Left" Width="220" />
+                        <GridColumn Field="@nameof(FacturacionColonia.Agua)" HeaderText="Agua" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionColonia.Drenaje)" HeaderText="Drenaje" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionColonia.Saneamiento)" HeaderText="Saneamiento" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionColonia.Actu)" HeaderText="Actu" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionColonia.Otros)" HeaderText="Otros" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionColonia.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionColonia.Iva)" HeaderText="IVA" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionColonia.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionColonia.Usuarios)" HeaderText="Usuarios" TextAlign="TextAlign.Center" Width="190" Format="n0" />
+                        <GridColumn Field="@nameof(FacturacionColonia.M3Consumidos)" HeaderText="M3 Consumidos" TextAlign="TextAlign.Center" Width="190" Format="n0" />
+                        <GridColumn Field="@nameof(FacturacionColonia.M3Facturados)" HeaderText="M3 Facturados" TextAlign="TextAlign.Center" Width="190" Format="n0" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+}
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos..." />
+
+@code {
+    [Parameter] public string Titulo {get;set;} = "Facturacion Por Colonias";
+    [Parameter] public EventCallback OnClose {get;set;}
+    [Parameter] public bool Visible {get;set;}
+    [Parameter] public IEnlace Enlace {get;set;}
+    [Parameter] public DateTime Fecha {get;set;}
+    [Parameter] public int Subsistema {get;set;}
+    [Parameter] public int Sector {get;set;}
+
+    private SfGrid<FacturacionColonia> DataGrid {get;set;}
+    private List<FacturacionColonia> DatosGrid {get;set;}
+    private List<ChartItem> DatosChart {get;set;}
+    private double[] ColumnasTemplate = new double[]{.85};
+    private double[] FilasTemplate = new double[]{50, .7};
+
+    private bool busyDialog  = false;
+
+    public void Inicializar(IEnumerable<FacturacionColonia> datos){
+        this.DatosGrid = datos.ToList();
+    }
+    private async Task CerrarModal(){
+        await OnClose.InvokeAsync(null);
+    }
+    private async Task OnExportExcel_Click(){
+        var _guid = Guid.NewGuid().ToString().Replace("-","").Substring(0,10);
+        var _titulo = Titulo.Replace(" - ",".").Replace(" ","_").ToString();
+        var _p = new ExcelExportProperties(){
+            FileName = $"{_titulo}-{_guid}.xlsx",
+            IncludeHiddenColumn = true
+        };
+        await DataGrid.ExportToExcelAsync(_p);
+    }
+}

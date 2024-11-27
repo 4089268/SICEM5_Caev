@@ -1,0 +1,603 @@
+@page "/SimuladorTarifario"
+@using Sicem_Blazor.Tarifas.Models
+@using Sicem_Blazor.Tarifas.Data
+@inject ITarifasService tarifasService
+@inject SicemService sicemService
+@inject IMatToaster Toaster
+
+<div class="grid-simulador-page">
+
+    <div class="title-page" style="grid-area:1/1/2/3;">SIMULADOR TARIFARIO</div>
+
+    <div class="border rounded bg-white d-flex align-items-center p-2" style="grid-area:2/1/3/3;">
+        <div class="d-flex align-items-center px-3 py-2 mr-3">
+            <span class="h5 mr-3 mt-1">Seleccionar Oficina:</span>
+            <ComboBox Width="250" InitValue="0" Options="@CatalogoOficinas" OnSelected="@OnOficina_Selected"/>
+        </div>
+
+        @* // Botones de pruebas
+        <div class="button dissable px-3 py-2 mr-3">
+            <i class="fa fa-sort-amount-up mr-2"></i>
+            <span>Boton 1</span>
+        </div>
+
+        <div class="button dissable px-3 py-2 mr-3">
+            <i class="fa fa-sort-amount-up mr-2"></i>
+            <span>Incrementar 2</span>
+        </div>
+
+        <div class="button dissable px-3 py-2 mr-3">
+            <i class="fa fa-sort-amount-up mr-2"></i>
+            <span>Procesar</span>
+        </div> *@
+        
+    </div>
+
+    <!-- Panel Izquierdo-->
+    <div class="border rounded bg-white p-2 d-flex flex-column" style="grid-area:3/1/4/2;">
+        <div class="h4 text-center" style="height: 2rem;">Catalogo Tarifas @DescripcionCatalogoFormat</div>
+        <div class="d-flex py-2" style="width: 100%; height:3rem;">
+
+            @* <button class="button mr-2" @onclick="@CargarTarifasDelSicem"> <span>Cargar Catalogo de Sicem</span> </button> *@
+
+            <button class="button mr-2" @onclick="@CargarCatalogosAlmacenados">
+                <i class="fas fa-archive pl-1 pr-2"></i>
+                <span>Catalogos Almacenados</span>
+            </button>
+
+            <button class="button mr-2" @onclick="@(e => CargarTarifaDeHistorial())">
+                <i class="fas fa-history pl-1 pr-2"></i>
+                <span>Historial Mensual</span>
+            </button>
+
+            <button title="Almacener catalogo de tarifas" class="button mr-2 bg-success ml-auto px-2" @onclick="MostarModalConfirmacion">
+                <i class="fa fa-save pl-1 pr-2"/>
+                <span>Almacenar Catalogo</span>
+            </button>
+
+        </div>
+
+        <div style="width:100%; height: calc(100% - 5.5rem);">
+            <SfGrid @ref="@DataGrid" DataSource="@Tarifas" TValue="ITarifa" AllowResizing="true" AllowSorting="false" AllowFiltering="false" AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true" AllowGrouping="true">
+                <GridGroupSettings ShowDropArea="false" Columns="@(new string[] {"Id_TipoUsuario"})">
+                    <CaptionTemplate>
+                        @{
+                            var group = (context as CaptionTemplateContext);
+                            <div style="font-weight:700;">@(Tarifas.Where(i=>i.Id_TipoUsuario.ToString().Equals(group.Key)).First().TipoUsuario)</div>
+                        }
+                    </CaptionTemplate>
+                </GridGroupSettings>
+                <GridColumns>
+                    <GridColumn Field="@nameof(ITarifa.Id_TipoUsuario)" HeaderText="Id Tipo Usuario" Width="auto" Visible="true" />
+                    <GridColumn Field="@nameof(ITarifa.TipoUsuario)" HeaderText="Tipo Usuario" TextAlign="TextAlign.Left" Width="120" Visible="false" />
+                    <GridColumn HeaderText="Rango" Width="120" TextAlign="TextAlign.Center">
+                        <Template>
+                        @{
+                            var data = (context as ITarifa);
+                            <div style="width:100%; text-align:center;">
+                                <span>@(data.Hasta >= 900000 ? $"> {data.Desde} m3": $"{data.Desde} - {data.Hasta} m3" )</span>
+                            </div>
+                        }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(ITarifa.Desde)" HeaderText="Desde" TextAlign="TextAlign.Right" Width="100" Visible="false" />
+                    <GridColumn Field="@nameof(ITarifa.Hasta)" HeaderText="hasta" TextAlign="TextAlign.Right" Width="100" Visible="false" />
+                    <GridColumn Field="@nameof(ITarifa.CostoBase)" HeaderText="Cuota Base" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                    <GridColumn Field="@nameof(ITarifa.Costo)" HeaderText="Costo Adicional" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                    <GridColumn HeaderText="Acciones" Width="auto" TextAlign="TextAlign.Left">
+                        <Template>
+                        @{
+                            var data = (context as ITarifa);
+                            <div class="px-2" style="width:100%;">
+                                <button class="button px-3" @onclick="@( e => EditarTarifa_Click(data) )">
+                                    <i class="fa-solid fa-pencil"></i>
+                                    <div>Editar</div>
+                                </button>
+                            </div>
+                        }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </div>
+    </div>
+
+    <!-- Panel Derecho-->
+    <div class="border rounded bg-white p-2" style="grid-area:3/2/4/3;">
+        <div class="h4 text-center">Parametros</div>
+
+        <!-- Area Parametros -->
+        <div class="form-inputs p-2">
+            <div class="d-flex align-items-center">
+                <label for="anio">Año:</label>
+                <input type="number" id="anio" @bind-value="@simulacionParams.Anio" />
+            </div>
+            <div class="d-flex align-items-center">
+                <label for="mes">Mes:</label>
+                <input type="number" id="mes" @bind-value="@simulacionParams.Mes" />
+            </div>
+
+            <div class="d-flex align-items-center">
+                <label for="sb">Subsistema:</label>
+                <input type="number" id="sb" @bind-value="@simulacionParams.Subsistema" />
+            </div>
+            <div class="d-flex align-items-center">
+                <label for="sc">Sector:</label>
+                <input type="number" id="sc" @bind-value="@simulacionParams.Sector" />
+            </div>
+            
+            <div class="d-flex align-items-center">
+                <label for="facta">Factor Drenaje:</label>
+                <input type="number" id="facta" @bind-value="@simulacionParams.FactorDren" />
+            </div>
+            <div class="d-flex align-items-center">
+                <label for="factd">Factor Sane.:</label>
+                <input type="number" id="factd" @bind-value="@simulacionParams.FactorSane" />
+            </div>
+        </div>
+
+        <!-- Boton Procesar -->
+        <div class="w-100">
+            <button class="button mx-auto my-3 py-2" style="width:14rem;" @onclick="ProcesarSimulacion_Click">Procesar</button>
+        </div>
+
+
+        <div class="h4 text-center border-top py-2 mt-4">Resultados Simulacion</div>
+
+        <!-- Gird Resultados -->
+        <div class="" style="width:100%; height: calc(100% - 20rem);">
+
+            <div class="d-flex flex-column p-2" style="height: calc(100% / 2);">
+                <div class="d-flex">
+                    <div class="h4"> Resultado Simulacion - @DescripcionOpcionSeleccionado()</div>
+                    <div class="button px-3 mb-1 ml-4" @onclick="@(e => ExportarExcel(1) )"><i class="fa fa-file-excel pr-2"/> Exportar Excel </div>
+                </div
+                <div style="height:calc(100% - 5rem);">
+                    <SfGrid @ref="DataGrid2" DataSource="@DatosSimulacion" TValue="SimulacionResumen" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
+                        <GridColumns>
+                            <GridColumn Field="@nameof(SimulacionResumen.TipoUsuario)" HeaderText="Tipo Usuario" TextAlign="TextAlign.Left" Width="120" />
+                            <GridColumn Field="@nameof(SimulacionResumen.Agua)" HeaderText="Agua" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(SimulacionResumen.Drenaje)" HeaderText="Drenaje" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(SimulacionResumen.Saneamiento)" HeaderText="Saneamiento" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(SimulacionResumen.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                            <GridColumn Field="@nameof(SimulacionResumen.AguaSim)" HeaderText="Agua Sim" TextAlign="TextAlign.Right" Width="100" Format="c2"/>
+                            <GridColumn Field="@nameof(SimulacionResumen.DrenajeSim)" HeaderText="Drenaje Sim" TextAlign="TextAlign.Right" Width="100" Format="c2"/>
+                            <GridColumn Field="@nameof(SimulacionResumen.SaneamientoSim)" HeaderText="Saneamiento Sim" TextAlign="TextAlign.Right" Width="100" Format="c2"/>
+                            <GridColumn Field="@nameof(SimulacionResumen.TotalSimulado)" HeaderText="Total Simulado" TextAlign="TextAlign.Right" Width="120" Format="c2"/>
+                            <GridColumn Field="@nameof(SimulacionResumen.Usuarios)" HeaderText="Total Usuarios" TextAlign="TextAlign.Center" Width="100" Format="n0"/>
+                            <GridColumn Field="@nameof(SimulacionResumen.M3Facturados)" HeaderText="M3 Facturados" TextAlign="TextAlign.Center" Width="90" Format="n0"/>
+                            <GridColumn Field="@nameof(SimulacionResumen.M3Consumidos)" HeaderText="M3 Consumidos" TextAlign="TextAlign.Center" Width="90" Format="n0"/>
+                            <GridColumn Field="@nameof(SimulacionResumen.Porcentaje)" HeaderText="Porcentaje Dif " TextAlign="TextAlign.Center" Width="80" Format="n2"/>
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+                <div class="d-flex align-items pb-3">
+
+                    <div class="button bg-success mr-1 text-center" style="width: 6rem;" @onclick=@( e => OpcionSeleccionChanged(1) )>
+                        <span>Global</span>
+                    </div>
+
+                    <div class="button bg-success mr-1 text-center" style="width: 6rem;" @onclick=@( e => OpcionSeleccionChanged(2) )>
+                        <span>Medidos</span>
+                    </div>
+
+                    <div class="button bg-success mr-1 text-center" style="width: 6rem;" @onclick=@( e => OpcionSeleccionChanged(3) )>
+                        <span>Fijos</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="d-flex flex-column p-2" style="height: calc(100% / 2);">
+
+                <div class="d-flex">
+                    <div class="h4">Resultado Simulacion Rangos - @DescripcionOpcionSeleccionadoRangos()</div>
+                    <div class="button px-3 mb-1 ml-4" @onclick="@(e => ExportarExcel(2) )"><i class="fa fa-file-excel pr-2"/> Exportar Excel </div>
+                </div>
+                
+                <div style="height:calc(100% - 5rem);">
+                    <SfGrid @ref="DataGrid3" DataSource="@DatosRangos" TValue="SimulacionRangos" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
+                        <GridColumns>
+                            <GridColumn Field="@nameof(SimulacionRangos.Rango)" HeaderText="Rango" TextAlign="TextAlign.Left" Width="120" />
+                            <GridColumn Field="@nameof(SimulacionRangos.Importe)" HeaderText="Importe" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(SimulacionRangos.Metros)" HeaderText="Metros" TextAlign="TextAlign.Center" Width="100" Format="n0" />
+                            <GridColumn Field="@nameof(SimulacionRangos.Usuarios)" HeaderText="Usuarios" TextAlign="TextAlign.Center" Width="100" Format="n0" />
+                            <GridColumn Field="@nameof(SimulacionRangos.Porcentaje)" HeaderText="Porcentaje" TextAlign="TextAlign.Center" Width="120" Format="n2" />
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+                <div class="d-flex align-items pb-3">
+
+                    <div class="button bg-success mr-1 text-center" style="width: 6rem;" @onclick=@( e => OpcionSeleccionRangosChanged(1) )>
+                        <span>Global</span>
+                    </div>
+                    <div class="button bg-success mr-1 text-center" style="width: 6rem;" @onclick=@( e => OpcionSeleccionRangosChanged(2) )>
+                        <span>Domesticos</span>
+                    </div>
+                    <div class="button bg-success mr-1 text-center" style="width: 6rem;" @onclick=@( e => OpcionSeleccionRangosChanged(3) )>
+                        <span>Hoteleros</span>
+                    </div>
+                     <div class="button bg-success mr-1 text-center" style="width: 6rem;" @onclick=@( e => OpcionSeleccionRangosChanged(4) )>
+                        <span>Comerciales</span>
+                    </div>
+                     <div class="button bg-success mr-1 text-center" style="width: 6rem;" @onclick=@( e => OpcionSeleccionRangosChanged(5) )>
+                        <span>Industrial</span>
+                    </div>
+                     <div class="button bg-success mr-1 text-center" style="width: 6rem;" @onclick=@( e => OpcionSeleccionRangosChanged(6) )>
+                        <span>Serv. Gen.</span>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Ventana Secundarias -->
+<EditarTarifaVtn @ref="editarTarifaVtn" Visible="@editarTarifaVtnVisible" CerrarModal="EditarTarifa_Closed" Tarifa="@tarifaSeleccionada" ModificarBaseDatos="false"/>
+@if(seleccionarHistorial){
+    <SeleccionarHistorialVtn Enlace="@EnlaceSeleccionado" OnCerrarClick="@Historial_Closed" />
+}
+@if(mostarMododalConfirm){
+    <ConfirmacionAlmacenarVtn @bind-DescripcionCatalogo="@TarifaAlmacenadaSeleccionada.Descripcion" OnClosed="OnModalConfirmacion_Closed" />
+}
+@if(mostrarCatalogosAlmacenados){
+    <CatalogoTarifasAlmacenadosVtn OnClosed="CatalogoAlmacenadoOnClosed" @bind-StoTarifaSelect="TarifaAlmacenadaSeleccionada" />
+}
+<BusyIndicator Busy="@busyDialog" ContentText="Procesar datos..." />
+
+<style>
+    .grid-simulador-page {
+        width: 100%;
+        height: 100%;
+        display: grid;
+        grid-template-rows: 3rem 4rem  calc(100% - 8rem);
+        grid-template-columns: 40% 60%;
+        grid-gap: .5rem;
+    }
+    .form-inputs{
+        height: 9rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: repeat(3, 1fr);
+        gap: .5rem;
+    }
+        .form-inputs label{
+            width: 10rem;
+            font-size: 1.2rem;
+            margin-bottom:0px !important;
+        }
+        .form-inputs input{
+            height: 2.5rem;
+            padding: .5rem 1rem;
+            width: 60%;
+            -webkit-appearance: none;
+            margin: 0;
+            -moz-appearance: textfield;
+        }
+</style>
+
+
+@code {
+    private SfGrid<ITarifa> DataGrid {get;set;}
+    private List<ITarifa> Tarifas {get;set;}
+
+    private SfGrid<SimulacionResumen> DataGrid2 {get;set;}
+    private List<SimulacionResumen> DatosSimulacion {get;set;}
+    private SfGrid<SimulacionRangos> DataGrid3 {get;set;}
+    private List<SimulacionRangos> DatosRangos {get;set;}
+    private SimulacionResponse simulacionResponse {get;set;}
+
+    private ITarifa tarifaSeleccionada {get;set;}
+    private EditarTarifaVtn editarTarifaVtn {get;set;}
+    private bool editarTarifaVtnVisible = false;
+    private Dictionary<int, string> CatalogoOficinas = new Dictionary<int, string>();
+    private IEnumerable<IEnlace> CatalogoEnlaces = null;
+    private IEnlace EnlaceSeleccionado = null;
+    private SimulacionParams simulacionParams = new SimulacionParams();
+    private bool busyDialog = false, seleccionarHistorial = false;
+
+    private Dictionary<int,string> opcionesResultados = new Dictionary<int, string>();
+    private int opcionResultadoSeleccionado = 1;
+
+    private Dictionary<int,string> opcionesResultadosRangos = new Dictionary<int, string>();
+    private int opcionResultadoSeleccionadoRango = 1;
+
+    private bool mostarMododalConfirm = false, mostrarCatalogosAlmacenados = false;
+    private StoTarifa TarifaAlmacenadaSeleccionada {get;set;}
+    private string DescripcionCatalogoFormat {
+        get {
+            if(TarifaAlmacenadaSeleccionada == null){
+                return "";
+            }
+            if(TarifaAlmacenadaSeleccionada.Descripcion.Trim().Length  > 0 ){
+                return $" - {TarifaAlmacenadaSeleccionada.Descripcion}";
+            }else{
+                return "";
+            }
+        }
+    }
+    
+
+
+    protected override void OnInitialized(){
+        CargarCatalogoTarifas_Sisem();
+        CargarCatalogoOficinas();
+
+        TarifaAlmacenadaSeleccionada = new StoTarifa(){
+            Descripcion = ""
+        };
+
+        opcionesResultados.Add(1, "Global");
+        opcionesResultados.Add(2, "Usuarios Medidos");
+        opcionesResultados.Add(3, "Usuarios Fijos");
+
+        opcionesResultadosRangos.Add(1, "Global");
+        opcionesResultadosRangos.Add(2, "Domesticos");
+        opcionesResultadosRangos.Add(3, "Hotelero");
+        opcionesResultadosRangos.Add(4, "Comercial");
+        opcionesResultadosRangos.Add(5, "Industrial");
+        opcionesResultadosRangos.Add(6, "Servicios Generales");
+    }
+    private void CargarCatalogoTarifas_Sisem(){
+        Tarifas = tarifasService.ObtenerTarifasSicem().ToList();
+    }
+    private void CargarCatalogoOficinas(){
+        CatalogoEnlaces = sicemService.ObtenerEnlaces();
+
+        CatalogoOficinas.Clear();
+        CatalogoOficinas.Add(-1, "SELECCIONE UNA OFICINA");
+        foreach(var enlace in CatalogoEnlaces){
+            CatalogoOficinas.Add(enlace.Id, enlace.Nombre.ToUpper());
+        }
+    }
+
+    //**** Funciones Editar tarifas ******/
+    private void EditarTarifa_Click(ITarifa tarifa){
+        if(editarTarifaVtnVisible){
+            return;
+        }        
+        if(tarifaSeleccionada != tarifa){
+            this.tarifaSeleccionada = tarifa;
+        }
+        editarTarifaVtnVisible = true;
+    }
+    public void EditarTarifa_Closed(bool ok){
+        if(ok){
+            var _tarifa = Tarifas.Where( item=> item.Id_Tarifa == tarifaSeleccionada.Id_Tarifa).FirstOrDefault();
+            _tarifa.Desde = tarifaSeleccionada.Desde;
+            _tarifa.Hasta = tarifaSeleccionada.Hasta;
+            _tarifa.Costo = tarifaSeleccionada.Costo;
+            _tarifa.CostoBase = tarifaSeleccionada.CostoBase;
+            _tarifa.CuotaBase = tarifaSeleccionada.CuotaBase;
+            _tarifa.AdicionalM3 = tarifaSeleccionada.AdicionalM3;
+            this.DataGrid.Refresh();
+        }
+        this.editarTarifaVtnVisible = false;
+    }
+
+    /*** Funcione cargar catalogo Tarifas ***/
+    private void CargarTarifaDeOficina(){
+    }
+    private void CargarTarifaDeHistorial(){
+        if(EnlaceSeleccionado == null){
+            Toaster.Add("Seleccione una oficina", MatToastType.Warning);
+            return;
+        }
+        seleccionarHistorial = true;
+    }
+    private async Task CargarTarifasDelSicem(){
+        busyDialog = true;
+        await Task.Delay(100);
+
+        Tarifas = tarifasService.ObtenerTarifasSicem().ToList();
+        
+        DataGrid.Refresh();
+
+        await Task.Delay(100);
+        busyDialog = false;
+    }
+
+
+    private void OnOficina_Selected(int idOficina){
+        if(idOficina < 1){
+            return;
+        }
+        this.EnlaceSeleccionado = CatalogoEnlaces.Where(item => item.Id == idOficina).FirstOrDefault();
+    }
+    private async Task ProcesarSimulacion_Click(){
+        if( EnlaceSeleccionado == null){
+            Toaster.Add("Seleccione una oficina", MatToastType.Warning);
+            return;
+        }
+        busyDialog = true;
+        await Task.Delay(100);
+        
+        var xml = GenerarXml();
+        
+        simulacionResponse = tarifasService.SimularFacturacion(EnlaceSeleccionado, xml, simulacionParams, out string mensaje);
+        if(simulacionResponse == null){
+            Toaster.Add($"Error al realizar la simulacion. \n{mensaje}", MatToastType.Danger);
+        }else{
+            OpcionSeleccionChanged(1);
+            OpcionSeleccionRangosChanged(1);
+        }
+
+        busyDialog = false;
+        await Task.Delay(100);
+    }
+    private string GenerarXml(){
+        var _stringBuilder = new System.Text.StringBuilder();
+        _stringBuilder.Append("<tarifas>");
+        foreach(var tarifa in Tarifas){
+            _stringBuilder.Append("<row>");
+            _stringBuilder.Append($"<id_TipoUsuario>{tarifa.Id_TipoUsuario}</id_TipoUsuario> ");
+            _stringBuilder.Append($"<desde>{tarifa.Desde}</desde> ");
+            _stringBuilder.Append($"<hasta>{tarifa.Hasta}</hasta> ");
+            _stringBuilder.Append($"<costo>{tarifa.Costo}</costo> ");
+            _stringBuilder.Append($"<costo_base>{tarifa.CostoBase}</costo_base> ");
+            _stringBuilder.Append($"<cuota_base>{tarifa.CuotaBase}</cuota_base> ");
+            _stringBuilder.Append($"<adicional_m3>{tarifa.AdicionalM3}</adicional_m3> ");
+            _stringBuilder.Append("</row>");
+        }
+        _stringBuilder.Append("</tarifas>");
+        return _stringBuilder.ToString();
+    }
+
+    private void Historial_Closed(IEnumerable<ITarifa> datos){
+        this.seleccionarHistorial = false;
+        if(datos == null){
+            Toaster.Add("Se cancelo la seleccion del historial", MatToastType.Info);
+            return;
+        }
+
+        this.Tarifas = datos.ToList();
+        this.DataGrid.Refresh();
+    }
+
+    /*** Funciones Opciones Resultados ***/
+    public string DescripcionOpcionSeleccionado(){
+        return this.opcionesResultados[opcionResultadoSeleccionado].ToString();
+    }
+    public void OpcionSeleccionChanged(int opcion){
+        this.opcionResultadoSeleccionado = opcion;
+
+        if(simulacionResponse == null){
+            return;
+        }
+
+        switch (opcionResultadoSeleccionado){
+            case 1:
+                this.DatosSimulacion = simulacionResponse.DatosGlobal.ToList();
+                break;
+            case 2:
+                this.DatosSimulacion = simulacionResponse.DatosMedidos.ToList();
+                break;
+            case 3:
+                this.DatosSimulacion = simulacionResponse.DatosFijos.ToList();
+                break;
+            default:
+                this.DatosSimulacion.Clear();
+                break;
+                
+        }
+        DataGrid2.Refresh();
+        this.StateHasChanged();
+    }
+    public string DescripcionOpcionSeleccionadoRangos(){
+        return this.opcionesResultadosRangos[opcionResultadoSeleccionadoRango].ToString();
+    }
+    public void OpcionSeleccionRangosChanged(int opcion){
+        this.opcionResultadoSeleccionadoRango = opcion;
+        if(simulacionResponse == null){
+            return;
+        }
+        switch (opcionResultadoSeleccionadoRango){
+            case 1:
+                this.DatosRangos = simulacionResponse.DatosRangos.ToList();
+                break;
+            case 2:
+                this.DatosRangos = simulacionResponse.DatosRangosDomestico.ToList();
+                break;
+            case 3:
+                this.DatosRangos = simulacionResponse.DatosRangosHotelero.ToList();
+                break;
+            case 4:
+                this.DatosRangos = simulacionResponse.DatosRangosComercial.ToList();
+                break;
+            case 5:
+                this.DatosRangos = simulacionResponse.DatosRangosIndustrial.ToList();
+                break;
+            case 6:
+                this.DatosRangos = simulacionResponse.DatosRangosServiciosGen.ToList();
+                break;
+            default:
+                this.DatosRangos.Clear();
+                break;
+                
+        }
+        DataGrid3.Refresh();
+        this.StateHasChanged();
+
+    }
+
+    private async Task ExportarExcel(int opcion){
+        if(opcion == 1){
+            await DataGrid2.ExportToExcelAsync();
+        }else{
+            await DataGrid3.ExportToExcelAsync();
+        }
+    }
+
+
+    //****** Funciones Catalogos Tarifas Almacenados
+    private void MostarModalConfirmacion(){
+        TarifaAlmacenadaSeleccionada = new StoTarifa(){Descripcion = ""};
+        mostarMododalConfirm = true;
+    }
+    private async Task OnModalConfirmacion_Closed(bool e){
+        mostarMododalConfirm = false;
+        if(e == true){
+            await GuardarCatalogoPerzonalisado(TarifaAlmacenadaSeleccionada.Descripcion);
+        }else{
+            TarifaAlmacenadaSeleccionada.Descripcion = "";
+            Toaster.Add("Se cancelo el almacenamiento del catalogo", MatToastType.Warning);
+        }
+    }
+    private async Task GuardarCatalogoPerzonalisado(string descripcion){
+
+        this.busyDialog = true;
+        await Task.Delay(100);
+
+        // Generar los modelos de los datos
+        var _cabecera = new StoTarifa(){
+            Descripcion = descripcion,
+            FechaCreacion = DateTime.Now,
+            FechaModificacion = DateTime.Now
+        };
+
+        var _listaDatos = new List<StoDetTarifa>();
+        foreach(var _tarifa in Tarifas){
+            var _newStoDetTarifa = new StoDetTarifa();
+            _newStoDetTarifa.IdTarifa = _tarifa.Id_Tarifa;
+            _newStoDetTarifa.IdTipoUsuario = _tarifa.Id_TipoUsuario;
+            _newStoDetTarifa.Desde = _tarifa.Desde;
+            _newStoDetTarifa.Hasta = _tarifa.Hasta;
+            _newStoDetTarifa.Costo = _tarifa.Costo;
+            _newStoDetTarifa.CostoBase = _tarifa.CostoBase;
+            _newStoDetTarifa.CuotaBase = _tarifa.CuotaBase;
+            _newStoDetTarifa.AdicionalM3 = _tarifa.AdicionalM3;
+            _listaDatos.Add(_newStoDetTarifa);
+        }
+
+        // Almacenar los datos
+        var result = tarifasService.AlmacenarCustomCatalogoTarifas(_cabecera, _listaDatos);
+        
+        this.busyDialog = false;
+        await Task.Delay(100);
+
+        if(result){
+            Toaster.Add("Sealmaceno el catalogo de tarifas con exito", MatToastType.Success);
+        }else{
+            Toaster.Add("Error al almacenar el catalogo de tarifas", MatToastType.Danger);
+        }
+
+    }
+    private void CargarCatalogosAlmacenados(){
+        mostrarCatalogosAlmacenados = true;
+    }
+    private void CatalogoAlmacenadoOnClosed(IEnumerable<ITarifa> e){
+        mostrarCatalogosAlmacenados = false;
+        if(e == null){
+            Toaster.Add("Seleccion catalogo cancelado", MatToastType.Warning);
+        }else{
+            this.Tarifas = e.ToList();
+            StateHasChanged();
+        }
+    }
+
+
+}

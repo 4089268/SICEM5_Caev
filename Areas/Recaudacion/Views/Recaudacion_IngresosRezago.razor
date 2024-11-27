@@ -1,0 +1,132 @@
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Recaudacion.Data
+@using Sicem_Blazor.Recaudacion.Models
+@inject IJSRuntime JSRuntime
+@inject IMatToaster Toaster
+@inject IRecaudacionService recaudacionService
+
+@if (MostrarVentana) {
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@Cerrar_Modal" Filas="@(new double[]{50, 620})" Columnas="@(new double[]{.80})" >
+        <Content>
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="DataGrid" DataSource="@IngresosRezago" TValue="Recaudacion_Rezago" AllowResizing="true" AllowSorting="true" AllowFiltering="false" 
+                        AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="100%" EnableHover="true" RowHeight="20">
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="55" Visible="false">
+                            <Template>
+                                @{
+                                    var data = (context as Recaudacion_Rezago);
+                                    @if (!data.Mes.Contains("TOTAL")) {
+                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Ver detalle" @onclick="@( e => MostrarVentanaDetalle(data))">
+                                            <i class="fa fa-th" aria-hidden="true"></i>
+                                        </button>
+                                    }
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(Recaudacion_Rezago.Mes)" HeaderText="Mes" TextAlign="TextAlign.Center" Width="80" Format="n0" />
+                        <GridColumn Field="@nameof(Recaudacion_Rezago.Usuarios)" HeaderText="Usuarios" TextAlign="TextAlign.Center" Width="90" Format="n0" />
+                        <GridColumn Field="@nameof(Recaudacion_Rezago.Rez_agua)" HeaderText="Rez. Agua" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_Rezago.Rez_dren)" HeaderText="Rez. Drenaje" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_Rezago.Rez_sane)" HeaderText="Rez. Saneamiento" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_Rezago.Rez_otros)" HeaderText="Rez. Otros" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_Rezago.Rez_recargos)" HeaderText="Recargos" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_Rezago.Subtotal)" HeaderText="Sub Total" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_Rezago.Iva)" HeaderText="I.V.A." TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_Rezago.Total)" HeaderText="TOTAL" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+     
+    <BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+    <Recaudacion_IngresosRezago_detalle @ref="vtn_detalle" MostrarVentana="@mostrarDetalle" CerrarModal="@(x => mostrarDetalle = false)" />
+}
+
+@code {
+
+    [Parameter] public bool MostrarVentana { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    public string Titulo {get;set;} = "ANALISIS DE REZAGO";
+    public IEnlace Enlace { get; set; }
+
+    SfGrid<Recaudacion_Rezago> DataGrid {get;set;}
+    public List<Recaudacion_Rezago> IngresosRezago {get;set;}
+    private Recaudacion_IngresosRezago_detalle vtn_detalle;
+    private bool mostrarDetalle = false;
+    private bool busyDialog = false;
+
+
+    //******** Funciones ********"
+    public async Task Inicializar(IEnlace enlace, IEnumerable<Recaudacion_Rezago> datos) {
+        this.Enlace = enlace;
+        this.IngresosRezago = datos.ToList();
+        await Task.Delay(100);
+    }
+    private async Task Cerrar_Modal() {
+        if(IngresosRezago != null){
+            IngresosRezago.Clear();
+        }
+        await CerrarModal.InvokeAsync("");
+    }
+    private async Task GenerarExcel() {
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_rezago_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private async Task MostrarVentanaDetalle(Recaudacion_Rezago param) {
+        Toaster.Add("NO IMPLEMENTADO", MatToastType.Danger);
+        await Task.Delay(100);
+        return;
+
+        /*
+        if (mostrarDetalle) {
+            return;
+        }
+        this.busyDialog = true;
+        await Task.Delay(200);
+
+        int tmpMes = -1;
+        switch (param.Mes) {
+            case ">=60": tmpMes = 60; break;
+            case "TOTAL": tmpMes = -1; break;
+            default: tmpMes = int.Parse(param.Mes); break;
+        }
+        if (tmpMes == -1) {
+            this.busyDialog = false;
+            return;
+        }
+
+        var tmpData = recaudacionService.ObtenerDetalleRezago(Enlace, this.Fecha1, this.Fecha2, this.Subsistema, this.Sector, tmpMes, false);
+        if (tmpData == null) {
+            Toaster.Add("Hubo un error al procesar la petición, inténtelo mas tarde.", MatToastType.Warning);
+        }
+        else {
+            if (tmpData.Count() > 0) {
+                this.mostrarDetalle = true;
+                vtn_detalle.Inicializar(Enlace, tmpData, tmpMes);
+            }
+            else {
+                Toaster.Add("No hay datos disponibles.", MatToastType.Info);
+            }
+        }
+        
+        await Task.Delay(200);
+        this.busyDialog = false;
+        */
+    }
+
+}

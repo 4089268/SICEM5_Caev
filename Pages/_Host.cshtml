@@ -1,0 +1,70 @@
+﻿@page "/"
+@namespace Sicem_Blazor.Pages
+@using Microsoft.Extensions.Options
+@using Sicem_Blazor.Helpers
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@inject IOptions<BingMapsSettings> bingMapsOptions
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es-mx">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sicem - CAEV </title>
+    <base href="~/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link href="_content/Syncfusion.Blazor/styles/bootstrap4.css" rel="stylesheet" />
+    <link href="_content/Syncfusion.Blazor/styles/fabric.css" rel="stylesheet" />
+    <link href="_content/MatBlazor/dist/matBlazor.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
+    <link href="~/fonts/segoe-ui-font.css" rel="stylesheet" />
+    <link href="~/css/site.min.css" rel="stylesheet" />
+    <link href="~/css/siteLayout.min.css" rel="stylesheet" />
+    <link href="~/css/consultaGeneral.min.css" rel="stylesheet" />
+    <link href="~/css/logearsePage.min.css" rel="stylesheet" />
+     <link href="~/css/tabs.min.css" rel="stylesheet" />
+    <link href="~/css/components/NsComponents.min.css" rel="stylesheet" />
+
+</head>
+<body>
+
+    @{
+        var connectionInfo = new Sicem_Blazor.Models.ConnectionInfo() {  IpAddress = Request.HttpContext.Connection.RemoteIpAddress.ToString() };
+    }
+
+    <app>
+        <component type="typeof(App)" render-mode="ServerPrerendered" param-ConnectionInfo="connectionInfo" /> />
+    </app>
+
+    <div id="blazor-error-ui">
+        <environment include="Staging,Production">
+            Ocurrió un error inesperado. Presione el siguiente botón para recargar la pagina
+        </environment>
+        <environment include="Development">
+            Ocurrió un error inesperado. Presione el siguiente botón para recargar la pagina
+        </environment>
+        <a href="" class="reload">Recargar</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    
+    <script type='text/javascript' src='https://www.bing.com/api/maps/mapcontrol?key=@bingMapsOptions.Value.Key'></script>
+    <script src="~/js/JQuery/jquery-3.5.1.min.js"></script>
+    <script src="~/js/JQuery/jquery-ui.min.js"></script>
+    <script src="~/js/Syncfusion/syncfusion-blazor-base.min.js"></script>
+    <script src="https://kit.fontawesome.com/a2a7183415.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js"></script>
+    <script src="_content/MatBlazor/dist/matBlazor.js"></script>
+    <script src="~/js/utilities.js"></script>
+    <script src="~/js/animaciones.js"></script>
+    <script src="~/js/map.min.js"></script>
+    <script src="~/js/facturacion.min.js"></script>
+    <script src="_framework/blazor.server.js"></script>
+    
+
+</body>
+</html>

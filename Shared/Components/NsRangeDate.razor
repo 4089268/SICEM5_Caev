@@ -1,0 +1,72 @@
+<div class="NsRangeDate">
+    <select @bind="OpcionSeleccionado">
+        <option value="0">Cualquiera</option>
+        <option value="1">Mayor que</option>
+        <option value="2">Menor que</option>
+        <option value="3">Entre</option>
+        <option value="4">Igual</option>
+    </select>
+
+    <div class="d-flex flex-nowrap">
+        @if(OpcionSeleccionado != 0){
+            <input type="date" style="width:100%;" @bind-value="Valor1" >
+
+            @if(OpcionSeleccionado == 3){
+                <input type="date" @bind-value="Valor2" style="width:100%;"/>
+            }
+        }
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public int Width {get;set;} = 200;
+    [Parameter] public int Height {get;set;} = 30;
+    
+    private int _opcionSeleccionado {get;set;} = 0;
+    private DateTime _valor1 {get;set;} = DateTime.Now;
+    private DateTime _valor2 {get;set;} = DateTime.Now;
+
+    [Parameter] public int OpcionSeleccionado {
+        get => _opcionSeleccionado;
+        set {
+            if(_opcionSeleccionado == value) return;
+            _opcionSeleccionado = value;
+            OpcionSeleccionadoChanged.InvokeAsync(value);
+        }
+    }
+    [Parameter] public DateTime Valor1 {
+        get => _valor1;
+        set {
+            if(_valor1 == value) return;
+            _valor1 = value;
+            Valor1Changed.InvokeAsync(value);
+        }
+    }
+    [Parameter] public DateTime Valor2 {
+        get => _valor2;
+        set {
+            if(_valor2 == value) return;
+            _valor2 = value;
+            Valor2Changed.InvokeAsync(value);
+        }
+    }
+
+    [Parameter] public EventCallback<int> OpcionSeleccionadoChanged {get;set;}
+    [Parameter] public EventCallback<DateTime> Valor1Changed {get;set;}
+    [Parameter] public EventCallback<DateTime> Valor2Changed {get;set;}
+
+    
+    
+    private void OnTextField_Changed(ChangeEventArgs e, int key){
+        switch(key){
+            case 1:
+                this.Valor1 = DateTime.TryParse(e.Value.ToString(), out DateTime tmp1)?tmp1:DateTime.Now;
+                break;
+            case 2:
+                this.Valor2 = DateTime.TryParse(e.Value.ToString(), out DateTime tmp2)?tmp2:DateTime.Now;
+                break;
+        }
+    }
+
+}

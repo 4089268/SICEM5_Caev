@@ -1,0 +1,286 @@
+@page "/Eficiencia"
+@using Sicem_Blazor.Eficiencia.Models
+@using Sicem_Blazor.Eficiencia.Data
+@using Sicem_Blazor.Data.Contracts
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Charts
+@inject IMatToaster Toaster
+@inject IEficienciaService eficienciaService
+@inject SicemService sicemService
+
+
+<div class="layout-page1">
+
+    <div class="title-page" style="grid-area:1/1/2/2;">EFICIENCIA COMERCIAL</div>
+
+    <div class="border rounded bg-white px-2 d-flex align-items-center" style="grid-area:2/1/3/2;">
+        <SeleccionarFecha fecha1="@Fecha1" fecha2="@Fecha2" ProcesarParam="@Procesar" MostrarPeriodos="false" />
+    </div>
+
+    @* ****** Acciones ****** *@
+    <div class="border rounded bg-white d-flex align-items-center" style="grid-area:3/1/4/2;">
+        <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" @onclick="ExportarExcel_Click">Exportar Excel</MatButton>
+    </div>
+
+    @* ****** DataGrid ****** *@
+    <div class="border rounded bg-white p-2 d-flex" style="grid-area:4/1/5/2;">
+        <SfGrid @ref="dataGrid" DataSource="@datosGrid" TValue="EficienciaResumen" AllowResizing="true" AllowSorting="true" AllowFiltering="false"
+                AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="100%" EnableHover="true">
+            <GridColumns>
+                <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="40">
+                    <Template>
+                        @{
+                            var data = (context as EficienciaResumen);
+                            if(data.Id > 0 && data.Id < 999) {
+                                @switch (data.Estatus) {
+                                    case ResumenOficinaEstatus.Completado:
+                                        <i class="fas fa-check-circle" style="color:green; font-size:1.5rem;"></i>
+                                        break;
+                                    case ResumenOficinaEstatus.Error:
+                                        <i class="fas fa-exclamation-circle" style="color:red; font-size:1.5rem;"></i>
+                                        break;
+                                    default:
+                                        <div class="spinner-border p-2" role="status"> </div>
+                                        break;
+                                }
+                            }
+                        }
+                    </Template>
+                </GridColumn>
+
+                <GridColumn Field="@nameof(EficienciaResumen.Oficina)" HeaderText="Oficina" TextAlign="TextAlign.Left" Width="170" />
+                <GridColumn Field="@nameof(EficienciaResumen.Facturado)" HeaderText="Facturado" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                <GridColumn Field="@nameof(EficienciaResumen.Refacturado)" HeaderText="Refacturado" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                <GridColumn Field="@nameof(EficienciaResumen.Anticipado)" HeaderText="Anticipado" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                <GridColumn Field="@nameof(EficienciaResumen.Descontado)" HeaderText="Descontado" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                <GridColumn Field="@nameof(EficienciaResumen.Cobrado)" HeaderText="Cobrado" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                <GridColumn Field="@nameof(EficienciaResumen.Porcentaje)" HeaderText="Eficiencia" TextAlign="TextAlign.Center" Width="110" Format="n2" />
+
+                <GridColumn HeaderText="Acciones" TextAlign="TextAlign.Left" Width="240">
+                    <Template>
+                        @{
+                            var data = (context as EficienciaResumen);
+                            if(data.Id > 0 && data.Id < 999) {
+                                <div class="d-flex p-1">
+                                    <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Facturacion Por Conceptos" disabled="@(data.Estatus != ResumenOficinaEstatus.Completado )" @onclick=@( e => EficienciaAnual_Click(data) ) >
+                                        <i class="fa fa-bookmark" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            }
+                        }
+                    </Template>
+                </GridColumn>
+            </GridColumns>
+        </SfGrid>
+    </div>
+
+    <!--- ****** Graficas ****** -->
+    <div class="d-flex" style="grid-area:5/1/6/2;">
+        <div class="border rounded bg-white mr-1 d-flex flex-column align-items-center" style="width:100%; height:100%;">
+            <SfChart @ref="graficaFacturacion" Title="TARIFAS FACTURADAS">
+                <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+                <ChartPrimaryYAxis Visible="false" LabelFormat="c2" />
+                <ChartTooltipSettings Enable="true" Header="Usuarios" Format="<b>${series.name}</b> : ${point.y}" Shared="true"></ChartTooltipSettings>
+                <ChartLegendSettings Position="LegendPosition.Right" />
+                <ChartSeriesCollection>
+                    <ChartSeries DataSource="@datosGrafica" Name="Facturado" XName="Descripcion" YName="Valor1" Type="ChartSeriesType.Column">
+                        <ChartMarker>
+                            <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Outer" />
+                        </ChartMarker>
+                    </ChartSeries>
+                    <ChartSeries DataSource="@datosGrafica" Name="Refacturado" XName="Descripcion" YName="Valor2" Type="ChartSeriesType.Column">
+                        <ChartMarker>
+                            <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Outer" />
+                        </ChartMarker>
+                    </ChartSeries>
+                    <ChartSeries DataSource="@datosGrafica" Name="Anticipado" XName="Descripcion" YName="Valor3" Type="ChartSeriesType.Column">
+                        <ChartMarker>
+                            <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Outer" />
+                        </ChartMarker>
+                    </ChartSeries>
+                    <ChartSeries DataSource="@datosGrafica" Name="Descontado" XName="Descripcion" YName="Valor4" Type="ChartSeriesType.Column">
+                        <ChartMarker>
+                            <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Outer" />
+                        </ChartMarker>
+                    </ChartSeries>
+                    <ChartSeries DataSource="@datosGrafica" Name="Cobrado" XName="Descripcion" YName="Valor5" Type="ChartSeriesType.Column">
+                        <ChartMarker>
+                            <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Outer" />
+                        </ChartMarker>
+                    </ChartSeries>
+                </ChartSeriesCollection>
+            </SfChart>
+        </div>
+    </div>
+
+</div>
+
+<style type="text/css">
+    .fact-item{
+        display:flex;
+        flex-flow:column;
+        align-items:center;
+        justify-content:space-around;
+        height:3rem;
+    }
+    .fact-item .usu, .fact-item .fac{
+        text-align:center;
+        font-size:1rem;
+        height:2rem;
+    }
+</style>
+
+
+@* ****** Dialogos y ventanas secundarias ****** *@
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+@if(EficienciaAnual_Visible){
+    <Eficiencia_AnualVtn  DatosGrid="@DatosEficienciaAnual" Enlace="@EnlaceSeleccionado" Fecha1="@Fecha1" Fecha2="@Fecha2" Subsistema="@Subsistema" Sector="@Sector" Titulo="@($"{EnlaceSeleccionado.Nombre} - EFICIENCIA COMERCIAL ANUAL")" CerrarModal="@(e => EficienciaAnual_Visible=false )" />
+}
+
+
+@code{
+    private SfGrid<EficienciaResumen> dataGrid {get;set;}
+    private SfChart graficaFacturacion {get;set;}
+    private List<EficienciaResumen> datosGrid {get;set;}
+    private List<ChartItem> datosGrafica {get;set;}
+    private bool busyDialog = false;
+
+    private DateTime Fecha1, Fecha2;
+    private int Subsistema, Sector;
+    private bool EficienciaAnual_Visible = false;
+
+    private IEnlace EnlaceSeleccionado;
+    private List<EficienciaResumen> DatosEficienciaAnual;
+
+
+
+    //********* Funciones  *********
+    protected override void OnInitialized() {
+        var _now = DateTime.Now.AddMonths(-1);
+        this.Fecha1 = new DateTime(_now.Year, _now.Month, 1);
+        this.Fecha2 = new DateTime(_now.Year, _now.Month, DateTime.DaysInMonth(_now.Year, _now.Month));
+        this.Subsistema = 0;
+        this.Sector = 0;
+    }
+    public void Procesar(SeleccionarFechaEventArgs e) {
+        this.Fecha1 = e.Fecha1;
+        this.Fecha2 = e.Fecha2;
+        this.Subsistema = e.Subsistema;
+        this.Sector = e.Sector;
+
+        datosGrid = new List<EficienciaResumen>();
+        datosGrafica = new List<ChartItem>();
+        var enlaces = sicemService.ObtenerOficinasDelUsuario();
+        var tareas = new List<Task>();
+
+        foreach(IEnlace enlace in enlaces){
+            var newItem = new EficienciaResumen(){
+                Estatus = ResumenOficinaEstatus.Pendiente,
+                Enlace = enlace
+            };
+
+            this.datosGrid.Add(newItem);
+
+            var newChart = new ChartItem(){
+                Id = enlace.Id,
+                Descripcion = enlace.Nombre,
+                Valor1 = 0m,
+                Valor2 = 0m,
+                Valor3 = 0m,
+                Valor4 = 0m,
+                Valor5 = 0m
+            };
+            this.datosGrafica.Add(newChart);
+
+            tareas.Add(new Task( () => ProcesarConsulta(enlace)) );
+        }
+
+        //*** Fila total
+        if(enlaces.Count() > 1){
+            this.datosGrid.Add(
+                new EficienciaResumen(){
+                    Estatus = ResumenOficinaEstatus.Pendiente
+                }
+            );
+        }
+
+        tareas.ForEach(item => item.Start());
+    }
+    private void ProcesarConsulta(IEnlace enlace){
+        var result = eficienciaService.ObtenerResumenEnlace(enlace, Fecha1.Year, Fecha1.Month, Subsistema, Sector);
+
+        lock(datosGrid){
+            var itemList = this.datosGrid.Where(item=> item.Id == enlace.Id).FirstOrDefault();
+            if(itemList != null){
+                itemList.Estatus = result.Estatus;
+                itemList.Mes = result.Mes;
+                itemList.Facturado = result.Facturado;
+                itemList.Refacturado = result.Refacturado;
+                itemList.Anticipado = result.Anticipado;
+                itemList.Descontado = result.Descontado;
+                itemList.Cobrado = result.Cobrado;
+                itemList.Porcentaje = result.Porcentaje;
+            }
+            //**** Recalcular fila total
+            RecalcularTotal();
+            dataGrid.Refresh();
+        }
+
+        lock(datosGrafica){
+            //**** Procesar item grafica
+            var itemGraf = this.datosGrafica.Where(item => item.Id == enlace.Id).FirstOrDefault();
+            if(itemGraf != null){
+                itemGraf.Valor1 = result.Facturado;
+                itemGraf.Valor2 = result.Refacturado;
+                itemGraf.Valor3 = result.Anticipado;
+                itemGraf.Valor4 = result.Descontado;
+                itemGraf.Valor5 = result.Cobrado;
+            }
+            graficaFacturacion.RefreshLiveData();
+        }
+    }
+    private void RecalcularTotal(){
+        var filaTotal = this.datosGrid.Where(item => item.Id == 999).FirstOrDefault();
+        if( filaTotal != null){
+            var _tmpDatos = this.datosGrid.Where(item => item.Id > 0 && item.Id < 999).ToList();
+            filaTotal.Mes = "";
+            filaTotal.Facturado = _tmpDatos.Sum( item => item.Facturado);
+            filaTotal.Refacturado = _tmpDatos.Sum( item => item.Refacturado);
+            filaTotal.Anticipado = _tmpDatos.Sum( item => item.Anticipado);
+            filaTotal.Descontado = _tmpDatos.Sum( item => item.Descontado);
+            filaTotal.Cobrado = _tmpDatos.Sum( item => item.Cobrado);
+            filaTotal.Porcentaje = _tmpDatos.Average( item => item.Porcentaje);
+        }
+    }
+    private async Task ExportarExcel_Click(){
+        var p = new ExcelExportProperties();
+        p.IncludeHiddenColumn = true;
+        await this.dataGrid.ExportToExcelAsync(p);
+    }
+
+
+    //*** Funciones Ventanas Secundarias
+    private async Task EficienciaAnual_Click(EficienciaResumen context){
+        if(EficienciaAnual_Visible){
+            return;
+        }
+
+        this.busyDialog = true;
+        await Task.Delay(100);
+
+        this.EnlaceSeleccionado = context.Enlace;
+
+        this.DatosEficienciaAnual = eficienciaService.ObtenerResumenAnual(context.Enlace, Fecha1.Year, Subsistema, Sector).ToList();
+        if(DatosEficienciaAnual.Count() > 0){
+            EficienciaAnual_Visible = true;
+        }else{
+            Toaster.Add("Error al procesar la consulta, intentelo mas tarde.", MatToastType.Warning);
+        }
+
+        await Task.Delay(100);
+        this.busyDialog = false;
+    
+    }
+   
+
+}

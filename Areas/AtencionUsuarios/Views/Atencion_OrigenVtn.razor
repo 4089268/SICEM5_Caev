@@ -1,0 +1,182 @@
+@using Syncfusion.Blazor.Grids
+@inject IJSRuntime JSRuntime
+@inject IMatToaster Toaster
+@inject IAtencionService atencionService
+
+@if (Visible) {
+    <VentanaSecundaria Titulo="@Titulo" Filas="@GridFilas" Columnas="@GridColumnas" CerrarVentana="@Cerrar_Modal">
+        <Content>
+             <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="DataGrid" DataSource="@DatosGrid" AllowPaging="@allowPagesGrid" AllowSorting="true" AllowResizing="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridPageSettings PageSize="1000"></GridPageSettings>
+                    <GridColumns>
+                        <GridColumn Field="@nameof(Atencion_Group.Descripcion)" HeaderText="Origen" TextAlign="TextAlign.Left" Width="160" />
+
+                        <GridColumn HeaderText="Pendientes" TextAlign="TextAlign.Center" Width="90">
+                            <Template>
+                                @{
+                                    var data = (context as Atencion_Group);
+                                    <div class="customLink" @onclick="@(e => MostrarDetalle(data,1) )"> @data.Pendiente </div>
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn HeaderText="Atendidos" TextAlign="TextAlign.Center" Width="90">
+                            <Template>
+                                @{
+                                    var data = (context as Atencion_Group);
+                                    <div class="customLink" @onclick="@(e => MostrarDetalle(data,2) )"> @data.Atendido </div>
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn HeaderText="Resueltos" TextAlign="TextAlign.Center" Width="90">
+                            <Template>
+                                @{
+                                    var data = (context as Atencion_Group);
+                                    <div class="customLink" @onclick="@(e => MostrarDetalle(data,3) )"> @data.Resuelto </div>
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn HeaderText="Sin Resolver" TextAlign="TextAlign.Center" Width="90">
+                            <Template>
+                                @{
+                                    var data = (context as Atencion_Group);
+                                    <div class="customLink" @onclick="@(e => MostrarDetalle(data,4) )"> @data.Sin_Resolver </div>
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn HeaderText="Total" TextAlign="TextAlign.Center" Width="90">
+                            <Template>
+                                @{
+                                    var data = (context as Atencion_Group);
+                                    <div class="customLink" @onclick="@(e => MostrarDetalle(data,0) )"> @data.Total </div>
+                                }
+                            </Template>
+                        </GridColumn>
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+
+    <style type="text/css">
+        .customLink:hover {
+            cursor: hand !important;
+            text-decoration: underline;
+            font-weight: bold;
+        }
+    </style>
+
+    <BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+    <Atencion_DetalleVtn @ref="vtn_detalle" Visible="@vtn_detalle_visible" CerrarModal="@CerrarVentanaDetalle" Fecha1="@Fecha1" Fecha2="@Fecha2" Subsistema="@Subsistema" Sector="@Sector" Filtro_Estatus="@mostrarFiltoEstatus" Filtro_Asuntos="false" />
+
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    public string Titulo {get;set;} = "";
+    private List<double> GridFilas = new List<double>() { 50, .8 };
+    private List<double> GridColumnas = new List<double>() { 920};
+    private SfGrid<Atencion_Group> DataGrid {get;set;}
+    private List<Atencion_Group> DatosGrid {get;set;}
+    bool allowPagesGrid = false, busyDialog = false, vtn_detalle_visible = false, mostrarFiltoEstatus = false;
+    Atencion_DetalleVtn vtn_detalle;
+    public IEnlace enlace {get;set;}
+
+    
+    public void Inicializar(IEnumerable<Atencion_Group> datos, IEnlace e) {
+        enlace = e;
+        if (datos.Count() > 3000) {
+            this.allowPagesGrid = true;
+        }
+        DatosGrid = datos.ToList();
+    }
+    private async Task GenerarExcel() {
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    async Task MostrarDetalle(Atencion_Group data, int tipo) {
+        
+        if (vtn_detalle_visible) {
+            return;
+        }
+
+        busyDialog = true;
+        await Task.Delay(100);
+
+        IEnumerable<Atencion_Detalle> datos = null;
+        string titulo = "Turnos de Atencion";
+        
+        Console.WriteLine(">> Id origen:" + data.Id);
+
+        switch (tipo) {
+            case 0:
+                datos = atencionService.ObtenerAtencionDetalle(enlace, Fecha1, Fecha2, Subsistema, Sector, $"id_origen:{data.Id}");
+                titulo = $"Turnos de Atencion Asunto {data.Descripcion} del {Fecha1.ToString("dd/MM/yyyy")} al {Fecha2.ToString("dd/MM/yyyy")}";
+                mostrarFiltoEstatus = true;
+                break;
+            case 1:
+                datos = atencionService.ObtenerAtencionDetalle(enlace, Fecha1, Fecha2, Subsistema, Sector, $"id_origen:{data.Id}, id_estatus: 45");
+                titulo = $"Turnos de Atencion Pendientes Asunto {data.Descripcion} del {Fecha1.ToString("dd/MM/yyyy")} al {Fecha2.ToString("dd/MM/yyyy")}";
+                mostrarFiltoEstatus = false;
+                break;
+            case 2:
+                datos = atencionService.ObtenerAtencionDetalle(enlace, Fecha1, Fecha2, Subsistema, Sector, $"id_origen:{data.Id}, id_estatus: 46");
+                titulo = $"Turnos de Atencion Atendidos Asunto {data.Descripcion} del {Fecha1.ToString("dd/MM/yyyy")} al {Fecha2.ToString("dd/MM/yyyy")}";
+                mostrarFiltoEstatus = false;
+                break;
+            case 3:
+                datos = atencionService.ObtenerAtencionDetalle(enlace, Fecha1, Fecha2, Subsistema, Sector, $"id_origen: {data.Id}, id_estatus: 47");
+                titulo = $"Turnos de Atencion Resueltos Asunto {data.Descripcion} del {Fecha1.ToString("dd/MM/yyyy")} al {Fecha2.ToString("dd/MM/yyyy")}";
+                mostrarFiltoEstatus = false;
+                break;
+            case 4:
+                datos = atencionService.ObtenerAtencionDetalle(enlace, Fecha1, Fecha2, Subsistema, Sector, $"id_origen:{data.Id}, id_estatus: 58");
+                titulo = $"Turnos de Atencion Sin Resolver Asunto {data.Descripcion} del {Fecha1.ToString("dd/MM/yyyy")} al {Fecha2.ToString("dd/MM/yyyy")}";
+                mostrarFiltoEstatus = false;
+                break;
+        }
+
+        if (datos == null) {
+            busyDialog = false;
+            Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+            return;
+        }
+        if (datos.Count() <= 0) {
+            busyDialog = false;
+            Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+            return;
+        }
+
+        vtn_detalle_visible = true;
+        vtn_detalle.Titulo = titulo;
+        vtn_detalle.Inicializar(datos);
+
+        busyDialog = false;
+        await Task.Delay(100);
+        
+
+    }
+    void CerrarVentanaDetalle() {
+        vtn_detalle_visible = false;
+    }
+    private async Task Cerrar_Modal() {
+        this.DatosGrid = new List<Atencion_Group>();
+        this.allowPagesGrid = false;
+        await CerrarModal.InvokeAsync("");
+    }
+
+
+}

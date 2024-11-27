@@ -1,0 +1,84 @@
+﻿@inject IJSRuntime JSRuntime
+
+<div class="groupButtons d-flex" style="@Style">
+    @for( int i = 0;  i<Buttons_Content.Length; i++ ) {
+        var context = Buttons_Content[i];
+
+        <div class="gButton w-100 h-100" @onclick="(() => BotonOpcion_Click(context))" Key="@i" >
+            <div class="lb">@context</div>
+        </div>
+    }
+</div>
+
+<style>
+    .groupButtons {
+        height: 40px;
+        background: #c5c5c5;
+        border: 1px solid #d0d0d0;
+        border-radius: 4px;
+        box-shadow: 0px 2px 4px 0px #dedede;
+    }
+    .gButton {
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin-bottom: auto;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+        .gButton:hover {
+            background-color: #90a8bf;
+        }
+        .gButton.active {
+            background-color: #707b86;
+        }
+        .gButton .lb {
+            margin-left: auto;
+            margin-top: auto;
+            margin-right: auto;
+            margin-bottom: auto;
+        }
+</style>
+
+@code {
+
+    [Parameter]
+    public string[] Buttons_Content { get; set; }
+    [Parameter]
+    public EventCallback<int> BotonClick { get; set; }
+    [Parameter]
+    public string Style { get; set; }
+    [Parameter]
+    public int SelectedButton { get; set; } = 0;
+
+    private async Task BotonOpcion_Click(string context){
+        int tmpIndex = -1;
+        for( int i = 0; i<Buttons_Content.Length; i++) {
+            if (context.ToLower() == Buttons_Content[i].ToLower()) {
+                tmpIndex = i;
+            }
+        }
+
+        if(tmpIndex != -1) {
+            await JSRuntime.InvokeVoidAsync("RemoverCSSClass", new string[] { ".gButton", "active" });
+            await JSRuntime.InvokeVoidAsync("AgregarCSSClass", new string[] { $".gButton[Key={tmpIndex}]", "active" });
+        }
+
+        await BotonClick.InvokeAsync(tmpIndex);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (firstRender) {
+            if (SelectedButton != -1) {
+                if (SelectedButton < Buttons_Content.Length) {
+                    await BotonOpcion_Click(Buttons_Content[SelectedButton]);
+                }
+            }
+
+        }
+    }
+
+
+}

@@ -1,0 +1,106 @@
+@inject ITarifasService tarifasService
+<VentanaSecundaria Titulo ="Seleccione un Mes" Filas="@GridFilas" Columnas="@GridColumnas" CerrarVentana="@(e => CerrarModal(null))" >
+    <Content>
+        <div>
+            <SfGrid @ref="DataGrid" TValue="@HistModel" DataSource="@DatosGrid" Height="100%" Width="100%">
+                <GridEvents OnRecordDoubleClick="RecordDoubleClickHandler" TValue="HistModel"></GridEvents>    
+                <GridColumns>
+                    <GridColumn Field="@nameof(HistModel.Anio)" HeaderText="Anio" Width="auto" />
+                    <GridColumn Field="@nameof(HistModel.MesDesc)" HeaderText="Mes" Width="auto" />
+                </GridColumns>
+            </SfGrid>
+        </div>
+    </Content>
+
+</VentanaSecundaria>
+
+<BusyIndicator Busy="@busyIndicator" ContentText="Cargando datos..." />
+
+@code {
+
+    [Parameter] public EventCallback<IEnumerable<Tarifa>> OnCerrarClick {get;set;}
+    [Parameter] public IEnlace Enlace {get;set;}
+    private double[] GridColumnas = new double[]{350};
+    private double[] GridFilas = new double[]{450, 40};
+
+    private List<HistTarifaItem> HistorialTarifa {get;set;}
+    private List<HistModel> DatosGrid {get;set;}
+    private SfGrid<HistModel> DataGrid {get;set;}
+
+    private bool busyIndicator = false;
+    
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCatalogoHistorial();
+    }
+
+
+    private async Task CerrarModal(List<Tarifa> d){
+        await OnCerrarClick.InvokeAsync(d);
+    }
+
+    private async Task CargarCatalogoHistorial(){
+        this.busyIndicator = true;
+        await Task.Delay(100);
+
+        HistorialTarifa = tarifasService.ObtenerHistorialTarifaComplete(Enlace).ToList();
+        
+        var tmpData = new List<HistModel>();
+        
+        var anios = HistorialTarifa.GroupBy(item => item.Af).Select(item =>  item.Key).ToList();
+        foreach( var anio in anios){
+            foreach( var item in HistorialTarifa.Where(item => item.Af == anio).OrderBy(item => item.Mf).ToList()){
+                var _x = tmpData.Where( d => d.Anio == anio && d.Mes == item.Mf).FirstOrDefault();
+                if(_x == null){
+                    tmpData.Add( new HistModel(item.Af, item.Mf, item.Mes));
+                }
+            }  
+        }
+        DatosGrid = tmpData;
+        DataGrid.Refresh();
+
+        await Task.Delay(100);
+        this.busyIndicator = false;
+    }
+
+    private async Task RecordDoubleClickHandler(RecordDoubleClickEventArgs<HistModel> args){
+        if(args.RowData == null){
+            return;
+        }
+        var _datos = new List<Tarifa>();
+
+        foreach(HistTarifaItem hTarifa in this.HistorialTarifa.Where( item => item.Af == args.RowData.Anio && item.Mf == args.RowData.Mes).ToList()){
+            _datos.Add( new Tarifa(){
+                Estatus = 1,
+                IdOficina = Enlace.Id,
+                Oficina = Enlace.Nombre,
+                Id_Tarifa= hTarifa.IdTarifa,
+                Id_TipoUsuario = hTarifa.IdTipoUsuario,
+                TipoUsuario = hTarifa.TipoUsuario,
+                Desde = hTarifa.Desde,
+                Hasta = hTarifa.Hasta,
+                Costo = hTarifa.Costo,
+                CostoBase = hTarifa.CostoBase,
+                CuotaBase = hTarifa.CuotaBase,
+                AdicionalM3 = hTarifa.AdicionalM3,
+            });
+        }
+
+        await CerrarModal(_datos);
+    }
+
+    public class HistModel {
+        public int Anio {get;set;}
+        public string MesDesc {get;set;}
+        public int Mes {get;set;}
+        public HistModel(){
+
+        }
+        public HistModel(int a, int m, string d){
+            Anio = a;
+            Mes = m;
+            MesDesc = d;
+        } 
+    }
+}

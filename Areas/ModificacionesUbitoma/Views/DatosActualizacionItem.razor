@@ -1,0 +1,46 @@
+@using Sicem_Blazor.ModsUbitoma.Models
+
+<div class="actualizacion-info">
+    <div class="item">
+        <div class="item-label">Oficina</div>
+        <div class="item-value">@DatosNuevos.Oficina</div>
+    </div>
+    <div class="item">
+        <div class="item-label">Cuenta</div>
+        <div class="item-value">@DatosAnteriores.IdCuenta</div>
+    </div>
+    <div class="item">
+        <div class="item-label">Localizacion</div>
+        <div class="item-value">@DatosAnteriores.Latitud <i class="fa fa-arrow-right text-muted"></i> @DatosNuevos.Latitud</div>
+        <div class="item-value">@DatosAnteriores.Longitud <i class="fa fa-arrow-right text-muted"></i> @DatosNuevos.Longitud</div>
+    </div>
+    <div class="item">
+        <div class="item-label">Anomalia Predio</div>
+        <div class="item-value">@DatosAnteriores.AnomaliaPredio <i class="fa fa-arrow-right text-muted"></i> @DatosNuevos.AnomaliaPredio</div>
+    </div>
+    <div class="item">
+        <div class="item-label">Tarifa</div>
+        <div class="item-value">@DatosAnteriores.Tarifa <i class="fa fa-arrow-right text-muted"></i> @DatosNuevos.Tarifa</div>
+    </div>
+    <div class="item">
+        <div class="item-label">Giro</div>
+        <div class="item-value">@DatosAnteriores.Giro <i class="fa fa-arrow-right text-muted"></i> @DatosNuevos.Giro</div>
+    </div>
+    @if(!string.IsNullOrEmpty(DatosNuevos.Observaciones)){
+        <div class="item">
+            <div class="item-label">Observaciones</div>
+            <div class="item-value">@DatosNuevos.Observaciones </div>
+        </div>
+    }
+    @if(DatosNuevos.Fecha != null){
+        <div class="item">
+            <div class="item-label">Fecha</div>
+            <div class="item-value">@DatosNuevos.Fecha?.ToShortDateString()</div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public ActualizacionItem DatosAnteriores {get;set;}
+    [Parameter] public ActualizacionItem DatosNuevos {get;set;}
+}

@@ -1,0 +1,159 @@
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using System.Threading
+@using System.Threading.Tasks
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Descuentos.Models
+@inject IJSRuntime JSRuntime
+@inject IDescuentosService descuentosService
+
+@if (Visible){
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@CerrarModal" Filas="@FilasTemplate" Columnas="@ColumnasTemplate">
+        <Content>
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/3;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" Disabled="true">Generar Reporte <i class="fa fa-file-pdf-o ml-2" aria-hidden="true"></i></MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/3;">
+                <SfGrid @ref="dataGrid" DataSource="@datosGrid" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridEvents RowSelected="OnDataGrid_SelectionChanged" TValue="DescuentosUsuarioAutorizoDetalle"></GridEvents>
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="55">
+                            <Template>
+                                @{
+                                    var data = (context as DescuentosUsuarioAutorizoDetalle);
+                                    <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Mostrar Datos General" @onclick="@( e => MostrarEnConsultaGeneral(data))" disabled="@(data.Cuenta <= 0)">
+                                        <i class="fa fa-address-book-o" aria-hidden="true"></i>
+                                    </button>
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Id_Abono)" HeaderText="Id Abono" TextAlign="TextAlign.Left" Width="140" />
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Cuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="110" />
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Usuarios)" HeaderText="Usuario" TextAlign="TextAlign.Left" Width="220" />
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Center" Width="135" />
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Cve)" HeaderText="CVE" TextAlign="TextAlign.Center" Width="120" />
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Autorizo)" HeaderText="Autorizo" TextAlign="TextAlign.Left" Width="220" />
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Justifica)" HeaderText="Justifica" TextAlign="TextAlign.Left" Width="240" />
+                        
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Agua)" HeaderText="Agua" TextAlign="TextAlign.Right" Width="120" Format="c2" Visible="false" />
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Drenaje)" HeaderText="Drenaje" TextAlign="TextAlign.Right" Width="120" Format="c2" Visible="false" />
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Saneamiento)" HeaderText="Saneamiento" TextAlign="TextAlign.Right" Width="120" Format="c2" Visible="false" />
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Rez_Agua)" HeaderText="Rez Agua" TextAlign="TextAlign.Right" Width="120" Format="c2" Visible="false" />
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Rez_Drenaje)" HeaderText="Rez Drenaje" TextAlign="TextAlign.Right" Width="120" Format="c2" Visible="false" />
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Rez_Saneamiento)" HeaderText="Rez Sane" TextAlign="TextAlign.Right" Width="120" Format="c2" Visible="false" />
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Otros)" HeaderText="Otros" TextAlign="TextAlign.Right" Width="120" Format="c2" Visible="false" />
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Recargos)" HeaderText="Recargos" TextAlign="TextAlign.Right" Width="120" Format="c2" Visible="false" />
+                        
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Iva)" HeaderText="IVA" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(DescuentosUsuarioAutorizoDetalle.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 3/4; grid-column: 1/2;">
+                <SfGrid DataSource="@datosGrid_Conceptos" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(DescuentosConcepto.Id_Concepto)" HeaderText="Id Concepto" TextAlign="TextAlign.Center" Width="110" Visible="false" />
+                        <GridColumn Field="@nameof(DescuentosConcepto.Descripcion)" HeaderText="Concepto" TextAlign="TextAlign.Left" Width="140" />
+                        <GridColumn Field="@nameof(DescuentosConcepto.Conc_Sin_Iva)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(DescuentosConcepto.Iva)" HeaderText="IVA" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(DescuentosConcepto.Total_Aplicado)" HeaderText="Total" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 3/4; grid-column: 2/3;">
+                <SfGrid DataSource="@datosGrid_Claves" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(DescuentosClave.Cve_Descuento)" HeaderText="Cve Descuento" TextAlign="TextAlign.Center" Width="140" />
+                        <GridColumn Field="@nameof(DescuentosClave.Conc_Sin_Iva)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(DescuentosClave.Iva)" HeaderText="IVA" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(DescuentosClave.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>    
+
+    @if(DatosGenerales_visible){
+        <DatosGenerales_Dialog IdOficina="@(enlaceSeleccionado.Id)" Cuenta="@CuentaActual" CerrarVentana="@(e => DatosGenerales_visible = false)"/>
+    }
+
+}
+
+@code {
+
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    public string Titulo = "";
+    private IEnlace enlaceSeleccionado;
+
+    private double[] FilasTemplate = new double[] {50, 480, 160};
+    private double[] ColumnasTemplate = new double[] {.45, .45};
+
+    private SfGrid<DescuentosUsuarioAutorizoDetalle> dataGrid;
+    public List<DescuentosUsuarioAutorizoDetalle> datosGrid {get;set;}
+    public List<DescuentosConcepto> datosGrid_Conceptos {get;set;}
+    public List<DescuentosClave> datosGrid_Claves {get;set;}
+
+
+    private bool DatosGenerales_visible = false;
+    private string CuentaActual = "0";
+
+
+    //"******** Funciones ********"
+    private async Task Cerrar_Modal() {
+        this.datosGrid = new List<DescuentosUsuarioAutorizoDetalle>();
+        await CerrarModal.InvokeAsync("");
+    }
+    public void Inicializar(IEnlace enlace, IEnumerable<DescuentosUsuarioAutorizoDetalle> datos) {
+        this.enlaceSeleccionado = enlace;
+        this.datosGrid = datos.ToList();
+    }
+    private void MostrarEnConsultaGeneral(DescuentosUsuarioAutorizoDetalle e) {
+        this.CuentaActual = e.Cuenta.ToString();
+        DatosGenerales_visible = true;
+    }
+
+    private async Task GenerarExcel() {
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            IncludeHiddenColumn = true,
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+    private void OnDataGrid_SelectionChanged(RowSelectEventArgs<DescuentosUsuarioAutorizoDetalle> e){
+
+        if(e.Data == null){
+            return;
+        }
+
+        var cveAbono = e.Data.Id_Abono;
+
+        var task1 = Task.Factory.StartNew( () => {
+            this.datosGrid_Conceptos = descuentosService.ObtenerDescuentosConceptosDetalle(this.enlaceSeleccionado, cveAbono).ToList();
+        });
+
+        var task2 = Task.Factory.StartNew( () => {
+            this.datosGrid_Claves = descuentosService.ObtenerDescuentosClavesDetalle(this.enlaceSeleccionado, cveAbono ).ToList();
+        });
+
+        Task.WaitAll( task1, task2);
+
+    }
+
+}

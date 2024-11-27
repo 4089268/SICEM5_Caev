@@ -1,0 +1,504 @@
+@page "/OrdenesOficina/{IdOficinaParam}"
+@using System.Text
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Charts
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Navigations
+@inject IMatToaster Toaster
+@inject OrdenesService ordenesService
+@inject SicemService sicemService
+@inject NavigationManager NavManager
+
+<div class="title-page">ORDENES DE TRABAJO</div>
+
+<SeleccionarFecha ProcesarParam="@Procesar" />
+
+@* **** Cards **** *@
+<div class="border rounded bg-white mt-2 mb-1 mr-2 p-3 d-flex w-100" style="user-select: text;">
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(()=> Mostrar_Vtn_Detalle(0))">
+        <div class="c-label"> Total </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val user-select-all">
+                @if (datosResumen != null) {<span>@datosResumen.Total.ToString("n0")</span>}
+            else {<span>0</span>}
+        </div>
+        <div class="c-subt">Ordenes</div>
+    </div>
+    <div class="d-flex flex-column mx-1 my-2 align-items-center">
+        <div class="c-val2 user-select-all">
+            @if (datosResumen != null) {<span>100%</span>}
+            else {<span>0%</span>}
+    </div>
+    <!-- <div class="c-subt"> Comparacion</div> -->
+</div>
+</div>
+
+
+<div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(()=> Mostrar_Vtn_Detalle(1))">
+
+    <div class="c-label"> Pendientes </div>
+    <div class="d-flex flex-column mx-1 my-2 align-items-center">
+        <div class="c-val user-select-all">
+            @if (datosResumen != null) {<span>@datosResumen.Pendi.ToString("n0")</span> }
+        else {<span>0</span>}
+    </div>
+    <div class="c-subt"> Ordenes</div>
+</div>
+<div class="d-flex flex-column mx-1 my-2 align-items-center">
+    <div class="c-val2 user-select-all">
+        @if (datosResumen != null) {<span> @CalcularPorcentaje(datosResumen.Total, datosResumen.Pendi)</span>}
+    else {<span>0%</span>}
+</div>
+<!-- <div class="c-subt">Adeudo</div> -->
+</div>
+</div>
+
+<div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(()=> Mostrar_Vtn_Detalle(2))">
+    <div class="c-label"> En Ejecucion</div>
+    <div class="d-flex flex-column mx-1 my-2 align-items-center">
+        <div class="c-val user-select-all">
+            @if (datosResumen != null) {<span>@datosResumen.Eneje.ToString("n0")</span>}
+        else {<span>0</span>}
+    </div>
+    <div class="c-subt">Ordenes</div>
+</div>
+<div class="d-flex flex-column mx-1 my-2 align-items-center">
+    <div class="c-val2 user-select-all">
+        @if (datosResumen != null) {<span> @CalcularPorcentaje(datosResumen.Total, datosResumen.Eneje)</span>}
+    else {<span>0%</span>}
+</div>
+<!-- <div class="c-subt">Adeudo</div> -->
+</div>
+</div>
+
+<div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(()=> Mostrar_Vtn_Detalle(3))">
+    <div class="c-label"> Realizadas</div>
+    <div class="d-flex flex-column mx-1 my-2 align-items-center">
+        <div class="c-val user-select-all">
+            @if (datosResumen != null) {<span>@datosResumen.Reali.ToString("n0")</span>}
+        else {<span>0</span>}
+    </div>
+    <div class="c-subt">Ordenes</div>
+</div>
+<div class="d-flex flex-column mx-1 my-2 align-items-center">
+    <div class="c-val2 user-select-all">
+        @if (datosResumen != null) {<span>@CalcularPorcentaje(datosResumen.Total, datosResumen.Reali) </span>}
+    else {<span>$0.00</span>}
+</div>
+<!-- <div class="c-subt">Adeudo</div> -->
+</div>
+</div>
+
+<div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(()=> Mostrar_Vtn_Detalle(4))">
+    <div class="c-label"> Canceladas</div>
+    <div class="d-flex flex-column mx-1 my-2 align-items-center">
+        <div class="c-val user-select-all">
+            @if (datosResumen != null) {<span>@datosResumen.Cance.ToString("n0")</span>}
+        else {<span>0</span>}
+    </div>
+    <div class="c-subt">Ordenes</div>
+</div>
+<div class="d-flex flex-column mx-1 my-2 align-items-center">
+    <div class="c-val2 user-select-all">
+        @if (datosResumen != null) {<span>@CalcularPorcentaje(datosResumen.Total, datosResumen.Cance) </span>}
+    else {<span>$0.00</span>}
+</div>
+<!-- <div class="c-subt">Adeudo</div> -->
+</div>
+</div>
+
+<div style="width:50px"></div>
+
+<div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(()=> Mostrar_Vtn_Detalle(5))">
+    <div class="c-label"> Ejecutadas </div>
+    <div class="d-flex flex-column mx-1 my-2 align-items-center">
+        <div class="c-val user-select-all">
+            @if (datosResumen != null) {<span>@datosResumen.Eje.ToString("n0")</span>}
+        else {<span>0</span>}
+    </div>
+    <div class="c-subt">Ordenes</div>
+</div>
+<div class="d-flex flex-column mx-1 my-2 align-items-center">
+    <div class="c-val2 user-select-all">
+        @if (datosResumen != null) {<span>@CalcularPorcentaje(datosResumen.Reali, datosResumen.Eje) </span>}
+    else {<span>$0.00</span>}
+</div>
+<!-- <div class="c-subt">Adeudo</div> -->
+</div>
+</div>
+
+<div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(()=> Mostrar_Vtn_Detalle(6))">
+    <div class="c-label"> No Ejecutadas </div>
+    <div class="d-flex flex-column mx-1 my-2 align-items-center">
+        <div class="c-val user-select-all">
+            @if (datosResumen != null) {<span>@datosResumen.No_eje.ToString("n0")</span>}
+        else {<span>0</span>}
+    </div>
+    <div class="c-subt">Ordenes</div>
+</div>
+<div class="d-flex flex-column mx-1 my-2 align-items-center">
+    <div class="c-val2 user-select-all">
+        @if (datosResumen != null) {<span>@CalcularPorcentaje(datosResumen.Reali, datosResumen.No_eje) </span>}
+    else {<span>$0.00</span>}
+</div>
+<!-- <div class="c-subt">Adeudo</div> -->
+</div>
+</div>
+
+</div>
+
+@* ****** Botones ****** *@
+<div class="border rounded bg-white my-1 py-3 d-flex">
+    <div class="col-12 d-flex align-content-center justify-content-center">
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" @onclick="Mostrar_Vtn_Colonias">Por Colonias </MatButton>
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" @onclick="Mostrar_Vtn_Trabajos">Por Trabajos </MatButton>
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" @onclick="Mostrar_Vtn_Realizacion">Por Realizacion</MatButton>
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" @onclick="Mostrar_Vtn_Capturacion">Por Captura</MatButton>
+    </div>
+</div>
+
+@* **** Graficas **** *@
+<div class="d-flex w-100">
+
+    @* ****** Grafica Adeudos ****** *@
+    <div class="border rounded bg-white p-1 my-1 mr-2 " style="width:100%;">
+        <SfChart Title="Ordenes por Trabajos" Width="100%" Height="450">
+            <ChartPrimaryXAxis Title="" ValueType="Syncfusion.Blazor.Charts.ValueType.Category" Minimum="0"> </ChartPrimaryXAxis>
+            <ChartPrimaryYAxis LabelFormat="n0"> </ChartPrimaryYAxis>
+            <ChartTooltipSettings Enable="true" Header="${point.x}" Shared="true" Format="${series.name} : ${point.y}"></ChartTooltipSettings>
+            <ChartSeriesCollection>
+                <ChartSeries DataSource="@DatosGrafica_Trabajos" Name="Pendientes" XName="Descripcion" YName="Valor1" Width="0.75" ColumnWidth="0.75" Type="ChartSeriesType.StackingBar">
+                    <ChartMarker>
+                        <ChartDataLabel Visible="true"></ChartDataLabel>
+                    </ChartMarker>
+                </ChartSeries>
+                <ChartSeries DataSource="@DatosGrafica_Trabajos" Name="En Ejecucion" XName="Descripcion" YName="Valor2" Width="0.75" ColumnWidth="0.75" Type="ChartSeriesType.StackingBar">
+                    <ChartMarker>
+                        <ChartDataLabel Visible="true"></ChartDataLabel>
+                    </ChartMarker>
+                </ChartSeries>
+                <ChartSeries DataSource="@DatosGrafica_Trabajos" Name="Realizadas" XName="Descripcion" YName="Valor3" Width="0.75" ColumnWidth="0.75" Type="ChartSeriesType.StackingBar">
+                    <ChartMarker>
+                        <ChartDataLabel Visible="true"></ChartDataLabel>
+                    </ChartMarker>
+                </ChartSeries>
+                <ChartSeries DataSource="@DatosGrafica_Trabajos" Name="Canceladas" XName="Descripcion" YName="Valor4" Width="0.75" ColumnWidth="0.75" Type="ChartSeriesType.StackingBar">
+                    <ChartMarker>
+                        <ChartDataLabel Visible="true"></ChartDataLabel>
+                    </ChartMarker>
+                </ChartSeries>
+            </ChartSeriesCollection>
+        </SfChart>
+    </div>
+
+</div>
+
+
+<style type="text/css">
+    .card-s {
+        border-radius: .8rem;
+        margin-top: .6rem;
+        margin-bottom: .4rem;
+        height: 17rem;
+        width: 15rem;
+        background: white;
+        justify-content: space-around;
+        cursor: pointer;
+        transition: margin .2s, background .2s;
+    }
+
+        .card-s:hover {
+            border-radius: .8rem;
+            margin-top: .4rem;
+            background: #dfe5eb;
+        }
+
+        .card-s .c-label {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            margin-bottom: .5rem;
+            font-weight: bold;
+        }
+
+        .card-s .c-val {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        .card-s .c-val2 {
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+
+        .card-s .c-subt {
+            font-size: .9rem;
+        }
+
+
+    .e-control.e-textbox {
+        font-size: 1.3rem !important;
+    }
+
+    .r .e-input {
+        text-align: right;
+    }
+</style>
+
+
+@* ****** Dialogos y ventanas secundarias ****** *@
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+<Ordenes_DetalleVtn @ref="vtn_detalle" Visible="@vtn_detalle_visible" CerrarModal="@(()=> vtn_detalle_visible = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" Filtro_Estatus="false" />
+<Ordenes_ColoniasVtn @ref="vtn_colonias" Visible="@vtn_colonias_visible" CerrarModal="@(()=> vtn_colonias_visible = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+<Ordenes_TrabajosVtn @ref="vtn_trabajos" Visible="@vtn_trabajos_visible" CerrarModal="@(()=> vtn_trabajos_visible = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+<Ordenes_RealizacionVtn @ref="vtn_realizacion" Visible="@vtn_realizacion_visible" CerrarModal="@(()=> vtn_realizacion_visible = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+<Ordenes_CapturacionVtn @ref="vtn_capturacion" Visible="@vtn_capturacion_visible" CerrarModal="@(()=> vtn_capturacion_visible = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+
+
+@code{
+    [Parameter] public string IdOficinaParam { get; set; }
+    public Ordenes_Resumen datosResumen = null;
+    public DateTime f1, f2;
+    public int Subsistema, Sector;
+    private bool busyDialog = false;
+    public Ruta OficinaActual;
+    public List<ChartItem> DatosGrafica_Trabajos = new List<ChartItem>();
+
+    private bool vtn_detalle_visible = false, vtn_colonias_visible = false, vtn_trabajos_visible = false, vtn_realizacion_visible = false, vtn_capturacion_visible = false;
+
+    Ordenes_DetalleVtn vtn_detalle;
+    Ordenes_ColoniasVtn vtn_colonias;
+    Ordenes_TrabajosVtn vtn_trabajos;
+    Ordenes_RealizacionVtn vtn_realizacion;
+    Ordenes_CapturacionVtn vtn_capturacion;
+
+
+    //********* Funciones  *********
+    protected override async Task OnInitializedAsync() {
+
+        //*** Validar Oficina
+        IEnlace ofi = new Ruta();
+        if (!sicemService.ComprobarOficinaUsuario(int.TryParse(IdOficinaParam, out int tmpId) ? tmpId : -1, out ofi)){
+            Toaster.Add("Oficina no autorizada para este usuario.", MatToastType.Warning);
+            NavManager.NavigateTo("/");
+        }
+        OficinaActual = sicemService.ObtenerEnlaces().Where( item => item.Id == ofi.Id).FirstOrDefault();
+
+        var tmpE = new SeleccionarFechaEventArgs() {
+            Subsistema = 0,
+            Sector = 0,
+            Fecha1 = DateTime.Parse("01/" + DateTime.Now.ToString("MM") + "/" + DateTime.Now.ToString("yyyy")),
+            Fecha2 = DateTime.Parse(DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month).ToString() + "/" + DateTime.Now.ToString("MM") + "/" + DateTime.Now.ToString("yyyy"))
+        };
+        this.f1 = tmpE.Fecha1;
+        this.f2 = tmpE.Fecha2;
+        this.Subsistema = tmpE.Subsistema;
+        this.Sector = tmpE.Sector;
+
+        await Procesar(tmpE);
+    }
+    public async Task Procesar(SeleccionarFechaEventArgs e) {
+
+        await Task.Delay(100);
+        this.busyDialog = true;
+
+        this.f1 = e.Fecha1;
+        this.f2 = e.Fecha2;
+        this.Subsistema = e.Subsistema;
+        this.Sector = e.Sector;
+
+        datosResumen = ordenesService.ObtenerOrdenesResumen(OficinaActual.Id, f1.ToString("yyyyMMdd"), f2.ToString("yyyyMMdd"), Subsistema, Sector);
+        if (datosResumen != null) { Procesar_Datos_Grafica(); }
+        else { Toaster.Add("Error al llamar a la base de datos, intente m�s tarde.", MatToastType.Warning, ""); }
+
+        this.busyDialog = false;
+        await Task.Delay(100);
+    }
+    private void Procesar_Datos_Grafica(){
+        /**** Grafica Barras ******/
+        var tmpChar2 = new List<ChartItem>();
+        foreach (Ordenes_Resumen_Trabajo trab in this.datosResumen.Trabajos) {
+            tmpChar2.Add(new ChartItem {
+                Descripcion = trab.Descripcion,
+                Valor1 = trab.Pendi,
+                Valor2 = trab.Eneje,
+                Valor3 = trab.Reali,
+                Valor4 = trab.Cance
+            });
+        }
+        DatosGrafica_Trabajos = tmpChar2;
+    }
+    private string CalcularPorcentaje(int total, int subtotal) {
+        decimal xp = 0m;
+        try {
+            xp = System.Math.Round(((decimal)subtotal / (decimal)total) * 100, 2);
+        }
+        catch (Exception){}
+        return $"{xp}%";
+    }
+
+    //*** Funciones Ventanas Secundarias
+    private async Task Mostrar_Vtn_Detalle(int opcion) {
+        if (!vtn_detalle_visible) {
+            this.busyDialog = true;
+            await Task.Delay(100);
+
+            Ordenes_Detalle[] datos = new Ordenes_Detalle[] { };
+            var titulo = "Ordenes Generadas";
+            var xmlFiltro = "";
+            switch (opcion) {
+                case 0:
+                    xmlFiltro = OrdenesService.GenerarFiltro_Detalle(isEstatus: 0);
+                    datos = ordenesService.ObtenerOrdenesDetalle(OficinaActual.Id, f1.ToString("yyyyMMdd"), f2.ToString("yyyyMMdd"), Subsistema, Sector, xmlFiltro);
+                    titulo = $"Ordenes Generadas del {f1.ToString("dd/MM/yyyy")} al  {f2.ToString("dd/MM/yyyy")}";
+                    break;
+                case 1:
+                    xmlFiltro = OrdenesService.GenerarFiltro_Detalle(isEstatus: 7);
+                    datos = ordenesService.ObtenerOrdenesDetalle(OficinaActual.Id, f1.ToString("yyyyMMdd"), f2.ToString("yyyyMMdd"), Subsistema, Sector, xmlFiltro);
+                    titulo = $"Ordenes Pendientes del {f1.ToString("dd/MM/yyyy")} al  {f2.ToString("dd/MM/yyyy")}";
+                    break;
+                case 2:
+                    xmlFiltro = OrdenesService.GenerarFiltro_Detalle(isEstatus: 8);
+                    datos = ordenesService.ObtenerOrdenesDetalle(OficinaActual.Id, f1.ToString("yyyyMMdd"), f2.ToString("yyyyMMdd"), Subsistema, Sector, xmlFiltro);
+                    titulo = $"Ordenes En Ejecucion del {f1.ToString("dd/MM/yyyy")} al  {f2.ToString("dd/MM/yyyy")}";
+                    break;
+                case 3:
+                    xmlFiltro = OrdenesService.GenerarFiltro_Detalle(isEstatus: 9);
+                    datos = ordenesService.ObtenerOrdenesDetalle(OficinaActual.Id, f1.ToString("yyyyMMdd"), f2.ToString("yyyyMMdd"), Subsistema, Sector, xmlFiltro);
+                    titulo = $"Ordenes Realizadas del {f1.ToString("dd/MM/yyyy")} al  {f2.ToString("dd/MM/yyyy")}";
+                    break;
+                case 4:
+                    xmlFiltro = OrdenesService.GenerarFiltro_Detalle(isEstatus: 10);
+                    datos = ordenesService.ObtenerOrdenesDetalle(OficinaActual.Id, f1.ToString("yyyyMMdd"), f2.ToString("yyyyMMdd"), Subsistema, Sector, xmlFiltro);
+                    titulo = $"Ordenes Canceladas del {f1.ToString("dd/MM/yyyy")} al  {f2.ToString("dd/MM/yyyy")}";
+                    break;
+                case 5:
+                    xmlFiltro = OrdenesService.GenerarFiltro_Detalle(isEstatus: 9, ejecutada:1);
+                    datos = ordenesService.ObtenerOrdenesDetalle(OficinaActual.Id, f1.ToString("yyyyMMdd"), f2.ToString("yyyyMMdd"), Subsistema, Sector, xmlFiltro);
+                    titulo = $"Ordenes Ejecutadas del {f1.ToString("dd/MM/yyyy")} al  {f2.ToString("dd/MM/yyyy")}";
+                    break;
+                case 6:
+                    xmlFiltro = OrdenesService.GenerarFiltro_Detalle(isEstatus: 9, ejecutada: 1);
+                    datos = ordenesService.ObtenerOrdenesDetalle(OficinaActual.Id, f1.ToString("yyyyMMdd"), f2.ToString("yyyyMMdd"), Subsistema, Sector, xmlFiltro);
+                    titulo = $"Ordenes No Ejecutadas del {f1.ToString("dd/MM/yyyy")} al  {f2.ToString("dd/MM/yyyy")}";
+                    break;
+            }
+
+            if (datos == null) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (datos.Length <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            vtn_detalle_visible = true;
+            await vtn_detalle.Inicializar(datos, titulo);
+
+            await Task.Delay(100);
+            this.busyDialog = false;
+        }
+    }
+    private async Task Mostrar_Vtn_Colonias() {
+        if (!vtn_colonias_visible) {
+            this.busyDialog = true;
+            await Task.Delay(100);
+
+            Ordenes_Agrupado[] datos = ordenesService.ObtenerOrdenesColonias(OficinaActual.Id, f1.ToString("yyyyMMdd"), f2.ToString("yyyyMMdd"), Subsistema, Sector, "");
+            if (datos == null) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (datos.Length <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            vtn_colonias_visible = true;
+            vtn_colonias.OficinaActual = OficinaActual;
+            await vtn_colonias.Inicializar(datos);
+
+            await Task.Delay(100);
+            this.busyDialog = false;
+        }
+    }
+    private async Task Mostrar_Vtn_Trabajos() {
+        if (!vtn_trabajos_visible) {
+            this.busyDialog = true;
+            await Task.Delay(100);
+
+            Ordenes_Agrupado[] datos = ordenesService.ObtenerOrdenesTrabajos(OficinaActual.Id, f1.ToString("yyyyMMdd"), f2.ToString("yyyyMMdd"), Subsistema, Sector);
+
+            if (datos == null) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (datos.Length <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            vtn_trabajos_visible = true;
+            vtn_trabajos.OficinaActual = OficinaActual;
+            await vtn_trabajos.Inicializar(datos);
+
+            await Task.Delay(100);
+            this.busyDialog = false;
+        }
+    }
+    private async Task Mostrar_Vtn_Realizacion() {
+        if (!vtn_realizacion_visible) {
+            this.busyDialog = true;
+            await Task.Delay(100);
+
+            Ordenes_Realizacion[] datos = ordenesService.ObtenerOrdenesRealizacion(OficinaActual.Id, f1.ToString("yyyyMMdd"), f2.ToString("yyyyMMdd"), Subsistema, Sector, "");
+            if (datos == null) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (datos.Length <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            vtn_realizacion_visible = true;
+            vtn_realizacion.OficinaActual = OficinaActual;
+            await vtn_realizacion.Inicializar(datos);
+
+            await Task.Delay(100);
+            this.busyDialog = false;
+        }
+    }
+    private async Task Mostrar_Vtn_Capturacion() {
+        if (!vtn_capturacion_visible) {
+            this.busyDialog = true;
+            await Task.Delay(100);
+            Ordenes_Capturacion[] datos = ordenesService.ObtenerOrdenesCapturacion(OficinaActual.Id, f1.ToString("yyyyMMdd"), f2.ToString("yyyyMMdd"), Subsistema, Sector, "");
+
+            if (datos == null) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (datos.Length <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            vtn_capturacion_visible = true;
+            vtn_capturacion.OficinaActual = OficinaActual;
+            await vtn_capturacion.Inicializar(datos);
+
+            await Task.Delay(100);
+            this.busyDialog = false;
+        }
+    }
+}

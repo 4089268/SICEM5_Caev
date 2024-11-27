@@ -1,0 +1,131 @@
+@page "/HistorialConexiones"
+@inject SicemService sicemService
+
+<div class="histLayout">
+    <div style="grid-area:1/1/2/3;">
+        <div class="title-page text-uppercase" style="grid-area:1/1/2/2;">HISTORIAL CONEXIONES</div>
+    </div>
+
+    <nav aria-label="breadcrumb" style="grid-area:2/1/3/3;">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="./">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="./Configuracion">Configuracion</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Historial Conexiones</li>
+        </ol>
+    </nav>
+
+    <div class="grid border rounded bg-white px-2 d-flex align-items-center" style="grid-area:3/1/4/3;">
+
+        <SeleccionarFecha ProcesarParam="ProcesarConsulta" OcultarSector="true" />
+
+        @**** Boton Exportar Excel ****@
+        @if(datosGrid != null){
+            <div class="button px-3 py-2 bg-success mx-3" @onclick="OnExportExcel_Click" >
+                <i class="fa fa-file-excel mr-2"></i>
+                <span>Exportar Historial</span>
+            </div>
+        }
+
+        @**** COMBO BOX FILTRO ****@
+        @*<label class="pr-2 mb-0">OFICINA:</label>
+        <div class="MyCombobox mr-3" style="width:17rem; height:2.5rem;">
+            <select @onchange=@OnComboboxOficinas_SelectionChanged>
+                <option value="0" disabled selected>SELECCIONE UNA OFICINA</option>
+                @foreach (var item in catOficinas) {
+                    <option value=@item.Id>@item.Oficina</option>
+                }
+            </select>
+        </div>
+        *@
+
+    </div>
+    
+    <!-- ****** Grid Catalogo Historial ******-->
+    <div class="border rounded bg-white p-2" style="grid-area:4/1/5/3;">
+
+        <div class="d-flex align-items-center p-1" style="height:4rem;">
+            <div class="d-flex align-items-center border rounded p-2" style="width: 24rem; height:100%; font-size:1.1rem;">
+                <i class="fa fa-search ml-2 mr-2" style="color:#555;"></i>
+                <input type="text" placeholder="Buscar" @bind-value="searchText" @onkeyup="OnGridSearch_KeyUp" style="border: none; outline:none; background-color:#fff; width:100%; box-shadow:none;" />
+                @if(searchText.Trim().Length > 1){
+                    <i class="fa fa-close link-btn aling ali align-self-start m m-1" aria-hidden="true" style="width: 1rem;height: 1rem;color: #333;text-decoration: none !important;" @onclick="ClearSearch_Click"></i>
+                }
+            </div>
+        </div>
+
+        <div class="p-1" style="width: 100%; height: calc(100% - 4.5rem);">
+            <SfGrid @ref="dataGrid" DataSource="@datosGrid" TValue="SesionInfo" AllowResizing="true" AllowSorting="true" AllowFiltering="false"
+                AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
+                <GridColumns>
+                    <GridColumn Width="15">
+                        <Template>
+                            <div class="px-2">
+                                <i class="fa fa-user"></i>
+                            </div>
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(SesionInfo.Usuario)" HeaderText="Usuario" TextAlign="TextAlign.Left" Width="200" />
+                    <GridColumn Field="@nameof(SesionInfo.Fecha_Inicio)" HeaderText="Inicio" TextAlign="TextAlign.Center" Width="180" />
+                    <GridColumn Field="@nameof(SesionInfo.Fecha_Fin)" HeaderText="Expira" TextAlign="TextAlign.Center" Width="180" />
+                    <GridColumn Field="@nameof(SesionInfo.IpAddress)" HeaderText="Ip Address" TextAlign="TextAlign.Center" Width="180" />
+                    <GridColumn HeaderText="Total Tiempo">
+                        <Template>
+                            <div class="px-2">
+                                @{
+                                    var data = (context as SesionInfo);
+                                    <div>
+                                        @(data.TotalTiempo.TotalMinutes.ToString("n2")) minutos
+                                    </div>
+                                }
+                            </div>
+                        </Template>
+                    </GridColumn>
+                    
+                </GridColumns>
+            </SfGrid>
+        </div>
+
+    </div>
+
+</div>
+
+<BusyIndicator Busy="@cargando" ContentText="Cargando datos..." />
+
+@code {
+    private SfGrid<SesionInfo> dataGrid {get;set;}
+    private List<SesionInfo> datosGrid {get;set;}
+
+    private DateTime fecha1 {get;set;} = DateTime.Now;
+    private DateTime fecha2 {get;set;} = DateTime.Now;
+    private bool cargando = false;
+    private string searchText = "";
+
+    private async Task ProcesarConsulta(SeleccionarFechaEventArgs e){
+        cargando = true;
+        await Task.Delay(200);
+
+        this.fecha1 = e.Fecha1;
+        this.fecha2 = e.Fecha2;
+        this.datosGrid = sicemService.ObtenerHistorialSessiones(this.fecha1, this.fecha2);
+
+        await Task.Delay(200);
+        cargando = false;
+    }
+    private async Task OnExportExcel_Click(){
+        var _name = $"Sicem_HistorialConexiones_{fecha1.ToString("ddMMyyyy")}-{fecha2.ToString("ddMMyyyy")}_{Guid.NewGuid().ToString().Replace("-","").Substring(0,10)}.xlsx";
+        var _options = new ExcelExportProperties(){
+            IncludeHiddenColumn = true,
+            FileName = _name
+        };
+        await this.dataGrid.ExportToExcelAsync(_options);
+    }
+    private async Task OnGridSearch_KeyUp(KeyboardEventArgs e){
+        if(e.Key == "Enter"){
+            await dataGrid.SearchAsync(searchText);
+        }
+    }
+    private async Task ClearSearch_Click(){
+        this.searchText = "";
+        await OnGridSearch_KeyUp(new KeyboardEventArgs(){Key = "Enter"});
+    }
+}

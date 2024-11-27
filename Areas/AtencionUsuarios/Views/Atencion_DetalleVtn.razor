@@ -1,0 +1,212 @@
+@using Syncfusion.Blazor.Grids
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavManager
+
+@if (Visible) {
+    <VentanaSecundaria Titulo="@Titulo" Filas="@GridFilas" Columnas="@GridColumnas" CerrarVentana="@Cerrar_Modal">
+        <Content>
+            <div class="d-flex align-items-center m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+
+                @if(Filtro_Asuntos){ 
+                    <div class="ml-4 font-weight-bold" style="font-size: 1.1rem;"> Asunto: </div>
+                    <select class="form-select form-select-lg" @onchange="@((ChangeEventArgs e) => ComboBox_SelectionChanged("asunto",e.Value))" style="height:28px; margin-left:10px; width:210px">
+                        <option style="font-size: 1.2rem;" value="-1" selected>TODOS</option>
+                        @foreach (int itemKey in cat_asuntos.Keys){
+                            <option style="font-size: 1.2rem;" value="@itemKey">@cat_asuntos[itemKey]</option>
+                        }
+                    </select>
+                }
+
+                @if(Filtro_Estatus){
+                    <div class="ml-4 font-weight-bold" style="font-size: 1.1rem;"> Estatus: </div>
+                    <select class="form-select form-select-lg" @onchange="@((ChangeEventArgs e) => ComboBox_SelectionChanged("estatus",e.Value))" style="height:28px; margin-left:10px; width:210px">
+                        <option style="font-size: 1.2rem;" value="-1" selected>TODOS</option>
+                        @foreach (int itemKey in cat_estatus.Keys){
+                            <option style="font-size: 1.2rem;" value="@itemKey">@cat_estatus[itemKey]</option>
+                        }
+                    </select>
+                }
+
+                @if(Filtro_Colonias){
+                    <div class="ml-4 font-weight-bold" style="font-size: 1.1rem;"> Colonia: </div>
+                    <select class="form-select form-select-lg" @onchange="@((ChangeEventArgs e) => ComboBox_SelectionChanged("colonia",e.Value))" style="height:28px; margin-left:10px; width:180px">
+                        <option style="font-size: 1.2rem;" value="-1" selected>TODAS</option>
+                        @foreach (int itemKey in cat_colonias.Keys){
+                            <option style="font-size: 1.2rem;" value="@itemKey">@cat_colonias[itemKey]</option>
+                        }
+                    </select>
+                }
+
+                @if(Filtro_Genero){
+                    <div class="ml-4 font-weight-bold" style="font-size: 1.1rem;"> Genero: </div>
+                    <select class="form-select form-select-lg" @onchange="@((ChangeEventArgs e) => ComboBox_SelectionChanged("genero",e.Value))" style="height:28px; margin-left:10px; width:180px">
+                        <option style="font-size: 1.2rem;" value="." selected>TODOS</option>
+                        @foreach (string itemKey in cat_genero.Keys){
+                            <option style="font-size: 1.2rem;" value="@itemKey">@cat_genero[itemKey]</option>
+                        }
+                    </select>
+                }
+                
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 3/4; grid-column: 1/2;">
+                <SfGrid @ref="DataGrid" DataSource="@DatosGrid" AllowPaging="@allowPagesGrid" AllowSorting="true" AllowResizing="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridPageSettings PageSize="1000"></GridPageSettings>
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="55">
+                            <Template>
+                                @{
+                                    var data = (context as Atencion_Detalle);
+                                    if(data.Cuenta > 0 ){
+                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Mostrar en Consulta General" @onclick="@( e => MostrarEnConsultaGeneral(data))">
+                                            <i class="fa fa-address-book-o" aria-hidden="true"></i>
+                                        </button>
+                                    }
+                                }
+                            </Template>
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(Atencion_Detalle.Folio)" HeaderText="Folio" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(Atencion_Detalle.Cuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(Atencion_Detalle.Nombre)" HeaderText="Nombre" TextAlign="TextAlign.Left" Width="210" />
+                        <GridColumn Field="@nameof(Atencion_Detalle.Asunto)" HeaderText="Asunto" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Atencion_Detalle.Estatus)" HeaderText="Estatus" TextAlign="TextAlign.Center" Width="80" />
+                        <GridColumn Field="@nameof(Atencion_Detalle.Colonia)" HeaderText="Colonia" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(Atencion_Detalle.Descripcion)" HeaderText="Descripcion" TextAlign="TextAlign.Left" Width="240" ClipMode="ClipMode.EllipsisWithTooltip" />
+                        <GridColumn Field="@nameof(Atencion_Detalle.Resultado)" HeaderText="Resultado" TextAlign="TextAlign.Left" Width="240" ClipMode="ClipMode.EllipsisWithTooltip" />
+                        <GridColumn Field="@nameof(Atencion_Detalle.Genero)" HeaderText="Genero" TextAlign="TextAlign.Left" Width="210" />
+                        <GridColumn Field="@nameof(Atencion_Detalle.Fecha_Genero)" HeaderText="Fecha" TextAlign="TextAlign.Center" Width="130" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+        </Content>
+    </VentanaSecundaria>
+}
+
+@code {
+
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    [Parameter] public bool Filtro_Estatus { get; set; } = true;
+    [Parameter] public bool Filtro_Colonias { get; set; } = true;
+    [Parameter] public bool Filtro_Asuntos { get; set; } = true;
+    [Parameter] public bool Filtro_Genero { get; set; } = true;
+    public string Titulo {get;set;} = "";
+
+    private List<double> GridFilas = new List<double>() { 50, 50, .8 };
+    private List<double> GridColumnas = new List<double>() { .85 };
+    
+
+    //"******** Variables ********"
+    SfGrid<Atencion_Detalle> DataGrid;
+    public List<Atencion_Detalle> Datos {get;set;}
+    public List<Atencion_Detalle> DatosGrid {get;set;}
+
+    private Dictionary<int,string> cat_colonias;
+    private Dictionary<int,string> cat_estatus;
+    private Dictionary<int,string> cat_asuntos;
+    private Dictionary<string,string> cat_genero;
+    
+    private int id_colonia_select = -1, id_estatus_select = -1, id_asunto_select = -1;
+    private string id_genero_select = "";
+    private bool allowPagesGrid = false;
+
+    //"******** Funciones Generales ********"
+    public void Inicializar(IEnumerable<Atencion_Detalle> datos) {
+        if(datos.Count() > 3000){
+            this.allowPagesGrid = true;
+        }
+        this.Datos = datos.ToList();
+        this.DatosGrid = datos.ToList(); 
+        CalcularCatalogos();
+    }
+    private void CalcularCatalogos(){
+        
+        cat_colonias = new Dictionary<int,string>();
+        cat_estatus = new Dictionary<int,string>();
+        cat_asuntos = new Dictionary<int,string>();
+        cat_genero = new Dictionary<string,string>();
+
+        foreach(Atencion_Detalle item in Datos){
+
+            if(!cat_colonias.ContainsKey(item.Id_Colonia)){
+                cat_colonias.Add(item.Id_Colonia, item.Colonia);
+            }
+
+            if(!cat_estatus.ContainsKey(item.Id_Estatus)){
+                cat_estatus.Add(item.Id_Estatus, item.Estatus);
+            }
+
+            if(!cat_asuntos.ContainsKey(item.Id_Asunto)){
+                cat_asuntos.Add(item.Id_Asunto, item.Asunto);
+            }
+            
+            if(!cat_genero.ContainsKey(item.Id_Genero)){
+                cat_genero.Add(item.Id_Genero, item.Genero);
+            }
+            
+        }
+
+    }
+    private void MostrarEnConsultaGeneral(Atencion_Detalle e) {
+        //NavManager.NavigateTo($"/ConsultaGeneral/{e.Cuenta}");
+    }
+    private async Task GenerarExcel() {
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private void ComboBox_SelectionChanged(string sender, object value){
+        
+        switch(sender){
+            case "colonia":
+                id_colonia_select = int.Parse(value.ToString());
+            break;
+            case "estatus":
+                id_estatus_select = int.Parse(value.ToString());
+            break;
+            case "asunto":
+                id_asunto_select = int.Parse(value.ToString());
+            break;
+            case "genero":
+                id_genero_select = value.ToString();
+            break;            
+        }
+        FiltrarDatos();
+    }
+
+    private void FiltrarDatos(){
+        IEnumerable<Atencion_Detalle> tmpData = Datos;
+
+        if(id_colonia_select >= 0){
+            tmpData = tmpData.Where(item => item.Id_Colonia == id_colonia_select ).ToArray<Atencion_Detalle>();
+        }
+        if(id_estatus_select >= 0){
+            tmpData = tmpData.Where(item => item.Id_Estatus == id_estatus_select ).ToArray<Atencion_Detalle>();
+        }
+        if(id_asunto_select >= 0){
+            tmpData = tmpData.Where(item => item.Id_Asunto == id_asunto_select ).ToArray<Atencion_Detalle>();
+        }
+        if(id_genero_select.Length > 1 ){
+            tmpData = tmpData.Where(item => item.Id_Genero == id_genero_select).ToArray<Atencion_Detalle>();
+        }
+        this.DatosGrid = tmpData.ToList();
+    }
+
+    private async Task Cerrar_Modal() {
+        this.DatosGrid = new List<Atencion_Detalle>();
+        this.allowPagesGrid = false;
+        await CerrarModal.InvokeAsync("");
+    }
+
+}

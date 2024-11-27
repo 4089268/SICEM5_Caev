@@ -1,0 +1,131 @@
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Facturacion.Models
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavManager
+
+@if (Visible) {
+    <div class="busy-control">
+
+        <div id="draggable" class="SicemDialog-control" style="width:auto; height:auto;">
+
+            @* *********** Cabecera *********** *@
+            <div class="SicemDialog-header">
+                <div>USUARIOS FACTURADOS @Titulo</div>
+                <MatIcon @onclick="@Cerrar_Modal" Class="close-icon" style="margin-left: auto;" Icon="clear"></MatIcon>
+            </div>
+
+            @* *********** Contenido *********** *@
+            <div class="SicemDialog-content" style="@ObtnerDimensiones()">
+
+                <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                    <div class="w-100 d-flex align-items-center">
+                        <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                        <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" Disabled="true">Generar Reporte <i class="fa fa-file-pdf-o ml-2" aria-hidden="true"></i></MatButton>
+                    </div>
+                </div>
+
+                <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                    <SfGrid @ref="dataGrid" DataSource="@datosGrid" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                        <GridColumns>
+                            <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="55">
+                                <Template>
+                                    @{
+                                        var data = (context as Facturacion_Usuarios);
+                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Mostrar en Consulta General" @onclick="@( e => MostrarEnConsultaGeneral(data))">
+                                            <i class="fa fa-address-book-o" aria-hidden="true"></i>
+                                        </button>
+                                    }
+                                </Template>
+                            </GridColumn>
+                            <GridColumn Field="@nameof(Facturacion_Usuarios.Id_Cuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="120" />
+                            <GridColumn Field="@nameof(Facturacion_Usuarios.Localizacion)" HeaderText="Localizacion" TextAlign="TextAlign.Left" Width="200" />
+                            <GridColumn Field="@nameof(Facturacion_Usuarios.Nombre)" HeaderText="Nombre" TextAlign="TextAlign.Left" Width="220" />
+                            <GridColumn Field="@nameof(Facturacion_Usuarios.Direccion)" HeaderText="Direccion" TextAlign="TextAlign.Left" Width="220" />
+                            <GridColumn Field="@nameof(Facturacion_Usuarios.Estatus)" HeaderText="Estatus" TextAlign="TextAlign.Left" Width="80" />
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+}
+
+@code {
+
+    #region  "******** Parametros ********"
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter]
+    public EventCallback CerrarModal { get; set; }
+    [Parameter]
+    public DateTime Fecha1 { get; set; }
+    [Parameter]
+    public DateTime Fecha2 { get; set; }
+    [Parameter]
+    public int Subsistema { get; set; }
+    [Parameter]
+    public int Sector { get; set; }
+
+    List<int> GridFilas = new List<int>() { 50, 540 };
+    List<int> GridColumnas = new List<int>() { 1020 };
+    #endregion
+    #region "******** Funciones Base ********"
+    private async Task Cerrar_Modal() {
+        this.datosGrid = new Facturacion_Usuarios[] { };
+        await CerrarModal.InvokeAsync("");
+    }
+    private string ObtnerDimensiones() {
+        var xB = new System.Text.StringBuilder();
+        xB.Append("height: 100%; width:100%; ");
+        xB.Append("display:grid; ");
+        xB.Append("grid-template-rows: ");
+        foreach (int FilaH in GridFilas) {
+            xB.Append(string.Format("{0}px ", FilaH));
+        }
+        xB.Append("; ");
+
+        xB.Append("grid-template-columns: ");
+        foreach (int ColW in GridColumnas) {
+            xB.Append(string.Format("{0}px ", ColW));
+        }
+        xB.Append("; ");
+
+        return xB.ToString();
+    }
+    #endregion
+
+
+    //"******** Variables ********"
+    SfGrid<Facturacion_Usuarios> dataGrid;
+    public Facturacion_Usuarios[] datosGrid;
+    string Titulo = "";
+
+    //"******** Funciones Generales ********"
+    public async Task Inicializar(Facturacion_Usuarios[] datos, string t) {
+        await JSRuntime.InvokeVoidAsync("ConfigurateDragg", null);
+        this.Titulo = t;
+        this.datosGrid = datos;
+    }
+    private void MostrarEnConsultaGeneral(Facturacion_Usuarios e) {
+        NavManager.NavigateTo($"/ConsultaGeneral/{e.Id_Cuenta}");
+    }
+    private async Task GenerarExcel() {
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+
+    public class ChartData {
+        public string Descripcion;
+        public decimal Valor1;
+    }
+
+}

@@ -1,0 +1,79 @@
+@using Sicem_Blazor.Conceptos.Models
+@using Sicem_Blazor.Conceptos.Data
+@inject ConceptosService conceptosService
+@inject IMatToaster Toaster
+
+<VentanaSecundaria Titulo="Publicar Conceptos Modificados" Filas="@filas" Columnas="@columnas" CerrarVentana="CerrarModal">
+    <Content>
+
+        <h4> Resumen Conceptos a publicar </h4>
+
+        <SfGrid DataSource="@Conceptos" TValue="Concepto" AllowResizing="true" AllowSorting="false" AllowFiltering="false" Height="100%" Width="100%" RowHeight="14">
+            <GridColumns>
+                <GridColumn Field="@nameof(Concepto.Id_Concepto)" HeaderText="Id Concepto" TextAlign="TextAlign.Center" Width="100" />
+                <GridColumn Field="@nameof(Concepto.Descripcion)" HeaderText="Concepto" TextAlign="TextAlign.Left" Width="160" />
+                <GridColumn Field="@nameof(Concepto.Importe)" HeaderText="Importe" TextAlign="TextAlign.Right" Width="100" Format="c2"/>
+                <GridColumn Field="@nameof(Concepto.Inactivo)" HeaderText="Inactivo" TextAlign="TextAlign.Center" Width="100" DisplayAsCheckBox="true"/>
+                <GridColumn Field="@nameof(Concepto.Credito)" HeaderText="Credito" TextAlign="TextAlign.Center" Width="100"  DisplayAsCheckBox="true"/>
+                <GridColumn Field="@nameof(Concepto.Mostrar)" HeaderText="Mostrar" TextAlign="TextAlign.Center" Width="100"  DisplayAsCheckBox="true"/>
+                <GridColumn Field="@nameof(Concepto.Costo_Estatico)" HeaderText="Costo Estatico" TextAlign="TextAlign.Center" Width="120" DisplayAsCheckBox="true"/>
+                <GridColumn Field="@nameof(Concepto.Estatus)" HeaderText="Estatus" TextAlign="TextAlign.Center" Width="110" />
+            </GridColumns>
+        </SfGrid>
+
+        @if(Cargando){
+            <div class="d-flex align-items-center justify-content-center" style="grid-area: 3/1/4/2;">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden"></span>
+                </div>
+            </div>
+            
+        }else{
+            <div class="d-flex align-items-center justify-content-center" style="grid-area: 3/1/4/2;">
+                <button class="button px-3 py-2" @onclick="Publicar_Click">
+                    <i class="mr-3 fa fa-cloud-upload"></i>
+                    <span>Publicar Conceptos</span>
+                </button>
+            </div>
+        }
+
+    </Content>
+    
+</VentanaSecundaria>
+
+@code {
+    [Parameter] public IEnlace Oficina {get;set;}
+    [Parameter] public List<Concepto> Conceptos {get;set;}
+    [Parameter] public EventCallback<bool> Cerrar {get;set;}
+
+    private double[] filas = new double[]{30, 400, 50};
+    private double[] columnas = new double[]{900};
+
+    private bool Cargando = false;
+
+    private async Task CerrarModal(){
+        await Cerrar.InvokeAsync(false);
+    }
+
+    private async Task Publicar_Click(){
+        if(Oficina == null || Conceptos == null){
+            return;
+        }
+        
+        this.Cargando = true;
+        await Task.Delay(200);
+        
+        var result = conceptosService.ModificarConceptos(Oficina, Conceptos);
+
+        if(result){
+            Toaster.Add($"Se modificaron correctamente los conceptos en la oficina {Oficina.Nombre}", MatToastType.Success, "Modificación Exitosa");
+        }else{
+            Toaster.Add($"Error al modificar los conceptos en la oficina {Oficina.Nombre}", MatToastType.Danger, "Error al modificar los conceptos");
+        }
+        
+        await Task.Delay(1000);
+        this.Cargando = false;
+        await Cerrar.InvokeAsync(result);
+    }
+
+}

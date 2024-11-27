@@ -1,0 +1,78 @@
+<div class="NsMultiselectBox">
+    <input class="input-text" type="text" readonly placeholder="@PlaceHolderText" style="width:@(Width)px; heiht;@(Height)px;" @onclick="@(e => open = !open )" value="@LabelText" />
+    
+    <div class="options @(open?"open":"hidden")" @onfocusout="@(e => open = false )" style="width:@(Width)px"  >
+        @if(OpcionTodos){
+            <div class="option px-1">
+                <input type="checkbox" checked="@(DatosSeleccionados.Contains(-1))" @onchange="@(e => OnCheckbox_Changed(e, -1))" @onfocusin="Checkbox_FocusIn"/>
+                <span>SELECCIONAR TODOS</span>
+            </div>            
+        }
+        @foreach(var key in Datos.Keys){
+            <div class="option px-1">
+                <input type="checkbox" checked="@(DatosSeleccionados.Contains(key))" @onchange="@(e => OnCheckbox_Changed(e, key))" @onfocusin="Checkbox_FocusIn"/>
+                <span>@(Datos[key])</span>
+            </div>
+        }
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public int Width {get;set;} = 200;
+    [Parameter] public int Height {get;set;} = 30;
+    [Parameter] public Dictionary<int, string> Datos {get;set;}
+    [Parameter] public string PlaceHolderText {get;set;} = "Seleccionar opcion";
+    [Parameter] public List<int> DatosSeleccionados {get;set;} = new List<int>();
+    [Parameter] public bool OpcionTodos {get;set;} = false;
+    private string LabelText = "";
+
+    private bool open {get;set;} = false;
+
+    protected override void OnParametersSet(){
+        if(DatosSeleccionados == null){
+            DatosSeleccionados= new List<int>();
+        }        
+    }
+
+    private void Checkbox_FocusIn(){
+        open = true;
+    }
+    private void OnCheckbox_Changed(ChangeEventArgs e, int key){
+        if((bool?)e.Value == true){
+            if(key   == -1){
+                foreach(var k in Datos.Keys){
+                    if(!DatosSeleccionados.Contains(k)){
+                        DatosSeleccionados.Add(k);
+                    }
+                }
+            }else{
+                DatosSeleccionados.Add(key);
+            }
+        }else{
+            if(key == -1){
+                DatosSeleccionados.Clear();
+            }else{
+                DatosSeleccionados.Remove(key);
+            }
+        }
+        GenerarLabelText();
+    }
+    private void GenerarLabelText(){
+        if(DatosSeleccionados.Count > 0 ){
+            var textBuilder = new System.Text.StringBuilder();
+            for(int i = 0; i<= DatosSeleccionados.Count-1; i++){
+                int _id = (DatosSeleccionados.ToArray())[i];
+                textBuilder.Append( (i>=DatosSeleccionados.Count-1)?$"{Datos[_id]}":$"{Datos[_id]}, ");
+            }
+            this.LabelText = textBuilder.ToString();
+        }else{
+            this.LabelText="";
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender){
+        GenerarLabelText();
+    }
+
+}

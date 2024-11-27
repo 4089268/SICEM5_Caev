@@ -1,0 +1,175 @@
+﻿@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Calendars
+@inject IJSRuntime JSRuntime
+@inject IMatToaster Toaster
+@inject SicemService sicemService
+@inject ConsultaGralService consultaGralService;
+
+@if (Show) {
+    <div class="busy-control">
+
+        <div id="draggable" class="SicemDialog-control" style="width:990px; height:auto;">
+
+            @* *********** Cabecera *********** *@
+            <div class="SicemDialog-header">
+                <div>@Titulo</div>
+                <MatIcon @onclick="@Cerrar_Modal" Class="close-icon" style="margin-left: auto;" Icon="clear"></MatIcon>
+            </div>
+
+            @* *********** Contenido *********** *@
+            <div class="SicemDialog-content" style="height: 100%; width:100%;  display:grid; grid-template-columns: 100%; grid-template-rows: 115px 525px 40px;">
+
+                <div class="p-1" style="grid-row: 1/2; grid-column: 1/2; align-items: center;">
+                    <div class="container-fluid mt-3 mb-5">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="row">
+                                    <div class="col-12 p-1">
+                                        <SfTextBox Type="InputType.Text" Placeholder="Razon Social" CssClass="e-small" @bind-Value="busquedaModel.Nombre" @onkeydown="@TextBox_KeyDown" />
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6 p-1">
+                                        <SfTextBox Type="InputType.Text" Placeholder="Direccion" CssClass="e-small" @bind-Value="busquedaModel.Direccion" @onkeydown="@TextBox_KeyDown" />
+                                    </div>
+                                    <div class="col-6 p-1">
+                                        <SfTextBox Type="InputType.Text" Placeholder="Colonia" CssClass="e-small" @bind-Value="busquedaModel.Colonia" @onkeydown="@TextBox_KeyDown" />
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6 p-1">
+                                        <SfTextBox Type="InputType.Text" Placeholder="Nº Medidor" CssClass="e-small" @bind-Value="busquedaModel.Medidor" @onkeydown="@TextBox_KeyDown" />
+                                    </div>
+                                    <div class="col-4 p-1">
+                                        <SfCheckBox Label="Mostrar solo cuentas activas" @bind-Checked="busquedaModel.SoloActivos" CssClass="e-small"></SfCheckBox>
+                                    </div>
+                                    <div class="col-2 p-1">
+
+                                        @if (Busy) {
+                                            <MatButton Outlined="true" Dense="true" style="width: 120px;">
+                                                <MatProgressCircle Indeterminate="true" Size="MatProgressCircleSize.Small" />
+                                            </MatButton>
+                                        }
+                                        else {
+                                            <MatButton Id="BotonBusquedaCuenta" Outlined="true" Dense="true" @onclick="Busqueda_Click" TrailingIcon="search" style="width: 120px;">Buscar</MatButton>
+                                        }
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-1" style="grid-row: 2/3; grid-column: 1/2;">
+                    <SfGrid @ref="@myGrid" DataSource="@ItemsGrid" AllowSorting="true" AllowFiltering="false" AllowSelection="true" AllowResizing="true"
+                            Height="100%" Width="100%" EnableHover="true" EnableAltRow="true">
+
+                        <GridSelectionSettings EnableToggle="false" Mode="Syncfusion.Blazor.Grids.SelectionMode.Row" Type="Syncfusion.Blazor.Grids.SelectionType.Single"></GridSelectionSettings>
+                        <GridEvents TValue="Cuenta_Arquos" RowSelected="@SelectionGrid_Changed" RowDeselected="@SelectionGrid_Unselected" OnRecordDoubleClick="RecordDoubleClickHandler" ></GridEvents>
+
+                        <GridColumns>
+                            <GridColumn Field="@nameof(Cuenta_Arquos.Id_cuenta)" HeaderText="N CUENTA" TextAlign="TextAlign.Left" Width="100" />
+                            <GridColumn Field="@nameof(Cuenta_Arquos.Razon_social)" HeaderText="RAZON SOCIAL" TextAlign="TextAlign.Left" Width="230" />
+                            <GridColumn Field="@nameof(Cuenta_Arquos.Nombre_comercial)" HeaderText="NOM COMERCIAL" TextAlign="TextAlign.Left" Width="230" />
+                            <GridColumn Field="@nameof(Cuenta_Arquos.Direccion)" HeaderText="DIRECCION" TextAlign="TextAlign.Left" Width="140" />
+                            <GridColumn Field="@nameof(Cuenta_Arquos.Servicio)" HeaderText="SERVICIO" TextAlign="TextAlign.Left" Width="110" />
+                            <GridColumn Field="@nameof(Cuenta_Arquos.Colonia)" HeaderText="COLONIA" TextAlign="TextAlign.Left" Width="110" />
+                            <GridColumn Field="@nameof(Cuenta_Arquos.Poblacion)" HeaderText="POBLACION" TextAlign="TextAlign.Left" Width="110" />
+                            <GridColumn Field="@nameof(Cuenta_Arquos.Medidor)" HeaderText="MEDIDOR" TextAlign="TextAlign.Left" Width="110" />
+                            <GridColumn Field="@nameof(Cuenta_Arquos.Estatus)" HeaderText="ESTATUS" TextAlign="TextAlign.Left" Width="90" />
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+
+                <div class="p-1 d-flex justify-content-center align-items-center " style="grid-row: 3/4; grid-column: 1/2; align-items: center;">
+                    <MatButton Disabled="botonDesactivado" Unelevated="true" OnClick="@Cerrar_Modal_Value" style="width:260px;">Seleccionar Cuenta</MatButton>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public EventCallback<long?> CerrarModal { get; set; }
+    [Parameter]
+    public bool Show { get; set; }
+
+    SfGrid<Cuenta_Arquos> myGrid;
+    public BusquedaCuentaModel busquedaModel { get; set; }
+    public Cuenta_Arquos[] ItemsGrid { get; set; }
+    private string Titulo = "BUSQUEDA DE CUENTA";
+    private bool Busy = false;
+    private long? CuentaSeleccionada;
+    private bool botonDesactivado = true;
+    private Ruta oficinaActual;
+
+
+    protected override void OnInitialized() {
+        busquedaModel = new BusquedaCuentaModel();
+    }
+
+    public async Task Inicializar(Ruta ofi) {
+        await JSRuntime.InvokeVoidAsync("ConfigurateDragg", "");
+        ItemsGrid = null;
+        this.oficinaActual = ofi;
+        this.Titulo = $"{ofi.Oficina.ToUpper()} - BUSQUEDA DE CUENTA";
+    }
+    private async Task Busqueda_Click() {
+        this.Busy = true;
+        await Task.Delay(200);
+        var tmpItems = consultaGralService.BusquedaCuentas(oficinaActual.Id, busquedaModel.Nombre, busquedaModel.Medidor, busquedaModel.Direccion, busquedaModel.Colonia, (busquedaModel.SoloActivos) ? 1 : 0);
+        if (tmpItems.Length > 0) {
+            ItemsGrid = tmpItems;
+        }
+        else {
+            ItemsGrid = null;
+            Toaster.Add("No hay datos disponibles.", MatToastType.Info, "");
+        }
+        await Task.Delay(200);
+        this.Busy = false;
+    }
+
+    private async void TextBox_KeyDown(KeyboardEventArgs e) {
+        if (e.Key == "Enter") {
+            await JSRuntime.InvokeVoidAsync("FocusElement", "BotonBusquedaCuenta");
+        }
+    }
+    protected async Task Cerrar_Modal_Value() {
+        busquedaModel = new BusquedaCuentaModel();
+        await CerrarModal.InvokeAsync(CuentaSeleccionada);
+    }
+    protected async Task Cerrar_Modal() {
+        busquedaModel = new BusquedaCuentaModel();
+        await CerrarModal.InvokeAsync(null);
+    }
+    private void SelectionGrid_Changed(RowSelectEventArgs<Cuenta_Arquos> selectedRow) {
+        if (selectedRow.Data != null) {
+            CuentaSeleccionada = selectedRow.Data.Id_cuenta;
+            botonDesactivado = false;
+        }
+        else {
+            CuentaSeleccionada = null;
+            botonDesactivado = true;
+        }
+    }
+    private void SelectionGrid_Unselected() {
+        CuentaSeleccionada = null;
+        botonDesactivado = true;
+    }
+    private async Task RecordDoubleClickHandler(RecordDoubleClickEventArgs<Cuenta_Arquos> param) {
+        if (param.RowData != null) {
+            CuentaSeleccionada = param.RowData.Id_cuenta;
+            botonDesactivado = false;
+            await Cerrar_Modal_Value();
+        }
+    }
+}

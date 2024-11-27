@@ -1,0 +1,184 @@
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.ControlRezago.Models
+@inject IJSRuntime JSRuntime
+
+@if (Visible) {
+    <div class="busy-control">
+
+        <div id="draggable" class="SicemDialog-control" style="width:auto; height:auto;">
+
+            @* *********** Cabecera *********** *@
+            <div class="SicemDialog-header">
+                <div>ORDENES DE TRABAJO REZAGO</div>
+                <MatIcon @onclick="@Cerrar_Modal" Class="close-icon" style="margin-left: auto;" Icon="clear"></MatIcon>
+            </div>
+
+            @* *********** Contenido *********** *@
+            <div class="SicemDialog-content" style="@ObtnerDimensiones()">
+
+                @**** Inputs*@
+                <div class="d-flex align-items-center m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                    <div class="w-100 d-flex align-items-center">
+                        <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                    </div>
+                </div>
+
+                @**** DataGrid*@
+                <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                    <SfGrid @ref="dataGrid" DataSource="@datosGrid" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                        <GridColumns>
+                            <GridColumn Field="@nameof(ControlRezago_Eficacia_Resumen.Trabajo)" HeaderText="Trabajo" TextAlign="TextAlign.Left" Width="180" />
+                            <GridColumn Field="@nameof(ControlRezago_Eficacia_Resumen.PENDIENTES)" HeaderText="Pendientes" TextAlign="TextAlign.Center" Width="100" />
+                            <GridColumn Field="@nameof(ControlRezago_Eficacia_Resumen.EN_EJECUCION)" HeaderText="En Ejecucion" TextAlign="TextAlign.Center" Width="100" />
+                            <GridColumn Field="@nameof(ControlRezago_Eficacia_Resumen.REAL_EJEC)" HeaderText="Real Ejecutadas" TextAlign="TextAlign.Center" Width="100" />
+                            <GridColumn Field="@nameof(ControlRezago_Eficacia_Resumen.REAL_NO_EJEC)" HeaderText="Real No Ejecutadas" TextAlign="TextAlign.Center" Width="100" />
+                            <GridColumn Field="@nameof(ControlRezago_Eficacia_Resumen.REALIZADAS)" HeaderText="Realizadas" TextAlign="TextAlign.Center" Width="100" />
+                            <GridColumn Field="@nameof(ControlRezago_Eficacia_Resumen.CANCELADAS)" HeaderText="Canceladas" TextAlign="TextAlign.Center" Width="100" />
+                            <GridColumn Field="@nameof(ControlRezago_Eficacia_Resumen.TOTALES)" HeaderText="Total" TextAlign="TextAlign.Center" Width="100" />
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+
+                @**** Grafica*@
+                <div class="m-1 p-2 border rounded bg-white" style="grid-row: 3/4; grid-column: 1/2;">
+                    <SfChart Title="" Height="185">
+                        <ChartPrimaryXAxis Title="" ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+                        <ChartPrimaryYAxis Title="Usuarios"></ChartPrimaryYAxis>
+                        <ChartTooltipSettings Enable="true" Header="${point.x}" Shared="true" Format="${series.name}: ${point.y}"></ChartTooltipSettings>
+                        <ChartLegendSettings Visible="false" Position="LegendPosition.Right"></ChartLegendSettings>
+                        <ChartSeriesCollection>
+                            <ChartSeries DataSource="@datosGrafica" Name="Ordenes De Trabajo" XName="Descripcion" YName="Valor1" Type="ChartSeriesType.Column">
+                                <ChartMarker>
+                                    <ChartDataLabel Visible="true"></ChartDataLabel>
+                                </ChartMarker>
+                            </ChartSeries>
+                        </ChartSeriesCollection>
+                    </SfChart>
+                </div>
+            
+            </div>
+
+        </div>
+
+    </div>
+    
+}
+
+@code {
+
+    #region  "******** Parametros ********"
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter]
+    public EventCallback CerrarModal { get; set; }
+    [Parameter]
+    public DateTime Fecha1 { get; set; }
+    [Parameter]
+    public DateTime Fecha2 { get; set; }
+    [Parameter]
+    public int Subsistema { get; set; }
+    [Parameter]
+    public int Sector { get; set; }
+
+    List<int> GridFilas = new List<int>() { 50, 400, 200 };
+    List<int> GridColumnas = new List<int>() { 1020 };
+    #endregion
+    #region "******** Funciones Base ********"
+    private async Task Cerrar_Modal() {
+        this.datosGrid = new ControlRezago_Eficacia_Resumen[] { };
+        await CerrarModal.InvokeAsync("");
+    }
+    private string ObtnerDimensiones() {
+        var xB = new System.Text.StringBuilder();
+        xB.Append("height: 100%; width:100%; ");
+        xB.Append("display:grid; ");
+        xB.Append("grid-template-rows: ");
+        foreach (int FilaH in GridFilas) {
+            xB.Append(string.Format("{0}px ", FilaH));
+        }
+        xB.Append("; ");
+
+        xB.Append("grid-template-columns: ");
+        foreach (int ColW in GridColumnas) {
+            xB.Append(string.Format("{0}px ", ColW));
+        }
+        xB.Append("; ");
+
+        return xB.ToString();
+    }
+    #endregion
+
+
+    //"******** Variables ********"
+    SfGrid<ControlRezago_Eficacia_Resumen> dataGrid;
+    public ControlRezago_Eficacia_Resumen[] datosGrid;
+    public CharItem[] datosGrafica = new CharItem[] { };
+
+
+    //"******** Funciones Generales ********"
+    public async Task Inicializar(ControlRezago_Eficacia_Resumen[] datos) {
+        await JSRuntime.InvokeVoidAsync("ConfigurateDragg", null);
+        this.datosGrid = datos;
+
+
+        //***Preparar Datos Para la Grafica
+        int tot_pendientes = 0;
+        int tot_enEjecucion = 0;
+        int tot_realizadaEjecutadas = 0;
+        int tot_realizadaNoEjecutadas = 0;
+        int tot_canceladas = 0;
+
+        var tmpList = new List<CharItem>();
+        foreach (var item in datosGrid) {
+            tot_pendientes += item.PENDIENTES;
+            tot_enEjecucion += item.EN_EJECUCION;
+            tot_realizadaEjecutadas += item.REAL_EJEC;
+            tot_realizadaNoEjecutadas += item.REAL_NO_EJEC;
+            tot_canceladas += item.CANCELADAS;
+        }
+        tmpList.Add(new CharItem { Descripcion = "Pendientes", Valor1 = tot_pendientes });
+        tmpList.Add(new CharItem { Descripcion = "En Ejecucion", Valor1 = tot_enEjecucion });
+        tmpList.Add(new CharItem { Descripcion = "Realizadas Ejecutadas", Valor1 = tot_realizadaEjecutadas });
+        tmpList.Add(new CharItem { Descripcion = "Realizadas No Ejecutadas", Valor1 = tot_realizadaNoEjecutadas});
+        tmpList.Add(new CharItem { Descripcion = "Canceladas", Valor1 = tot_canceladas});
+
+        this.datosGrafica = tmpList.ToArray<CharItem>();
+    }
+
+
+    private async Task GenerarExcel() {
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private async Task GenerarPdf() {
+        string titulo = string.Format("Ingresos por Conceptos del {0} al {1}", this.Fecha1.ToString("dd/MM/yyyy"), this.Fecha2.ToString("dd/MM/yyyy"));
+        List<PdfHeaderFooterContent> xconts = new List<PdfHeaderFooterContent>();
+        xconts.Add(
+            new PdfHeaderFooterContent() {
+                Type = ContentType.Text,
+                Value = titulo,
+                Position = new PdfPosition() { X = 10, Y = 10 },
+                Style = new PdfContentStyle() {
+                    TextBrushColor = "#000000",
+                    FontSize = 13
+                }
+            }
+        );
+
+        await this.dataGrid.PdfExport(new PdfExportProperties {
+            PageOrientation = PageOrientation.Landscape,
+            Header = new PdfHeader {
+                Contents = xconts
+            },
+            FileName = string.Format("sicem_IngresosxDias{0}.pdf", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+    public class CharItem {
+        public string Descripcion { get; set; }
+        public int Valor1 { get; set; }
+    }
+}

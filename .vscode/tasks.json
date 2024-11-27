@@ -1,0 +1,110 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Sicem_Blazor.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "publish",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "--no-self-contained",
+                "-r",
+                "win7-x64"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "watch",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "watch",
+                "run",
+                "${workspaceFolder}/Sicem_Blazor.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "SicemContext",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "ef",
+                "dbcontext",
+                "scaffold",
+                "name=ConnectionStrings:SICEM",
+                "Microsoft.EntityFrameworkCore.SqlServer",
+                "--context",
+                "SicemContext",
+                "--context-dir",
+                "Data",
+                "--output-dir",
+                "Models/Entities/Sicem",
+                "--namespace",
+                "Sicem_Blazor.Models",
+                "--force"
+            ]
+        },
+        {
+            "label": "ArquosContext",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "ef",
+                "dbcontext",
+                "scaffold",
+                "name=ConnectionStrings:ARQUOS",
+                "Microsoft.EntityFrameworkCore.SqlServer",
+                "--context",
+                "ArquosContext",
+                "--context-dir",
+                "Data",
+                "--output-dir",
+                "Models/Entities/Arquos",
+                "--namespace",
+                "Sicem_Blazor.Models.Entities.Arquos",
+                "--table",
+                "Global.Cat_Estatus",
+                "--table",
+                "Padron.Cat_ClasesUsuario",
+                "--table",
+                "Padron.Cat_Colonias",
+                "--table",
+                "Padron.Cat_Conceptos",
+                "--table",
+                "Padron.Cat_TiposUsuario",
+                "--table",
+                "Padron.vw_Cat_Padron",
+                "--table",
+                "Padron.Cat_Giros",
+                "--table",
+                "Padron.Cat_NivelesSocioEconomicos",
+                "--table",
+                "Facturacion.Cat_Anomalias",
+                "--table",
+                "Facturacion.Cat_Servicios",
+                "--table",
+                "Facturacion.Cat_Tarifas",
+                "--table",
+                "Facturacion.Cat_TiposCalculo",
+                "--table",
+                "Facturacion.vw_Opr_Facturas",
+                "--force"
+            ]
+        }
+    ]
+}

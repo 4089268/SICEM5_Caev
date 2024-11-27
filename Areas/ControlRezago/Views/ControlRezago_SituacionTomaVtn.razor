@@ -1,0 +1,194 @@
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.ControlRezago.Models
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavManager
+
+
+@if (Visible) {
+    <div class="busy-control">
+
+        <div id="draggable" class="SicemDialog-control" style="width:auto; height:auto;">
+
+            @* *********** Cabecera *********** *@
+            <div class="SicemDialog-header">
+                <div>DETALLE SITUACIONES DE TOMA</div>
+                <MatIcon @onclick="@Cerrar_Modal" Class="close-icon" style="margin-left: auto;" Icon="clear"></MatIcon>
+            </div>
+
+            @* *********** Contenido *********** *@
+            <div class="SicemDialog-content" style="@ObtnerDimensiones()">
+
+                <div class="d-flex align-items-center m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+
+                    <div class="font-weight-bold" style="width:13rem;"> SITUACION: </div>
+                    <select class="form-select form-select-lg" @onchange="FiltrarDatos_TipoMovto" style="height:28px; margin-left:10px; width:210px">
+                        <option value="0" selected>TODOS</option>
+                        @foreach (var xKey in cat_situacion.Keys) {
+                            <option value="@xKey">@cat_situacion[xKey]</option>
+                        }
+                    </select>
+
+                    <div style="width:10rem;" />
+
+                    <div class="w-100 d-flex align-items-center">
+                        <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                        <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" Disabled="true">Generar Reporte <i class="fa fa-file-pdf-o ml-2" aria-hidden="true"></i></MatButton>
+                    </div>
+                </div>
+
+
+                <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                    <SfGrid @ref="dataGrid" DataSource="@datosGrid_filtrados" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                        <GridColumns>
+                            <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="55">
+                                <Template>
+                                    @{
+                                        var data = (context as ControlRezago_GestionCart_Detalle);
+                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Mostrar en Consulta General" @onclick="@( e => MostrarEnConsultaGeneral(data))">
+                                            <i class="fa fa-address-book-o" aria-hidden="true"></i>
+                                        </button>
+                                    }
+                                </Template>
+                            </GridColumn>
+                            <GridColumn Field="@nameof(ControlRezago_GestionCart_Detalle.Cuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="90" />
+                            <GridColumn Field="@nameof(ControlRezago_GestionCart_Detalle.Usuario)" HeaderText="Usuario" TextAlign="TextAlign.Left" Width="210" />
+                            <GridColumn Field="@nameof(ControlRezago_GestionCart_Detalle.Fecha_Req)" HeaderText="Fecha Req" TextAlign="TextAlign.Center" Width="100" />
+                            <GridColumn Field="@nameof(ControlRezago_GestionCart_Detalle.Fecha_Pago)" HeaderText="Fecha Pago" TextAlign="TextAlign.Center" Width="100" />
+                            <GridColumn Field="@nameof(ControlRezago_GestionCart_Detalle.MA)" HeaderText="Meses Adeudo" TextAlign="TextAlign.Center" Width="60" />
+                            <GridColumn Field="@nameof(ControlRezago_GestionCart_Detalle.Importe_Requerido)" HeaderText="Importe Req" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(ControlRezago_GestionCart_Detalle.Importe_Pago)" HeaderText="Importe Pago" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(ControlRezago_GestionCart_Detalle.Saldo_Actual)" HeaderText="Saldo Actual" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(ControlRezago_GestionCart_Detalle.Situacion)" HeaderText="Situacion" TextAlign="TextAlign.Center" Width="100" />
+                            <GridColumn Field="@nameof(ControlRezago_GestionCart_Detalle.Tipo_Usuario)" HeaderText="Tipo Usuario" TextAlign="TextAlign.Center" Width="140" />
+                            <GridColumn Field="@nameof(ControlRezago_GestionCart_Detalle.Tipo)" HeaderText="Tipo Pago" TextAlign="TextAlign.Center" Width="120" />
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+}
+
+@code {
+
+    #region  "******** Parametros ********"
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter]
+    public EventCallback CerrarModal { get; set; }
+    [Parameter]
+    public DateTime Fecha1 { get; set; }
+    [Parameter]
+    public DateTime Fecha2 { get; set; }
+    [Parameter]
+    public int Subsistema { get; set; }
+    [Parameter]
+    public int Sector { get; set; }
+
+    List<int> GridFilas = new List<int>() { 50, 600 };
+    List<int> GridColumnas = new List<int>() { 1020 };
+    #endregion
+    #region "******** Funciones Base ********"
+    private async Task Cerrar_Modal() {
+        this.datosGrid = new ControlRezago_GestionCart_Detalle[] { };
+        await CerrarModal.InvokeAsync("");
+    }
+    private string ObtnerDimensiones() {
+        var xB = new System.Text.StringBuilder();
+        xB.Append("height: 100%; width:100%; ");
+        xB.Append("display:grid; ");
+        xB.Append("grid-template-rows: ");
+        foreach (int FilaH in GridFilas) {
+            xB.Append(string.Format("{0}px ", FilaH));
+        }
+        xB.Append("; ");
+
+        xB.Append("grid-template-columns: ");
+        foreach (int ColW in GridColumnas) {
+            xB.Append(string.Format("{0}px ", ColW));
+        }
+        xB.Append("; ");
+
+        return xB.ToString();
+    }
+    #endregion
+
+
+    //"******** Variables ********"
+
+    SfGrid<ControlRezago_GestionCart_Detalle> dataGrid;
+    public ControlRezago_GestionCart_Detalle[] datosGrid;
+    public ControlRezago_GestionCart_Detalle[] datosGrid_filtrados;
+    public Dictionary<int, string> cat_situacion = new Dictionary<int, string>();
+
+
+
+    //"******** Funciones Generales ********"
+    public async Task Inicializar(ControlRezago_GestionCart_Detalle[] datos) {
+        await JSRuntime.InvokeVoidAsync("ConfigurateDragg", null);
+
+        this.datosGrid = datos;
+
+        foreach (ControlRezago_GestionCart_Detalle xItem in datosGrid) {
+            if (!cat_situacion.ContainsKey(xItem.Id_Situacion)) {
+                cat_situacion.Add(xItem.Id_Situacion, xItem.Situacion);
+            }
+        }
+        this.datosGrid_filtrados = this.datosGrid;
+
+    }
+    private void FiltrarDatos_TipoMovto(ChangeEventArgs e) {
+        int xld = int.Parse(e.Value.ToString());
+
+        if (xld == 0) {
+            this.datosGrid_filtrados = this.datosGrid;
+            return;
+        }
+
+        var xTmpList = new List<ControlRezago_GestionCart_Detalle>();
+        foreach (ControlRezago_GestionCart_Detalle xItem in this.datosGrid) {
+            if (xItem.Id_Situacion == xld) {
+                xTmpList.Add(xItem);
+            }
+        }
+
+        this.datosGrid_filtrados = xTmpList.ToArray();
+    }
+    private void MostrarEnConsultaGeneral(ControlRezago_GestionCart_Detalle e) {
+        NavManager.NavigateTo($"/ConsultaGeneral/{e.Cuenta}");
+    }
+
+    private async Task GenerarExcel() {
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private async Task GenerarPdf() {
+        string titulo = string.Format("Ingresos por Conceptos del {0} al {1}", this.Fecha1.ToString("dd/MM/yyyy"), this.Fecha2.ToString("dd/MM/yyyy"));
+        List<PdfHeaderFooterContent> xconts = new List<PdfHeaderFooterContent>();
+        xconts.Add(
+            new PdfHeaderFooterContent() {
+                Type = ContentType.Text,
+                Value = titulo,
+                Position = new PdfPosition() { X = 10, Y = 10 },
+                Style = new PdfContentStyle() {
+                    TextBrushColor = "#000000",
+                    FontSize = 13
+                }
+            }
+        );
+
+        await this.dataGrid.PdfExport(new PdfExportProperties {
+            PageOrientation = PageOrientation.Landscape,
+            Header = new PdfHeader {
+                Contents = xconts
+            },
+            FileName = string.Format("sicem_IngresosxDias{0}.pdf", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+}

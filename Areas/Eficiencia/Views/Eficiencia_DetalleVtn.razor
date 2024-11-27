@@ -1,0 +1,141 @@
+@using Sicem_Blazor.Eficiencia.Data
+@using Sicem_Blazor.Eficiencia.Models
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.DropDowns
+@inject IJSRuntime JSRuntime
+
+@if (Visible) {
+    <div class="busy-control">
+
+        <div id="draggable2" class="SicemDialog-control" style="width:auto; height:auto;">
+
+            @* *********** Cabecera *********** *@
+            <div class="SicemDialog-header">
+                <div>DETALLE EFICIENCIA</div>
+                <MatIcon @onclick="@Cerrar_Modal" Class="close-icon" style="margin-left: auto;" Icon="clear"></MatIcon>
+            </div>
+
+            @* *********** Contenido *********** *@
+            <div class="SicemDialog-content" style="@ObtnerDimensiones()">
+
+                <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                    <div class="w-100 d-flex align-items-center">
+                        <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                        <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" Disabled="true">Generar Reporte <i class="fa fa-file-pdf-o ml-2" aria-hidden="true"></i></MatButton>
+                    </div>
+                </div>
+
+                <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                    <SfGrid @ref="dataGrid" DataSource="@datosGrid" AllowSorting="true" AllowResizing="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                        <GridColumns> 
+                            <GridColumn Field="@nameof(Eficiencia_Detalle.Tipo_Usuario)" HeaderText="Tipo Usuario" TextAlign="TextAlign.Left" Width="120" />
+                            <GridColumn Field="@nameof(Eficiencia_Detalle.Facturacion)" HeaderText="Facturado" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(Eficiencia_Detalle.Por_Fac)" HeaderText="% Fact." TextAlign="TextAlign.Center" Width="80" />
+                            <GridColumn Field="@nameof(Eficiencia_Detalle.Cobrado)" HeaderText="Cobrado" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(Eficiencia_Detalle.Por_Cob)" HeaderText="% Cobr." TextAlign="TextAlign.Center" Width="80" />
+                            <GridColumn Field="@nameof(Eficiencia_Detalle.Descontado)" HeaderText="Descontado" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(Eficiencia_Detalle.Por_Des)" HeaderText="% Desc." TextAlign="TextAlign.Center" Width="80" />
+                            <GridColumn Field="@nameof(Eficiencia_Detalle.Anticipado)" HeaderText="Anticipado" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                            <GridColumn Field="@nameof(Eficiencia_Detalle.Por_Ant)" HeaderText="% Anti." TextAlign="TextAlign.Center" Width="80" />
+                            <GridColumn Field="@nameof(Eficiencia_Detalle.Por_Efi)" HeaderText="Eficiencia" TextAlign="TextAlign.Center" Width="90" />
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+}
+
+@code {
+
+    #region  "******** Parametros ********"
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter]
+    public EventCallback CerrarModal { get; set; }
+    [Parameter]
+    public DateTime Fecha1 { get; set; }
+    [Parameter]
+    public DateTime Fecha2 { get; set; }
+    [Parameter]
+    public int Subsistema { get; set; }
+    [Parameter]
+    public int Sector { get; set; }
+
+    List<int> GridFilas = new List<int>() { 50, 350};
+    List<int> GridColumnas = new List<int>() { 1020 };
+    #endregion
+    #region "******** Funciones Base ********"
+    private async Task Cerrar_Modal() {
+        this.datosGrid = new Eficiencia_Detalle[]{ };
+        await CerrarModal.InvokeAsync("");
+    }
+    private string ObtnerDimensiones() {
+        var xB = new System.Text.StringBuilder();
+        xB.Append("height: 100%; width:100%; ");
+        xB.Append("display:grid; ");
+        xB.Append("grid-template-rows: ");
+        foreach (int FilaH in GridFilas) {
+            xB.Append(string.Format("{0}px ", FilaH));
+        }
+        xB.Append("; ");
+
+        xB.Append("grid-template-columns: ");
+        foreach (int ColW in GridColumnas) {
+            xB.Append(string.Format("{0}px ", ColW));
+        }
+        xB.Append("; ");
+
+        return xB.ToString();
+    }
+    #endregion
+
+
+    //"******** Variables ********"
+
+    SfGrid<Eficiencia_Detalle> dataGrid;
+    public Eficiencia_Detalle[] datosGrid;
+
+
+    //"******** Funciones Generales ********"
+    public async Task Inicializar(Eficiencia_Detalle[] datos) {
+        await JSRuntime.InvokeVoidAsync("ConfigurateDragg2", "#draggable2");
+        this.datosGrid = datos;
+    }
+
+    private async Task GenerarExcel() {
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private async Task GenerarPdf() {
+        string titulo = string.Format("Ingresos por Conceptos del {0} al {1}", this.Fecha1.ToString("dd/MM/yyyy"), this.Fecha2.ToString("dd/MM/yyyy"));
+        List<PdfHeaderFooterContent> xconts = new List<PdfHeaderFooterContent>();
+        xconts.Add(
+            new PdfHeaderFooterContent() {
+                Type = ContentType.Text,
+                Value = titulo,
+                Position = new PdfPosition() { X = 10, Y = 10 },
+                Style = new PdfContentStyle() {
+                    TextBrushColor = "#000000",
+                    FontSize = 13
+                }
+            }
+        );
+
+        await this.dataGrid.PdfExport(new PdfExportProperties {
+            PageOrientation = PageOrientation.Landscape,
+            Header = new PdfHeader {
+                Contents = xconts
+            },
+            FileName = string.Format("sicem_IngresosxDias{0}.pdf", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+        
+
+}

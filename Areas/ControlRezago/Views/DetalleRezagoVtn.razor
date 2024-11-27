@@ -1,0 +1,100 @@
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.ControlRezago.Models
+@inject IJSRuntime JSRuntime
+
+    <VentanaSecundaria Titulo="@Titulo" Columnas="@GridColumnas" Filas="@GridFilas" CerrarVentana="@( e => Cerrar_Modal() )">
+        <Content>
+
+            <div class="p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <MatButton Class="mx-1 bg-success" Raised="true" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="DataGrid" DataSource="@DatosGrid" AllowPaging="@allowPagesGrid" AllowSorting="true" AllowResizing="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridPageSettings PageSize="1000"></GridPageSettings>
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="55">
+                            <Template>
+                                @{
+                                    var data = (context as DetalleRezago);
+                                    <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Mostrar en Consulta General" @onclick="@( e => MostrarDatosGenerales(data))">
+                                        <i class="fa fa-address-book-o" aria-hidden="true"></i>
+                                    </button>
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(DetalleRezago.Cuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Left" Width="110" />
+                        <GridColumn Field="@nameof(DetalleRezago.Nombre)" HeaderText="Nombre" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(DetalleRezago.Estatus)" HeaderText="Estatus" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(DetalleRezago.Localizacion)" HeaderText="Localizacion" TextAlign="TextAlign.Left" Width="210" />
+                        <GridColumn Field="@nameof(DetalleRezago.Direccion)" HeaderText="Direccion" TextAlign="TextAlign.Left" Width="190" />
+                        <GridColumn Field="@nameof(DetalleRezago.Tarifa)" HeaderText="Tarifa" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(DetalleRezago.Colonia)" HeaderText="Colonia" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(DetalleRezago.Lec_ant)" HeaderText="Lect. Ant." TextAlign="TextAlign.Center" Width="90" />
+                        <GridColumn Field="@nameof(DetalleRezago.Lec_act)" HeaderText="Lect. Act." TextAlign="TextAlign.Center" Width="90" />
+                        <GridColumn Field="@nameof(DetalleRezago.Consumo)" HeaderText="Consumo" TextAlign="TextAlign.Center" Width="90" />
+                        <GridColumn Field="@nameof(DetalleRezago.Calculo)" HeaderText="Calculo" TextAlign="TextAlign.Center" Width="90" />
+                        <GridColumn Field="@nameof(DetalleRezago.Promedio)" HeaderText="Promedio" TextAlign="TextAlign.Center" Width="90" />
+                        <GridColumn Field="@nameof(DetalleRezago.Medidor)" HeaderText="Medidor" TextAlign="TextAlign.Center" Width="90" />
+                        <GridColumn Field="@nameof(DetalleRezago.Agua)" HeaderText="Agua" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(DetalleRezago.Dren)" HeaderText="Dren" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(DetalleRezago.Sane)" HeaderText="Sane" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(DetalleRezago.Otros)" HeaderText="Actuali" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(DetalleRezago.RezAgua)" HeaderText="Rez Agua" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(DetalleRezago.RezDren)" HeaderText="Rez Dren" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(DetalleRezago.RezTrat)" HeaderText="Rez Trat" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(DetalleRezago.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(DetalleRezago.Iva)" HeaderText="IVA" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(DetalleRezago.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+            
+        </Content>
+    </VentanaSecundaria>
+
+    @if(DatosGenerales_visible){
+        <DatosGenerales_Dialog IdOficina="@EnlaceSeleccionado.Id" Cuenta="@CuentaActual" CerrarVentana="@(e => DatosGenerales_visible = false)"/>
+    }
+
+@code {
+    [Parameter] public string Titulo {get;set;} = "";
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    [Parameter] public List<DetalleRezago> DatosGrid {get;set;}
+    [Parameter] public IEnlace EnlaceSeleccionado {get;set;}
+
+    SfGrid<DetalleRezago> DataGrid;
+    bool allowPagesGrid = false;
+    private List<double> GridFilas = new List<double>() { 50, .75 };
+    private List<double> GridColumnas = new List<double>() { .95 };
+    private string CuentaActual = "0";
+    private bool DatosGenerales_visible = false;
+    
+    
+    protected override void OnInitialized()
+    {
+        if(DatosGrid != null){
+            if(DatosGrid.Count() > 2000){
+                this.allowPagesGrid = true;
+            }
+        }
+    }
+    private async Task Cerrar_Modal() {
+       await CerrarModal.InvokeAsync(null);
+    }
+    private async Task GenerarExcel() {
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private void MostrarDatosGenerales(DetalleRezago e) {
+        Console.WriteLine("Cuenta seleccionado:" + e.Cuenta + "  Enlace Seleccionado: " + EnlaceSeleccionado.Nombre);
+        this.CuentaActual = e.Cuenta.ToString();
+        this.DatosGenerales_visible = true;
+    }
+
+}

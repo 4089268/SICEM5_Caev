@@ -1,0 +1,72 @@
+@page "/Configuracion"
+@inject NavigationManager navigationManager
+
+<div class="title-page" style="grid-area:1/1/2/2;">CONFIGURACIÓN</div>
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="./">Inicio</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Configuracion</li>
+  </ol>
+</nav>
+
+<div class="section-title"> Usuarios</div>
+<div class="c-items">
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center shadow" @onclick="@( e => navigationManager.NavigateTo("/Configuracion/CatUsuarios") )">
+        <div class="c-label text-center">Configuracion Usuarios</div>
+        <i class="c-icon fa fa-user"></i>
+    </div>
+    
+</div>
+
+<div class="section-title"> Catalogos</div>
+<div class="c-items">
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center shadow" @onclick="@( e => navigationManager.NavigateTo("/CatalogoTarifas") )">
+        <div class="c-label">Tarifas</div>
+        <i class="c-icon fa fa-usd"></i>
+    </div>
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center shadow" @onclick="@( e => navigationManager.NavigateTo("/Configuracion/Conceptos") )">
+        <div class="c-label">Conceptos</div>
+        <i class="c-icon fa fa-receipt"></i>
+    </div>
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center shadow" @onclick="@( e => navigationManager.NavigateTo("/Configuracion/CatalogoCFE") )">
+        <div class="c-label">Catalogo CFE</div>
+        <i class="c-icon fa fa-book"></i>
+    </div>
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center shadow" @onclick="@( e => navigationManager.NavigateTo("/Configuracion/CatalogoUMA") )">
+        <div class="c-label">Catalogo UMA</div>
+        <i class="c-icon fa fa-book"></i>
+    </div>
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center shadow" @onclick="@( e => navigationManager.NavigateTo("/Configuracion/CatalogoINPC") )">
+        <div class="c-label">Catalogo INPC</div>
+        <i class="c-icon fa fa-book"></i>
+    </div>
+    
+</div>
+
+<hr/>
+
+<div class="section-title">Historial</div>
+<div class="c-items">
+    <div class="card-s border p-3 d-flex flex-column align-items-center shadow" @onclick="@( e => navigationManager.NavigateTo("/HistorialModificaciones") )">
+        <div class="c-label">Modificaciones</div>
+        <i class="c-icon fa fa-clock"></i>
+    </div>
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center shadow" @onclick="@(e => navigationManager.NavigateTo("/HistorialConexiones") )" >
+        <div class="c-label">Conexiones</div>
+        <i class="c-icon fa fa-network-wired"></i>
+    </div>
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center shadow" @onclick="@(e => navigationManager.NavigateTo("/Sessiones") )" >
+        <div class="c-label">Sesiones Activas</div>
+        <i class="c-icon fa fa-network-wired"></i>
+    </div>
+
+</div>

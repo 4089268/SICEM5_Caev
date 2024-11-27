@@ -1,0 +1,160 @@
+@inject IMatToaster MatToaster
+
+<VentanaSecundaria Titulo="Campos a Exportar" Filas="@GridFilas" Columnas="@GridColumnas" CerrarVentana="@(e => CerrarVentana_Click(false))">
+    <Content>
+        <div class="p-2" style="width:100%; height:100%; grid-area:1/1/2/2">
+            <SfGrid @ref="@DataGrid1" DataSource="@CatCamposExportar" TValue="Dictionary<string, string>" Height="100%" Width="100%" EnableHover="true">
+                <GridEvents RowSelected="RowSelectHandler" OnRecordDoubleClick="RecordDoubleClickHandler" TValue="Dictionary<string, string>"></GridEvents>
+                <GridColumns>
+                    <GridColumn HeaderText="Campos Disponibles" TextAlign="TextAlign.Center" Width="120">
+                        <Template>
+                            @{
+                                var data = (context as Dictionary<string, string>);
+                                <div>
+                                    @data["Desc"]
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </div>
+
+        <div class="p-2 d-flex flex-column align-items-center justify-content-center" style="width:100%; height:100%; grid-area:1/2/2/3">
+            <button class="button m-4" @onclick="ButtonRight2Left_Click"> @("<<") </button>
+            <button class="button m-4" @onclick="ButtonLeft2Right_Click"> @(">>") </button>
+        </div>
+
+        <div class="p-2 " style="width:100%; height:100%; grid-area:1/3/2/4">
+            <SfGrid @ref="@DataGrid2" DataSource="@CamposAExportar" TValue="Dictionary<string, string>" Height="100%" Width="100%" EnableHover="true">
+                <GridEvents RowSelected="RowSelectHandler2" OnRecordDoubleClick="RecordDoubleClickHandler2" TValue="Dictionary<string, string>"></GridEvents>
+                <GridColumns>
+                    <GridColumn HeaderText="Campo Exportar" TextAlign="TextAlign.Center" Width="120">
+                        <Template>
+                            @{
+                                var data = (context as Dictionary<string, string>);
+                                <div>
+                                    @data["Desc"]
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </div>
+
+        <div class="p-2 d-flex align-items-center justify-content-center" style="width:100%; height:100%; grid-area:2/1/3/4">
+            <button class="button px-3 py-2" style="width: 14rem;" @onclick="@(e => CerrarVentana_Click(true))">Exportar</button>
+        </div>
+
+    </Content>
+</VentanaSecundaria>
+@code {
+
+    [Parameter] public EventCallback<List<string>> OnClosed {get;set;}
+
+    private List<Dictionary<string, string>> CatCamposExportar = new List<Dictionary<string, string>>(){
+        new Dictionary<string, string>() { { "Nombre", "RazonSocial" }, { "Desc", "Razon Social"} },
+        new Dictionary<string, string>() { { "Nombre", "Direccion"}, { "Desc", "Direccion"} },
+        new Dictionary<string, string>() { { "Nombre", "Colonia"}, { "Desc", "Colonia"} },
+        new Dictionary<string, string>() { { "Nombre", "CodigoPostal"}, { "Desc", "Codigo Postal"} },
+        new Dictionary<string, string>() { { "Nombre", "CallePpal"}, { "Desc", "Calle Principal"} },
+        new Dictionary<string, string>() { { "Nombre", "Ruta"}, { "Desc", "Ruta"} },
+        new Dictionary<string, string>() { { "Nombre", "Localizacion"}, { "Desc", "Localizacion"} },
+        new Dictionary<string, string>() { { "Nombre", "Sb"}, { "Desc", "Subsistema"} },
+        new Dictionary<string, string>() { { "Nombre", "Sector"}, { "Desc", "Sector"} },
+        new Dictionary<string, string>() { { "Nombre", "Manzana"}, { "Desc", "Manzana"} },
+        new Dictionary<string, string>() { { "Nombre", "Lote"}, { "Desc", "Lote"} },
+        new Dictionary<string, string>() { { "Nombre", "Giro"}, { "Desc", "Giro"} },
+        new Dictionary<string, string>() { { "Nombre", "Clase_Usuario"}, { "Desc", "Clase Usuario"} },
+        new Dictionary<string, string>() { { "Nombre", "Estatus"}, { "Desc", "Estatus"} },
+        new Dictionary<string, string>() { { "Nombre", "MesAdeudoAct"}, { "Desc", "Meses Adeudo Act"} },
+        new Dictionary<string, string>() { { "Nombre", "Servicio"}, { "Desc", "Servicio"} },
+        new Dictionary<string, string>() { { "Nombre", "Tipo_Usuario"}, { "Desc", "Tipo Usuario"} },
+        new Dictionary<string, string>() { { "Nombre", "Situacion"}, { "Desc", "Situacion Actual"} },
+        new Dictionary<string, string>() { { "Nombre", "AnomaliaAct"}, { "Desc", "Anomalia Actual"} },
+        new Dictionary<string, string>() { { "Nombre", "ConsumoAct"}, { "Desc", "Consumo Actual"} },
+        new Dictionary<string, string>() { { "Nombre", "Diametro"}, { "Desc", "Diametro"} },
+        new Dictionary<string, string>() { { "Nombre", "Total"}, { "Desc", "Saldo Actual"} }
+    };
+    private List<Dictionary<string, string>> CamposAExportar  = new List<Dictionary<string, string>>(){
+        new Dictionary<string, string>() { { "Nombre", "Id_Cuenta"}, { "Desc", "Num Contrato"} }
+    };
+
+    private Dictionary<string, string> CampoSeleccionado;
+
+    private List<double> GridFilas = new List<double>(){.8, 40 };
+    private List<double> GridColumnas = new List<double>(){200, 30 , 200};
+    private SfGrid<Dictionary<string, string>> DataGrid1;
+    private SfGrid<Dictionary<string, string>> DataGrid2;
+
+    private async Task CerrarVentana_Click(bool param){
+        if(param){
+            if(CamposAExportar.Count() <= 0 ){
+                MatToaster.Add("No selecciono ningun campo a exportar", MatToastType.Warning );
+                return;
+            }
+            var _listaCampos = CamposAExportar.Select(item => item["Nombre"].ToString()).ToList<string>();
+            await OnClosed.InvokeAsync(_listaCampos);
+        }else{
+            await OnClosed.InvokeAsync(null);
+        }
+    }
+
+    public async Task RowSelectHandler(RowSelectEventArgs<Dictionary<string, string>> args)
+    {
+        this.CampoSeleccionado = args.Data;
+        await DataGrid2.ClearRowSelectionAsync();
+    }
+    public void RecordDoubleClickHandler(RecordDoubleClickEventArgs<Dictionary<string, string>> args)
+    {
+        var campo = args.RowData;
+        if(!CamposAExportar.Contains(campo)){
+            CamposAExportar.Add(campo);
+            CatCamposExportar.Remove(campo);
+
+            DataGrid1.Refresh();
+            DataGrid2.Refresh();
+        }
+    }
+
+    public async Task RowSelectHandler2(RowSelectEventArgs<Dictionary<string, string>> args)
+    {
+        this.CampoSeleccionado = args.Data;
+        await DataGrid1.ClearRowSelectionAsync();
+    }
+    public void RecordDoubleClickHandler2(RecordDoubleClickEventArgs<Dictionary<string, string>> args)
+    {
+        var campo = args.RowData;
+        if(!CatCamposExportar.Contains(campo)){
+            CatCamposExportar.Add(campo);
+            CamposAExportar.Remove(campo);
+
+            DataGrid1.Refresh();
+            DataGrid2.Refresh();
+        }
+    }
+
+    public void ButtonLeft2Right_Click(){
+        if(CampoSeleccionado != null){
+            if(!CamposAExportar.Contains(CampoSeleccionado)){
+                CatCamposExportar.Remove(CampoSeleccionado);
+                CamposAExportar.Add(CampoSeleccionado);
+                DataGrid1.Refresh();
+                DataGrid2.Refresh();
+            }
+        }
+
+    }
+    public void ButtonRight2Left_Click(){
+        if(CampoSeleccionado != null){
+            if(!CatCamposExportar.Contains(CampoSeleccionado)){
+                CamposAExportar.Remove(CampoSeleccionado);
+                CatCamposExportar.Add(CampoSeleccionado);
+                DataGrid1.Refresh();
+                DataGrid2.Refresh();
+            }
+        }
+    }
+
+}

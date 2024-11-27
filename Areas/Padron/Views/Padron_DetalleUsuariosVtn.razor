@@ -1,0 +1,115 @@
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Padron.Models
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavManager
+
+@if (Visible) {
+    <VentanaSecundaria Titulo="@Titulo" Columnas="@GridColumnas" Filas="@GridFilas" CerrarVentana="@( e => Cerrar_Modal() )">
+        <Content>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="dataGrid" DataSource="@datosGrid" AllowPaging="@allowPagesGrid" AllowSorting="true" AllowResizing="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridPageSettings PageSize="1000"></GridPageSettings>
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="55">
+                            <Template>
+                                @{
+                                    var data = (context as Padron_DetallePadron);
+                                    <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Mostrar en Consulta General" @onclick="@( e => MostrarEnConsultaGeneral(data))">
+                                        <i class="fa fa-address-book-o" aria-hidden="true"></i>
+                                    </button>
+                                }
+                            </Template>
+                        </GridColumn>
+                        @* <GridColumn Field="@nameof(Padron_DetallePadron.Id_Padron)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="120" /> *@
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Cuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Left" Width="110" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Nombre)" HeaderText="Nombre" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Estatus)" HeaderText="Estatus" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Localizacion)" HeaderText="Localizacion" TextAlign="TextAlign.Left" Width="210" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Direccion)" HeaderText="Direccion" TextAlign="TextAlign.Left" Width="190" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Tarifa)" HeaderText="Tarifa" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Colonia)" HeaderText="Colonia" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Lec_Ant)" HeaderText="Lect. Ant." TextAlign="TextAlign.Center" Width="80" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Lec_Act)" HeaderText="Lect. Act." TextAlign="TextAlign.Center" Width="80" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Consumo)" HeaderText="Consumo" TextAlign="TextAlign.Center" Width="80" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Calculo)" HeaderText="Calculo" TextAlign="TextAlign.Center" Width="80" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Promedio)" HeaderText="Promedio" TextAlign="TextAlign.Center" Width="80" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Medidor)" HeaderText="Medidor" TextAlign="TextAlign.Center" Width="80" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Agua)" HeaderText="Agua" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Dren)" HeaderText="Dren" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Sane)" HeaderText="Sane" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Act)" HeaderText="Actuali" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Ragua)" HeaderText="Rez Agua" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Rdren)" HeaderText="Rez Dren" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Rtrat)" HeaderText="Rez Trat" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Iva)" HeaderText="IVA" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Padron_DetallePadron.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+            
+        </Content>
+    </VentanaSecundaria>
+
+    @if(DatosGenerales_visible){
+        <DatosGenerales_Dialog IdOficina="@Enlace.Id" Cuenta="@CuentaActual" CerrarVentana="@(e => DatosGenerales_visible = false)"/>
+    }
+
+}
+
+@code {
+
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    public IEnlace Enlace {get;set;}
+
+
+    SfGrid<Padron_DetallePadron> dataGrid;
+    public Padron_DetallePadron[] datosGrid;
+    string Titulo = "";
+    bool allowPagesGrid = false;
+    private List<double> GridFilas = new List<double>() { 50, .75 };
+    private List<double> GridColumnas = new List<double>() { .95 };
+    public string CuentaActual = "0";
+    private bool DatosGenerales_visible = false;
+
+    
+    private async Task Cerrar_Modal() {
+        this.datosGrid = new Padron_DetallePadron[] { };
+        this.allowPagesGrid = false;
+        await CerrarModal.InvokeAsync("");
+    }
+    public async Task Inicializar(Padron_DetallePadron[] datos, string t) {
+        await JSRuntime.InvokeVoidAsync("ConfigurateDragg", null);
+        this.Titulo = t;
+        if (datos.Length > 3000) {
+            this.allowPagesGrid = true;
+        }
+        this.datosGrid = datos;
+    }
+    private void MostrarEnConsultaGeneral(Padron_DetallePadron e) {
+        this.CuentaActual = e.Cuenta.ToString();
+        DatosGenerales_visible = true;
+    }
+    private async Task GenerarExcel() {
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+}

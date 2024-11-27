@@ -1,0 +1,292 @@
+@using System.IO
+@using System.Collections
+@using System.Linq
+@using System.Data
+@inject SicemService sicemService
+
+<div class="d-flex flex-column align-items-start" style="height: 100%;">
+    <div class="d-flex align-items-center w-100" style="padding: 1rem 1rem 0.5rem 1rem; ">
+        <div class="ofi-title mb-0 mr-3">Oficinas:</div>
+        @if(CatOficinas!=null){
+            <NsMultiselectBox Datos="@CatOficinas" Width="500" Height="33" DatosSeleccionados="@FiltroBusqueda.Id_Oficinas" OpcionTodos="true" />
+        }else{
+            <select style="height: 30px; width: 500px; opacity: .5; padding: 0px 5px; cursor:wait;"><option disable>Cargando oficinas....</option></select>
+        }
+    </div>
+    <div class="d-flex align-items-center w-100" style="padding: 1rem 1rem 0.5rem 1rem; ">
+        <div class="px-2 h5 py-auto">Seleccionar cuentas:</div>
+
+        <InputFile OnChange="@LoadFiles" multiple accept=".xlsx, .xls" />
+
+    </div>
+
+    @******* Datos Generales *******@
+    <div class="filtro f1">
+        <div class="title">Datos Generales</div>
+        <div class="items">
+
+            <div class="item">
+                <label>Razon Social</label>
+                <input type="text" @bind-value="@FiltroBusqueda.RazonSocial" />
+            </div>
+
+            <div class="item">
+                <label>Nombre Comercial</label>
+                <input type="text" @bind-value="@FiltroBusqueda.NombreComercial" />
+            </div>
+
+            <div class="item">
+                <label>Direccion</label>
+                <input type="text" @bind-value="@FiltroBusqueda.Direccion" />
+            </div>
+
+            <div class="item">
+                <label>Colonia</label>
+                <input type="text" @bind-value="@FiltroBusqueda.Colonia" />
+            </div>
+
+            <div class="item">
+                <label>Poblacion</label>
+                <input type="text" @bind-value="@FiltroBusqueda.Localidad" />
+            </div>
+
+            @if(CatEstatus != null){
+                <div class="item">
+                    <label>Estatus</label>
+                    <NsMultiselectBox Datos="@CatEstatus" PlaceHolderText="TODOS"  DatosSeleccionados="@FiltroBusqueda.Id_Estatus"/>
+                </div>
+            }else{
+                <div class="item">
+                    <label>Estatus</label>
+                    <input type="text" placeholder="CatEstatus..."/>
+                </div>
+            }
+
+            <div class="item">
+                <label>Tiene Ubicacion</label>
+                <select class="ns-input" @bind="FiltroBusqueda.TieneUbicacion">
+                    <option value="0">Cualquiera</option>
+                    <option value="1">Si</option>
+                    <option value="2">No</option>
+                </select>
+            </div>
+
+            <div class="item">
+                <label>Subsistema</label>
+                <NsRangeNumeric Format="n0" @bind-OpcionSeleccionado="@FiltroBusqueda.Subsistema_Opcion" @bind-Valor1="@FiltroBusqueda.Subsistema_Valor1" @bind-Valor2="@FiltroBusqueda.Subsistema_Valor2" />
+            </div>
+
+            <div class="item">
+                <label>Sector</label>
+                <NsRangeNumeric Format="n0" @bind-OpcionSeleccionado="@FiltroBusqueda.Sector_Opcion" @bind-Valor1="@FiltroBusqueda.Sector_Valor1" @bind-Valor2="@FiltroBusqueda.Sector_Valor2" />
+            </div>
+
+        </div>
+    </div>
+
+    @******* Datos Facturacion *******@
+    <div class="filtro f2">
+        <div class="title">Datos Facturacion</div>
+        <div class="items">
+
+            <div class="item">
+                <label>Saldo</label>
+                <NsRangeNumeric Format="c2" @bind-OpcionSeleccionado="@FiltroBusqueda.Saldo_Opcion" @bind-Valor1="@FiltroBusqueda.Saldo_Valor1" @bind-Valor2="@FiltroBusqueda.Saldo_Valor2" />
+            </div>
+
+            @if(CatSetvicios != null){
+                <div class="item">
+                    <label>Servicio</label>
+                    <NsMultiselectBox Datos="@CatSetvicios" PlaceHolderText="TODOS" DatosSeleccionados="@FiltroBusqueda.Id_Servicios" />
+                </div>
+            }else {
+                <div class="item">
+                    <label>Servicio</label>
+                    <input type="text" placeholder="Cargando..."/>
+                </div>
+            }
+
+            @if(CatTarifas != null){
+                <div class="item">
+                    <label>Tarifa</label>
+                    <NsMultiselectBox Datos="@CatTarifas" PlaceHolderText="TODOS" DatosSeleccionados="@FiltroBusqueda.Id_Tarifas" />
+                </div>
+            }else{
+                <div class="item">
+                    <label>Tarifa</label>
+                    <input type="text" placeholder="Cargando..."/>
+                </div>
+            }
+
+            @if(CatTipoCalculo != null){
+                <div class="item">
+                    <label>Tipo Calculo</label>
+                    <NsMultiselectBox Datos="@CatTipoCalculo" DatosSeleccionados="@FiltroBusqueda.Id_TipoCalculo" />
+                </div>
+            }else{
+                <div class="item">
+                    <label>Calculo Act</label>
+                    <input type="text" placeholder="Cargando..."/>
+                </div>
+            }
+
+            <div class="item">
+                <label>Consumo</label>
+                <NsRangeNumeric Format="n0" @bind-OpcionSeleccionado="@FiltroBusqueda.Consumo_Opcion" @bind-Valor1="@FiltroBusqueda.Consumo_Valor1" @bind-Valor2="@FiltroBusqueda.Consumo_Valor2" />
+            </div>
+
+            @if(CatAnomalias != null){
+                <div class="item">
+                    <label>Anomalia</label>
+                    <NsMultiselectBox Datos="@CatAnomalias" PlaceHolderText="TODOS" DatosSeleccionados="@FiltroBusqueda.Id_Anomalias" />
+                </div>
+            }else {
+                <div class="item">
+                    <label>Anomalia</label>
+                    <input type="text" placeholder="Cargando..."/>
+                </div>
+            }
+
+             <div class="item">
+                <label>Meses Adeudo</label>
+                <NsRangeNumeric Format="n0" @bind-OpcionSeleccionado="@FiltroBusqueda.MesesAdeudo_Opcion" @bind-Valor1="@FiltroBusqueda.MesesAdeudo_Valor1" @bind-Valor2="@FiltroBusqueda.MesesAdeudo_Valor2" />
+            </div>
+
+            @* <div class="item">
+                <label>LPS Pagados</label>
+                <NsRangeNumeric Format="n0" @bind-OpcionSeleccionado="@FiltroBusqueda.LPS_Opcion" @bind-Valor1="@FiltroBusqueda.LPS_Valor1" @bind-Valor2="@FiltroBusqueda.LPS_Valor2" />
+            </div> *@
+
+        </div>
+    </div>
+
+    @******* Clasificacion de Usuario *******@
+    <div class="filtro f2">
+        <div class="title">Clasificacion del Usuario</div>
+        <div class="items">
+
+             @if(CatClaseUsuaro != null) {
+                <div class="item">
+                    <label>Clase de Usuario</label>
+                    <NsMultiselectBox Datos="@CatClaseUsuaro" PlaceHolderText="TODOS" DatosSeleccionados="@FiltroBusqueda.Id_ClaseUsuario" />
+                </div>
+            }else{
+                <div class="item">
+                    <label>Clase de Usuario</label>
+                    <input type="text" placeholder="Cargando..."/>
+                </div>
+            }
+
+            @if(CatGiro != null){
+                <div class="item">
+                    <label>Giro</label>
+                    <NsMultiselectBox Datos="@CatGiro" PlaceHolderText="TODOS" DatosSeleccionados="@FiltroBusqueda.Id_Giro" />
+                </div>
+            }else{
+                <div class="item">
+                    <label>Giro</label>
+                    <input type="text" placeholder="Cargando..."/>
+                </div>
+            }
+
+            <div class="item">
+                <label>Es Alto Consumidor</label>
+                <select class="ns-input" @bind="FiltroBusqueda.AltoConsumidor_Opcion">
+                    <option value="0">Cualquiera</option>
+                    <option value="1">Si</option>
+                    <option value="2">No</option>
+                </select>
+            </div>
+
+            <div class="item">
+                <label>Es Draef</label>
+                <select class="ns-input" @bind="FiltroBusqueda.EsDraef_Opcion">
+                    <option value="0">Cualquiera</option>
+                    <option value="1">Si</option>
+                    <option value="2">No</option>
+                </select>
+            </div>
+
+            <div class="item">
+                <label>Tiene Pozo</label>
+                <select class="ns-input" @bind="FiltroBusqueda.TienePozo_Opcion">
+                    <option value="0">Cualquiera</option>
+                    <option value="1">Si</option>
+                    <option value="2">No</option>
+                </select>
+            </div>
+
+        </div>
+    </div>
+
+    @******* Acciones *******@
+    <div class="d-flex mt-auto justify-content-center aling-items-center w-100" >
+
+        <div class="button px-5 py-3 m-3" @onclick="OnProcesar_Click">
+            <i class="fa fa-binoculars mr-2"></i>
+            <label class="mb-0">Realizar Consulta</label>
+        </div>
+
+    </div>
+
+</div>
+
+<BusyIndicator Busy="cargando" ContentText="Cargando catalogos..." />
+
+@code{
+
+    [Parameter] public EventCallback<AnalisysInfoFilter> ProcesarConsulta {get;set;}
+    [Parameter] public Dictionary<int, string> CatOficinas {get;set;}
+    [Parameter] public Dictionary<int, string> CatEstatus {get;set;}
+    [Parameter] public Dictionary<int, string> CatTipoCalculo {get;set;}
+    [Parameter] public Dictionary<int, string> CatSetvicios {get;set;}
+    [Parameter] public Dictionary<int, string> CatTarifas {get;set;}
+    [Parameter] public Dictionary<int, string> CatAnomalias {get;set;}
+    [Parameter] public Dictionary<int, string> CatGiro {get;set;}
+    [Parameter] public Dictionary<int, string> CatClaseUsuaro {get;set;}
+    
+    bool cargando {get;set;} = false;
+
+    public AnalisysInfoFilter FiltroBusqueda {get;set;} = new AnalisysInfoFilter();
+
+    private async Task OnProcesar_Click(){
+        await ProcesarConsulta.InvokeAsync(this.FiltroBusqueda);
+    }
+
+    private async Task LoadFiles(InputFileChangeEventArgs e){
+        cargando = true;
+        await Task.Delay(100); 
+        
+
+        // procesar archivo excel
+        IBrowserFile browserFile = e.File;
+        Console.WriteLine($"Archivo seleccionado {browserFile.Name}");
+        var _tmpPath = string.Format("{0}/tmp_{1}.{2}", System.IO.Path.GetTempPath(), Guid.NewGuid().ToString(), browserFile.Name.Split(".").Last());
+        using (FileStream fs = new FileStream(_tmpPath, System.IO.FileMode.CreateNew)){
+            using(var stream = browserFile.OpenReadStream()){
+                await stream.CopyToAsync(fs);
+            }
+        }
+        Console.WriteLine($"Archivo generado: {_tmpPath}");
+        var procesarExcel = new ProcesarExcel();
+        var _datos = procesarExcel.ToDataTableFirstCol(_tmpPath);
+        Console.WriteLine($"Total Filas: {_datos.Rows.Count}");
+
+        // obtener cuentas
+        var _cuentas = new List<int>();
+        foreach(DataRow row in _datos.Rows){
+            var _cuenta = ConvertUtils.ParseInteger(row[0].ToString());
+            if(!_cuentas.Contains(_cuenta)){
+                _cuentas.Add(_cuenta);
+            }
+        }
+
+        Console.WriteLine($"Total Cuentas: {_cuentas.Count()}");
+
+        FiltroBusqueda.Cuentas = _cuentas;
+        
+        await Task.Delay(100);
+        cargando = false;
+    }
+
+}

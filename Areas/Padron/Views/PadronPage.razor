@@ -1,0 +1,602 @@
+@page "/Padron"
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Charts
+@using Sicem_Blazor.Padron.Models
+@inject NavigationManager NavManager
+@inject IMatToaster Toaster
+@inject PadronService padronService
+@inject SicemService sicemService
+
+<div class="layout-page1">
+
+    <div class="title-page" style="grid-area:1/1/2/2;">CONSULTA DE PADRÓN</div>
+
+    <div class="border rounded bg-white px-2 d-flex align-items-center" style="grid-area:2/1/3/2;">
+        <SeleccionarFecha ProcesarParam="@Procesar" MostrarPeriodos="false" OcultarSector="true" />
+    </div>
+
+    @* ****** Acciones ****** *@
+    <div class="border rounded bg-white p-2 d-flex align-items-center" style="grid-area:3/1/4/2;">
+        <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" @onclick="ExportarExcel_Click">Exportar Excel</MatButton>
+        <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" Disabled="true">Generar Reporte</MatButton>
+    </div>
+
+    @* ****** DataGrid ****** *@
+    <div class="border rounded bg-white p-2 d-flex" style="grid-area:4/1/5/2;">
+        <SfGrid @ref="DataGrid" DataSource="@DatosGrid" TValue="Padron_Resumen" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true"
+                AllowPdfExport="true" Height="99%" Width="100%" EnableHover="true">
+            <GridColumns>
+
+                <GridColumn Width="40">
+                    <Template>
+                        @{
+                            var data = (context as Padron_Resumen);
+                            if (data.Id > 0) {
+                                @switch (data.Estatus) {
+
+                                    case 1:
+                                        <i class="fas fa-check-circle" style="color:green; font-size:1.5rem;"></i>
+                                        break;
+
+                                    case 2:
+                                        <i class="fas fa-exclamation-circle" style="color:red; font-size:1.5rem;"></i>
+                                        break;
+
+                                    default:
+                                        <div class="spinner-border p-2" role="status"> </div>
+                                        break;
+                                }
+                            }
+                        }
+                    </Template>
+                </GridColumn>
+
+                <GridColumn Field="@nameof(Padron_Resumen.Oficina)" HeaderText="Oficina" TextAlign="TextAlign.Left" Width="140" />
+                <GridColumn Field="@nameof(Padron_Resumen.FechaModificacion)" HeaderText="Actualizado" TextAlign="TextAlign.Center" Width="190" />
+
+                <GridColumn HeaderText="Usuarios Activos" TextAlign="TextAlign.Center" Width="140">
+                    <Template>
+                        @{
+                            var data = (context as Padron_Resumen);
+                            <div class="link-butn d-flex flex-column align-items-center" @onclick="@(e => PadronGridDetalle_Click(data, 1))">
+                                <div class="txt-usuarios">@data.Activos_Usuarios.ToString("n0")</div>
+                                <div>@(FormateoMoneda(data.Activos_Adeudos))</div>
+                            </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(Padron_Resumen.Activos_Usuarios)" HeaderText="Usuarios Activos" TextAlign="TextAlign.Center" Width="125" Format="n0" Visible="false" />
+                <GridColumn Field="@nameof(Padron_Resumen.Activos_Adeudos)" HeaderText="Importe Activos" TextAlign="TextAlign.Right" Width="125" Format="c2" Visible="false" />
+
+                <GridColumn HeaderText="Usuarios Sala Espera" TextAlign="TextAlign.Center" Width="140">
+                    <Template>
+                        @{
+                            var data = (context as Padron_Resumen);
+                            <div class="link-btn text-dark d-flex flex-column align-items-center" @onclick="@(e => PadronGridDetalle_Click(data, 2))">
+                                <div class="txt-usuarios">@data.Espera_Usuarios.ToString("n0")</div>
+                                <div>@(FormateoMoneda(data.Espera_Adeudos))</div>
+                            </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(Padron_Resumen.Espera_Usuarios)" HeaderText="Usuarios Sala Espera" TextAlign="TextAlign.Center" Width="125" Format="n0" Visible="false" />
+                <GridColumn Field="@nameof(Padron_Resumen.Espera_Adeudos)" HeaderText="Importe Sala Espera" TextAlign="TextAlign.Right" Width="125" Format="c2" Visible="false" />
+
+                <GridColumn HeaderText="Usuarios Baja Temporal" TextAlign="TextAlign.Center" Width="140">
+                    <Template>
+                        @{
+                            var data = (context as Padron_Resumen);
+                            <div class="link-btn text-dark d-flex flex-column align-items-center" @onclick="@(e => PadronGridDetalle_Click(data, 3))">
+                                <div class="txt-usuarios">@data.BajaTemp_Usuarios.ToString("n0")</div>
+                                <div>@(FormateoMoneda(data.BajaTemp_Adeudos))</div>
+                            </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(Padron_Resumen.BajaTemp_Usuarios)" HeaderText="Usuarios Baja Tmp" TextAlign="TextAlign.Center" Width="125" Format="n0" Visible="false" />
+                <GridColumn Field="@nameof(Padron_Resumen.BajaTemp_Adeudos)" HeaderText="Importe Baja Tmp" TextAlign="TextAlign.Right" Width="125" Format="c2" Visible="false" />
+
+                <GridColumn HeaderText="Usuarios Baja Definitiva" TextAlign="TextAlign.Center" Width="140">
+                    <Template>
+                        @{
+                            var data = (context as Padron_Resumen);
+                            <div class="link-btn text-dark d-flex flex-column align-items-center" @onclick="@(e => PadronGridDetalle_Click(data, 4))">
+                                <div class="txt-usuarios">@data.BajaDef_Usuarios.ToString("n0")</div>
+                                <div>@(FormateoMoneda(data.BajaDef_Adeudos))</div>
+                            </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(Padron_Resumen.BajaDef_Usuarios)" HeaderText="Usuarios Baja Def" TextAlign="TextAlign.Center" Width="125" Format="n0" Visible="false" />
+                <GridColumn Field="@nameof(Padron_Resumen.BajaDef_Adeudos)" HeaderText="Importe Baja Def" TextAlign="TextAlign.Right" Width="125" Format="c2" Visible="false" />
+
+                <GridColumn HeaderText="Usuarios Congelados" TextAlign="TextAlign.Center" Width="140">
+                    <Template>
+                        @{
+                            var data = (context as Padron_Resumen);
+                            <div class="link-btn text-dark d-flex flex-column align-items-center" @onclick="@(e => PadronGridDetalle_Click(data, 5))">
+                                <div class="txt-usuarios">@data.Conge_Usuarios.ToString("n0")</div>
+                                <div>@(FormateoMoneda(data.Conge_Adeudos))</div>
+                            </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(Padron_Resumen.Conge_Usuarios)" HeaderText="Usuarios Congelados" TextAlign="TextAlign.Center" Width="125" Format="n0" Visible="false" />
+                <GridColumn Field="@nameof(Padron_Resumen.Conge_Adeudos)" HeaderText="Importe Congelados" TextAlign="TextAlign.Right" Width="125" Format="c2" Visible="false" />
+
+                <GridColumn HeaderText="Total Usuarios" TextAlign="TextAlign.Center" Width="140">
+                    <Template>
+                        @{
+                            var data = (context as Padron_Resumen);
+                            <div class="link-btn text-dark d-flex flex-column align-items-center" @onclick="@(e => PadronGridDetalle_Click(data, 6))">
+                                <div class="txt-usuarios">@data.Total_Usuarios.ToString("n0")</div>
+                                <div>@(FormateoMoneda(data.Total_Adeudos))</div>
+                            </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(Padron_Resumen.Total_Usuarios)" HeaderText="Usuarios Total" TextAlign="TextAlign.Center" Width="125" Format="n0" Visible="false" />
+                <GridColumn Field="@nameof(Padron_Resumen.Total_Adeudos)" HeaderText="Importe Total" TextAlign="TextAlign.Right" Width="125" Format="c2" Visible="false" />
+
+                <GridColumn HeaderText="Acciones" TextAlign="TextAlign.Left" Width="140">
+                    <Template>
+                        @{
+                            var data = (context as Padron_Resumen);
+                            if (data.Id > 0) {
+                                <div class="d-flex p-1">
+                                    <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Contratos Realizados" disabled="@(data.Estatus != 1 )" @onclick=@( e => ContratosRealizados_Click(data) )>
+                                        <i class="fa fa-bookmark" aria-hidden="true"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Modificaciones de Tarifa" disabled="@(data.Estatus != 1 )" @onclick=@( e => ModificacionesTarifa_Click(data) )>
+                                        <i class="fa fa-bookmark" aria-hidden="true"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Bitacora ABC" disabled="@(data.Estatus != 1 )" @onclick="( e => BitacoraABC_Clikc(data))">
+                                        <i class="fa fa-bookmark" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            }
+                        }
+                    </Template>
+                </GridColumn>
+            </GridColumns>
+        </SfGrid>
+    </div>
+
+    <!--- ****** Graficas ****** -->
+    <div class="d-flex" style="grid-area:5/1/6/2;" >
+        <SfChart @ref="GraficaUsuarios" Height="100%" Width="100%" Title="Grafica Usuarios">
+            <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+            <ChartPrimaryYAxis Visible="false" LabelFormat="n0" />
+            <ChartTooltipSettings Enable="true" Header="Ingresos" Format="<b>${series.name}</b> : ${point.y}" Shared="true"></ChartTooltipSettings>
+            <ChartLegendSettings Visible="true" Position="LegendPosition.Right"></ChartLegendSettings>
+            <ChartSeriesCollection>
+
+                <ChartSeries DataSource="@DatosGrafica" Name="Usuarios Activos" XName="Descripcion" YName="Valor1" Type="ChartSeriesType.StackingBar">
+                    <ChartMarker>
+                        <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Middle" />
+                    </ChartMarker>
+                </ChartSeries>
+
+                <ChartSeries DataSource="@DatosGrafica" Name="Usuarios Espera" XName="Descripcion" YName="Valor2" Type="ChartSeriesType.StackingBar">
+                    <ChartMarker>
+                        <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Middle" />
+                    </ChartMarker>
+                </ChartSeries>
+
+                <ChartSeries DataSource="@DatosGrafica" Name="Usuarios Baja Temporal" XName="Descripcion" YName="Valor3" Type="ChartSeriesType.StackingBar">
+                    <ChartMarker>
+                        <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Middle" />
+                    </ChartMarker>
+                </ChartSeries>
+
+                <ChartSeries DataSource="@DatosGrafica" Name="Usuarios Baja Definitiva" XName="Descripcion" YName="Valor4" Type="ChartSeriesType.StackingBar">
+                    <ChartMarker>
+                        <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Middle" />
+                    </ChartMarker>
+                </ChartSeries>
+
+                <ChartSeries DataSource="@DatosGrafica" Name="Usuarios Congelados" XName="Descripcion" YName="Valor5" Type="ChartSeriesType.StackingBar">
+                    <ChartMarker>
+                        <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Middle" />
+                    </ChartMarker>
+                </ChartSeries>
+
+            </ChartSeriesCollection>
+        </SfChart>
+    </div>
+
+</div>
+
+
+<style type="text/css">
+    .txt-usuarios{
+        font-weight:bold;
+        font-size:1.2rem;
+    }
+</style>
+
+
+@* ****** Dialogos y ventanas secundarias ****** *@
+<Padron_ContratosVtn @ref="VtnContratos" Visible="@VtnContratos_Visible" CerrarModal="@( e => VtnContratos_Visible = false )" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector"/>
+<Padron_ModifTarifasVtn @ref="VtnModifTarifas" Visible="@VtnModifTarifas_Visible" CerrarModal="@(()=> VtnModifTarifas_Visible  = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+<Padron_ModifABCVtn @ref="VtnModifABC" Visible="@VtnModifABC_Visible" CerrarModal="@(()=> VtnModifABC_Visible = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+<Padron_ColoniasVtn @ref="VtnColoniasPadron" Visible="@VtnColoniasPadron_Visible" CerrarModal="@(()=> VtnColoniasPadron_Visible = false )" />
+<Padron_SectoresVtn @ref="VtnSectoresPadron" Visible="@VtnSectoresPadron_Visible" CerrarModal="@(()=> VtnSectoresPadron_Visible = false )" />
+<Padron_DetalleUsuariosVtn @ref="VtnPadronDetalle" Visible="@VtnPadronDetalle_Visible" CerrarModal="@( e => VtnPadronDetalle_Visible = false)" />
+@if(ResumenVtnVisible){
+    <ResumenVtn Datos="@DatosResumen" Titulo="@tituloResumen" OnClosed="@(e => ResumenVtnVisible = false)"  Enlace="@EnlaceSeleccionado" />
+}
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+
+
+@code{
+    private SfGrid<Padron_Resumen> DataGrid { get; set; }
+    private SfChart GraficaUsuarios {get; set;}
+
+    private bool busyDialog = false;
+    private DateTime f1, f2;
+    private int Subsistema, Sector;
+    private List<Padron_Resumen> DatosGrid { get; set; }
+    private List<ChartItem> DatosGrafica { get; set; }
+    private IEnlace EnlaceSeleccionado {get;set;}
+    private Padron_ContratosVtn VtnContratos;
+    private bool VtnContratos_Visible = false;
+    private Padron_ModifTarifasVtn VtnModifTarifas;
+    private bool VtnModifTarifas_Visible = false;
+    private Padron_ModifABCVtn VtnModifABC;
+    private bool VtnModifABC_Visible = false;
+
+    private Padron_ColoniasVtn VtnColoniasPadron {get;set;}
+    private bool VtnColoniasPadron_Visible = false;
+    private Padron_SectoresVtn VtnSectoresPadron {get;set;}
+    private bool VtnSectoresPadron_Visible = false;
+    private Padron_DetalleUsuariosVtn VtnPadronDetalle  {get;set;}
+    private bool VtnPadronDetalle_Visible {get;set;} = false;
+
+    private bool ResumenVtnVisible = false;
+    private List<Padron_DetallePadron> DatosResumen {get;set;}
+    private string tituloResumen = "";
+
+    //********* Funciones  *********
+    protected override void OnInitialized() {
+        var _now = DateTime.Now;
+        this.f1 = new DateTime(_now.Year, _now.Month, 1);
+        this.f2 = new DateTime(_now.Year, _now.Month, DateTime.DaysInMonth(_now.Year, _now.Month));
+        this.Subsistema = 0;
+        this.Sector = 0;
+    }
+    public void Procesar(SeleccionarFechaEventArgs e) {
+        this.f1 = e.Fecha1;
+        this.f2 = e.Fecha2;
+        this.Subsistema = e.Subsistema;
+        this.Sector = e.Sector;
+
+        var enlaces = sicemService.ObtenerOficinasDelUsuario();
+        var oficinas = sicemService.ObtenerEnlaces().Where(item => enlaces.Select(i => i.Id).Contains(item.Id)).ToArray();
+        this.DatosGrid = new List<Padron_Resumen>();
+        this.DatosGrafica = new List<ChartItem>();
+        var Tareas = new List<Task>();
+
+        //*** Generar items
+        foreach(var oficina in oficinas){
+            var _itemGrid = new Padron_Resumen() {
+                Estatus = 0,
+                Enlace = oficina
+            };
+            this.DatosGrid.Add(_itemGrid);
+
+            var _itemGraf = new ChartItem() {
+                Id= oficina.Id,
+                Descripcion = oficina.Oficina
+            };
+            this.DatosGrafica.Add(_itemGraf);
+
+
+            Tareas.Add(new Task( () => ProcesarConsulta(oficina) ));
+
+        }
+
+        if(oficinas.Length > 1) {
+            var _itemTotal = new Padron_Resumen();
+            this.DatosGrid.Add(_itemTotal);
+        }
+
+        Tareas.ForEach(item => item.Start());
+
+    }
+    private void Procesar_Datos_Grafica(){
+
+        //*** Datos Usuarios
+        var tmpList1 = new List<ChartItem>();
+        foreach (var item in this.DatosGrid.OrderByDescending(item => item.Enlace.Id).ToList()) {
+            if (item.Id > 0) {
+                var newItem = new ChartItem();
+                newItem.Id = item.Enlace.Id;
+                newItem.Descripcion = item.Oficina;
+                newItem.Valor1 = item.Activos_Usuarios;
+                newItem.Valor2 = item.Espera_Usuarios;
+                newItem.Valor3 = item.BajaTemp_Usuarios;
+                newItem.Valor4 = item.BajaDef_Usuarios;
+                newItem.Valor5 = item.Conge_Usuarios;
+                tmpList1.Add(newItem);
+            }
+        }
+        this.DatosGrafica = tmpList1;
+    }
+    private void ProcesarConsulta(IEnlace oficina){
+        var tmpDatos = padronService.ObtenerPadronResumen(oficina, f1.Year, f1.Month, Subsistema, Sector);
+        
+        var _random = new Random();
+        var _sleepTime = _random.Next(100,3000);
+        System.Threading.Thread.Sleep(_sleepTime);
+
+        lock(DatosGrid){
+            var _itemGrid = this.DatosGrid.Where(item => item.Id == oficina.Id).FirstOrDefault();
+            if( _itemGrid != null) {
+                _itemGrid.Estatus = tmpDatos.Estatus;
+                _itemGrid.Activos_Usuarios = tmpDatos.Activos_Usuarios;
+                _itemGrid.Activos_Adeudos = tmpDatos.Activos_Adeudos;
+                _itemGrid.Espera_Usuarios = tmpDatos.Espera_Usuarios;
+                _itemGrid.Espera_Adeudos = tmpDatos.Espera_Adeudos;
+                _itemGrid.BajaTemp_Usuarios = tmpDatos.BajaTemp_Usuarios;
+                _itemGrid.BajaTemp_Adeudos = tmpDatos.BajaTemp_Adeudos;
+                _itemGrid.BajaDef_Usuarios = tmpDatos.BajaDef_Usuarios;
+                _itemGrid.BajaDef_Adeudos = tmpDatos.BajaDef_Adeudos;
+                _itemGrid.Conge_Usuarios = tmpDatos.Conge_Usuarios;
+                _itemGrid.Conge_Adeudos = tmpDatos.Conge_Adeudos;
+                _itemGrid.Total_Usuarios = tmpDatos.Total_Usuarios;
+                _itemGrid.Total_Adeudos = tmpDatos.Total_Adeudos;
+                _itemGrid.FechaModificacion = tmpDatos.FechaModificacion;
+            }
+            RecalculatFilaTotal();
+            this.DataGrid.Refresh();
+        }
+        
+        lock(DatosGrafica){
+            var _itemGrafica = this.DatosGrafica.Where(item => item.Id == oficina.Id).FirstOrDefault();
+            if( _itemGrafica != null) {
+                _itemGrafica.Valor1 = (decimal)tmpDatos.Activos_Usuarios;
+                _itemGrafica.Valor2 = (decimal)tmpDatos.Espera_Usuarios;
+                _itemGrafica.Valor3 = (decimal)tmpDatos.BajaTemp_Usuarios;
+                _itemGrafica.Valor4 = (decimal)tmpDatos.BajaDef_Usuarios;
+                _itemGrafica.Valor5 = (decimal)tmpDatos.Conge_Usuarios;
+            }
+            try {
+                this.GraficaUsuarios.RefreshLiveData();
+            }
+            catch (Exception) { }
+        }
+    }
+    private void RecalculatFilaTotal(){
+        var _itemTotal = this.DatosGrid.Where(item => item.Id == 0).FirstOrDefault();
+        if( _itemTotal != null) {
+            var _datos = this.DatosGrid.Where(item => item.Id > 0 ).ToList();
+            _itemTotal.Activos_Usuarios = _datos.Sum(item => item.Activos_Usuarios);
+            _itemTotal.Activos_Adeudos = _datos.Sum(item => item.Activos_Adeudos);
+            _itemTotal.Espera_Usuarios = _datos.Sum(item => item.Espera_Usuarios);
+            _itemTotal.Espera_Adeudos = _datos.Sum(item => item.Espera_Adeudos);
+            _itemTotal.BajaTemp_Usuarios = _datos.Sum(item => item.BajaTemp_Usuarios);
+            _itemTotal.BajaTemp_Adeudos = _datos.Sum(item => item.BajaTemp_Adeudos);
+            _itemTotal.BajaDef_Usuarios = _datos.Sum(item => item.BajaDef_Usuarios);
+            _itemTotal.BajaDef_Adeudos = _datos.Sum(item => item.BajaDef_Adeudos);
+            _itemTotal.Conge_Usuarios = _datos.Sum(item => item.Conge_Usuarios);
+            _itemTotal.Conge_Adeudos = _datos.Sum(item => item.Conge_Adeudos);
+            _itemTotal.Total_Usuarios = _datos.Sum(item => item.Total_Usuarios);
+            _itemTotal.Total_Adeudos = _datos.Sum(item => item.Total_Adeudos);
+        }
+
+    }
+
+
+    private async Task ContratosRealizados_Click(Padron_Resumen data){
+        if (VtnContratos_Visible) {
+            return;
+        }
+
+        this.busyDialog = true;
+        await Task.Delay(200);
+
+        var tmpdata = padronService.ObtenerContratosRealizados(data.Enlace, f1.Year, f1.Month);
+        if (tmpdata == null) {
+            Toaster.Add("Hubo un error al procesar la petici�n, int�ntelo mas tarde.", MatToastType.Warning);
+            await Task.Delay(100);
+            this.busyDialog = false;
+            return;
+        }
+
+        if(tmpdata.Length <= 0) {
+            Toaster.Add("No hay contratos realizados en este periodo..", MatToastType.Info);
+            await Task.Delay(100);
+            this.busyDialog = false;
+            return;
+        }
+
+
+        //*** Cargar catalago tarifas
+        var catTarifas = sicemService.CatalogoTarifas(data.Enlace.Id);
+
+
+        //*** Inicializar ventana secundaria
+        VtnContratos_Visible = true;
+        VtnContratos.Titulo = $"{data.Enlace.Nombre.ToUpper()} - CONTRATOS REALIZADOS";
+        VtnContratos.EnlaceActual = data.Enlace;
+        await VtnContratos.Inicializar(tmpdata, catTarifas);
+
+        await Task.Delay(200);
+        this.busyDialog = false;
+    }
+    private async Task ModificacionesTarifa_Click(Padron_Resumen data) {
+        if(VtnModifTarifas_Visible) {
+            return;
+        }
+        this.busyDialog = true;
+        await Task.Delay(200);
+
+        var tmpdata = padronService.ObtenerModifiTarifas(data.Enlace, this.f1.Year, this.f1.Month);
+        if (tmpdata == null) {
+            Toaster.Add("Hubo un error al procesar la petici�n, int�ntelo mas tarde.", MatToastType.Warning);
+        }
+        if(tmpdata.Count() <= 0) {
+            Toaster.Add("No hay datos disponibles, para este periodo.", MatToastType.Info);
+        }
+        else {
+            VtnModifTarifas_Visible = true;
+            VtnModifTarifas.Titulo = $"{data.Enlace.Nombre.ToUpper()} - MODIFICACIONES DE TARIFAS";
+            VtnModifTarifas.OficinaActual = data.Enlace;
+            await VtnModifTarifas.Inicializar(tmpdata.ToArray());
+        }
+        await Task.Delay(200);
+        this.busyDialog = false;
+    }
+    private async Task BitacoraABC_Clikc(Padron_Resumen data){
+        if (VtnModifABC_Visible) {
+            return;
+        }
+        this.busyDialog = true;
+        await Task.Delay(200);
+
+        var tmpdata = padronService.ObtenerModificacionesABC(data.Enlace, this.f1.Year, this.f1.Month);
+        if (tmpdata == null) {
+            Toaster.Add("Hubo un error al procesar la petici�n, int�ntelo mas tarde.", MatToastType.Warning);
+        }
+        if (tmpdata.Modificaciones.Length <= 0) {
+            Toaster.Add("No hay datos disponibles, para este periodo.", MatToastType.Info);
+        }
+        else {
+            VtnModifABC_Visible = true;
+            VtnModifABC.Titulo = $"{data.Enlace.Nombre.ToUpper()} - MODIFICACIONES ABC";
+            VtnModifABC.OficinaActual = data.Enlace;
+            await VtnModifABC.Inicializar(tmpdata);
+        }
+        await Task.Delay(200);
+        this.busyDialog = false;
+    }
+
+    private async Task ExportarExcel_Click(){
+        var p = new ExcelExportProperties {
+            FileName = $"Sicem_{Guid.NewGuid().ToString().Replace("-","")}.xlsx",
+            IncludeHiddenColumn = true
+        };
+        await DataGrid.ExportToExcelAsync(excelExportProperties: p);
+    }
+    private string FormateoMoneda(decimal valor){
+        return valor.ToString("c2");
+    }
+    private async Task PadronColonias_Click(Padron_Resumen data){
+        if(VtnColoniasPadron_Visible){
+            return;
+        }
+
+        this.busyDialog = true;
+        await Task.Delay(200);
+
+        var _datos = padronService.ObtenerPadronPorColonia(data.Enlace, this.f1.Year, this.f1.Month);
+        if(_datos.Count() <= 0){
+            Toaster.Add("No hay datos disponibles", MatToastType.Info);
+        }else{
+            VtnColoniasPadron.Inicializar(_datos.ToList(), data.Enlace);
+            VtnColoniasPadron.Titulo = $"{data.Enlace.Nombre} - PADRON POR COLONIAS";
+            VtnColoniasPadron_Visible = true;
+        }
+
+        await Task.Delay(200);
+        this.busyDialog = false;
+    }
+    private async Task PadronSectores_Click(Padron_Resumen data){
+        if(VtnSectoresPadron_Visible){
+            return;
+        }
+
+        this.busyDialog = true;
+        await Task.Delay(200);
+
+        var _datos = padronService.ObtenerPadronPorSectores(data.Enlace, this.f1.Year, this.f1.Month);
+        if(_datos.Count() <= 0){
+            Toaster.Add("No hay datos disponibles", MatToastType.Info);
+        }else{
+            VtnSectoresPadron.Inicializar(_datos.ToList(), data.Enlace);
+            VtnColoniasPadron.Titulo = $"{data.Enlace.Nombre} - PADRON POR SECTORES";
+            VtnSectoresPadron_Visible = true;
+        }
+
+        await Task.Delay(200);
+        this.busyDialog = false;
+
+    }
+
+    private async Task PadronGridDetalle_Click(Padron_Resumen data, int opcion){
+
+        if(ResumenVtnVisible || data.Id <= 0){
+            return;
+        }
+
+        DatosResumen = null;
+
+        busyDialog = true;
+        await Task.Delay(200);
+
+        var _estatus = CalcularIdEstatus(opcion);
+        this.EnlaceSeleccionado = data.Enlace;
+
+        DatosResumen = padronService.ObtenerDetallePadron(data.Enlace, f1.Year, f1.Month, this.Subsistema, this.Sector, (int) _estatus["id"]).ToList();
+        if(DatosResumen.Count() <= 0){
+            Toaster.Add("No hay datos disponibles para mostrar", MatToastType.Warning);
+        }else {
+            tituloResumen = $"{_estatus["descripcion"]} de {f1.ToString("MMMM")} del {f1.ToString("yyyy")} ".ToUpper();
+            ResumenVtnVisible = true;
+        }
+
+        await Task.Delay(200);
+        busyDialog = false;
+        
+    }
+
+    public Dictionary<string,object> CalcularIdEstatus(int opcion){
+        var _idEstatus = 0;
+        var _estatus = "";
+
+        switch(opcion){
+            //*** Usuarios Activos
+            case 1:
+                _idEstatus = 1;
+                _estatus = "usuarios Activos";
+                break;
+
+            //*** Sala de espera
+            case 2:
+                _idEstatus = 2;
+                _estatus = "Usuarios en Sala de Espera ";
+                break;
+
+            //*** Baja temporal
+            case 3:
+                _idEstatus = 3;
+                _estatus = "Usuarios con Baja Temporal";
+                break;
+
+            //*** Baja definitiva
+            case 4:
+                _idEstatus = 4;
+                _estatus = "Usuarios con Baja Definitiva";
+                break;
+
+            //*** Usuarios Congelados
+            case 5:
+                _idEstatus = 51;
+                _estatus = "Usuarios Congelados";
+                break;
+
+            //*** Total Usuarios
+            case 6:
+                _idEstatus = 0;
+                _estatus = "Usuarios";
+                break;
+        }
+
+        return new Dictionary<string,object>(){
+            {"id",_idEstatus},
+            {"descripcion",_estatus}
+        };
+
+    }
+}

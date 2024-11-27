@@ -1,0 +1,243 @@
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Grids
+
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavManager
+
+@if (Visible) {
+
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@CerrarModal" Filas="@(new double[]{ 50, 50, 530 })" Columnas="@(new double[]{ .85})" >
+        <Content>
+            <div class="d-flex align-items-center m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+
+                @if (Filtro_Trabajos) {
+                    <div class="ml-4 font-weight-bold" style="font-size: 1.1rem;"> Trabajo: </div>
+                    <select class="form-select form-select-lg" @onchange="@((ChangeEventArgs e) => ComboBox_SelectionChanged("trabajo",e.Value))" style="height:28px; margin-left:10px; width:210px">
+                        <option style="font-size: 1.2rem;" value="-1" selected>TODOS</option>
+                        @foreach (int itemKey in cat_trabajos.Keys) {
+                            <option style="font-size: 1.2rem;" value="@itemKey">@cat_trabajos[itemKey]</option>
+                        }
+                    </select>
+                }
+
+                @if (Filtro_Colonia) {
+                    <div class="ml-4 font-weight-bold" style="font-size: 1.1rem;"> Colonia: </div>
+                    <select class="form-select form-select-lg" @onchange="@((ChangeEventArgs e) => ComboBox_SelectionChanged("colonia",e.Value))" style="height:28px; margin-left:10px; width:210px">
+                        <option style="font-size: 1.2rem;" value="-1" selected>TODOS</option>
+                        @foreach (int itemKey in cat_colonias.Keys) {
+                            <option style="font-size: 1.2rem;" value="@itemKey">@cat_colonias[itemKey]</option>
+                        }
+                    </select>
+                }
+
+                @if (Filtro_Tarifa) {
+                    <div class="ml-4 font-weight-bold" style="font-size: 1.1rem;"> Tarifa: </div>
+                    <select class="form-select form-select-lg" @onchange="@((ChangeEventArgs e) => ComboBox_SelectionChanged("tarifa",e.Value))" style="height:28px; margin-left:10px; width:180px">
+                        <option style="font-size: 1.2rem;" value="-1" selected>TODOS</option>
+                        @foreach (int itemKey in cat_tarifas.Keys) {
+                            <option style="font-size: 1.2rem;" value="@itemKey">@cat_tarifas[itemKey]</option>
+                        }
+                    </select>
+                }
+
+                @if (Filtro_Estatus) {
+                    <div class="ml-4 font-weight-bold" style="font-size: 1.1rem;"> Estatus: </div>
+                    <select class="form-select form-select-lg" @onchange="@((ChangeEventArgs e) => ComboBox_SelectionChanged("estatus",e.Value))" style="height:28px; margin-left:10px; width:180px">
+                        <option style="font-size: 1.2rem;" value="-1" selected>TODOS</option>
+                        @foreach (int itemKey in cat_estatus.Keys) {
+                            <option style="font-size: 1.2rem;" value="@itemKey">@cat_estatus[itemKey]</option>
+                        }
+                    </select>
+                }
+
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 3/4; grid-column: 1/2;">
+                <SfGrid @ref="dataGrid" DataSource="@datosGrid" AllowPaging="@allowPagesGrid" AllowSorting="true" AllowResizing="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridPageSettings PageSize="500"></GridPageSettings>
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="55">
+                            <Template>
+                                @{
+                                    var data = (context as Ordenes_Detalle);
+                                    <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Datos Generales" @onclick="@( e => MostrarEnConsultaGeneral(data))" disabled="@(data.Cuenta <= 0)">
+                                        <i class="fa fa-address-book-o" aria-hidden="true"></i>
+                                    </button>
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(Ordenes_Detalle.Orden)" HeaderText="Id Orden" TextAlign="TextAlign.Center" Width="120" />
+                        <GridColumn Field="@nameof(Ordenes_Detalle.Cuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(Ordenes_Detalle.Nombre)" HeaderText="Nombre" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Ordenes_Detalle.Trabajo)" HeaderText="Trabajo" TextAlign="TextAlign.Left" Width="140" />
+                        <GridColumn Field="@nameof(Ordenes_Detalle.Fecha_Genero)" HeaderText="Fecha Gen." TextAlign="TextAlign.Center" Width="120" />
+                        <GridColumn Field="@nameof(Ordenes_Detalle.Colonia)" HeaderText="Colonia" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(Ordenes_Detalle.Estatus)" HeaderText="Estatus" TextAlign="TextAlign.Center" Width="90" />
+                        <GridColumn Field="@nameof(Ordenes_Detalle.Tarifa)" HeaderText="Tarifa" TextAlign="TextAlign.Center" Width="80" />
+                        <GridColumn Field="@nameof(Ordenes_Detalle.Genero)" HeaderText="Genero" TextAlign="TextAlign.Center" Width="140" />
+                        <GridColumn Field="@nameof(Ordenes_Detalle.Motivo)" HeaderText="Motivo" TextAlign="TextAlign.Left" Width="240" />
+                        <GridColumn Field="@nameof(Ordenes_Detalle.Resultado)" HeaderText="Resultado" TextAlign="TextAlign.Left" Width="240" />
+                        <GridColumn Field="@nameof(Ordenes_Detalle.Fecha_Realizo)" HeaderText="Fecha Rea." TextAlign="TextAlign.Center" Width="120" />
+                        <GridColumn Field="@nameof(Ordenes_Detalle.Realizo)" HeaderText="Realizo" TextAlign="TextAlign.Left" Width="140" />
+                        @*<GridColumn Field="@nameof(Ordenes_Detalle.Departamento)" HeaderText="Departamento" TextAlign="TextAlign.Left" Width="160" /> *@
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+
+    @if(DatosGenerales_visible){
+        <DatosGenerales_Dialog IdOficina="@IdOficina" Cuenta="@CuentaActual" CerrarVentana="@(e => DatosGenerales_visible = false)"/>
+    }
+
+}
+
+@code {
+
+    [Parameter] public bool Visible { get; set; }
+
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    [Parameter] public bool Filtro_Tarifa { get; set; } = true;
+    [Parameter] public bool Filtro_Colonia { get; set; } = true;
+    [Parameter] public bool Filtro_Trabajos { get; set; } = true;
+    [Parameter] public bool Filtro_Genero { get; set; } = true;
+    [Parameter] public bool Filtro_Estatus { get; set; } = true;
+    public string Titulo = "";
+    public int IdOficina = 0;
+
+
+    List<int> GridFilas = new List<int>() { 50, 50, 530 };
+    List<int> GridColumnas = new List<int>() { 1200 };
+    private async Task Cerrar_Modal() {
+        this.datosGrid = new List<Ordenes_Detalle>();
+        this.allowPagesGrid = false;
+        await CerrarModal.InvokeAsync("");
+    }
+
+
+    //"******** Variables ********"
+    SfGrid<Ordenes_Detalle> dataGrid;
+    public List<Ordenes_Detalle> datos;
+    public List<Ordenes_Detalle> datosGrid;
+
+    Dictionary<int, string> cat_tarifas;
+    Dictionary<int, string> cat_colonias;
+    Dictionary<int, string> cat_trabajos;
+    Dictionary<string, string> cat_genero;
+    Dictionary<int, string> cat_estatus;
+
+    private int id_tarifa_select = -1, id_colonia_select = -1, id_trabajo_select = -1, id_estatus_select = -1;
+    private bool allowPagesGrid = false;
+    private bool DatosGenerales_visible = false;
+    private string CuentaActual = "0";
+
+    //"******** Funciones Generales ********"
+    public async Task Inicializar(Ordenes_Detalle[] _datos, string t){
+        this.Titulo = t;
+        if (_datos.Length > 1000) {
+            this.allowPagesGrid = true;
+        }
+        else {
+            this.allowPagesGrid = false;
+        }
+        this.datos = _datos.ToList();
+        this.datosGrid = _datos.ToList();
+        CalcularCatalogos();
+        await Task.Delay(100);
+    }
+    private void CalcularCatalogos() {
+
+        cat_tarifas = new Dictionary<int, string>();
+        cat_colonias = new Dictionary<int, string>();
+        cat_trabajos = new Dictionary<int, string>();
+        cat_genero = new Dictionary<string, string>();
+        cat_estatus = new Dictionary<int, string>();
+
+        foreach (Ordenes_Detalle item in datos) {
+            if (!cat_tarifas.ContainsKey(item.Id_Tarifa)) {
+                cat_tarifas.Add(item.Id_Tarifa, item.Tarifa);
+            }
+
+            if (!cat_colonias.ContainsKey(item.Id_Colonia)) {
+                cat_colonias.Add(item.Id_Colonia, item.Colonia);
+            }
+
+            if (!cat_trabajos.ContainsKey(item.Id_Trabajo)) {
+                cat_trabajos.Add(item.Id_Trabajo, item.Trabajo);
+            }
+
+            if (!cat_genero.ContainsKey(item.Id_Genero)) {
+                cat_genero.Add(item.Id_Genero, item.Genero);
+            }
+
+            if (!cat_estatus.ContainsKey(item.Id_Estatus)) {
+                cat_estatus.Add(item.Id_Estatus, item.Estatus);
+            }
+
+        }
+
+    }
+    private void MostrarEnConsultaGeneral(Ordenes_Detalle e) {
+        this.CuentaActual = e.Cuenta.ToString();
+        DatosGenerales_visible = true;
+    }
+    private async Task GenerarExcel() {
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private void ComboBox_SelectionChanged(string sender, object value) {
+        switch (sender) {
+            case "tarifa":
+                id_tarifa_select = int.Parse(value.ToString());
+                break;
+            case "colonia":
+                id_colonia_select = int.Parse(value.ToString());
+                break;
+            case "trabajo":
+                id_trabajo_select = int.Parse(value.ToString());
+                break;
+            case "estatus":
+                id_estatus_select = int.Parse(value.ToString());
+                break;
+
+        }
+        FiltrarDatos();
+    }
+    private void FiltrarDatos() {
+        List<Ordenes_Detalle> tmpData = datos;
+
+        if (id_tarifa_select >= 0) {
+            tmpData = tmpData.Where(item => item.Id_Tarifa == id_tarifa_select).ToList<Ordenes_Detalle>();
+        }
+        if (id_colonia_select >= 0) {
+            tmpData = tmpData.Where(item => item.Id_Colonia == id_colonia_select).ToList<Ordenes_Detalle>();
+        }
+        if (id_trabajo_select >= 0) {
+            tmpData = tmpData.Where(item => item.Id_Trabajo == id_trabajo_select).ToList<Ordenes_Detalle>();
+        }
+        if (id_estatus_select >= 0) {
+            tmpData = tmpData.Where(item => item.Id_Estatus == id_estatus_select).ToList<Ordenes_Detalle>();
+        }
+
+        this.datosGrid = tmpData;
+
+    }
+
+    public class ChartData {
+        public string Descripcion;
+        public decimal Valor1;
+    }
+
+}

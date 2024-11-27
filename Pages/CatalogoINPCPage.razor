@@ -1,0 +1,125 @@
+@page "/Configuracion/CatalogoINPC"
+@using Sicem_Blazor.Tarifas.Data
+@inject ITarifasService tarifasService
+
+<div class="tarifasLayout">
+    <div style="grid-area:1/1/2/2;">
+        <div class="title-page" style="grid-area:1/1/2/2;">CATALOGO INPC</div>
+    </div>
+
+    <nav aria-label="breadcrumb" style="grid-area:2/1/3/2;">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="./">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="./Configuracion">Configuracion</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Catalogo INPC</li>
+        </ol>
+    </nav>
+
+    <!-- ****** Acciones ****** -->
+    <div class="grid border rounded bg-white px-2 d-flex align-items-center" style="grid-area:3/1/4/2;">
+        <div class="button px-3 py-2 bg-success mr-3" >
+            <i class="fa fa-file-excel mr-2"></i>
+            <span>Exportar Catalogo</span>
+        </div>
+
+        <button class="button px-3 py-2 mr-3" @onclick="AgregarCat_Click">
+            <i class="fa fa-plus mr-2"></i>
+            <span>Agregar</span>
+        </button>
+
+    </div>
+
+    <!-- ****** Datagrid ****** -->
+    <div class="d-flex align-items-center" style="grid-area:4/1/5/2;">
+        
+        <!-- ****** Grid Catalogo  ******-->
+        <div class="border rounded bg-white p-2" style="width:100%; height:100%;">
+            <SfGrid @ref="DataGrid" DataSource="@DatosGrid" TValue="CatInpc" AllowResizing="true" AllowSorting="false" AllowFiltering="false"
+                AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
+                <GridColumns>
+                    <GridColumn Field="@nameof(CatInpc.Af)" HeaderText="Anio" TextAlign="TextAlign.Center" Width="100" />
+                    <GridColumn Field="@nameof(CatInpc.MesLetras)" HeaderText="Mes" TextAlign="TextAlign.Center" Width="100" />
+                    <GridColumn Field="@nameof(CatInpc.Inpc)" HeaderText="INPC" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                    <GridColumn HeaderText="Acciones" Width="auto" TextAlign="TextAlign.Left">
+                        <Template>
+                        @{
+                            var data = (context as CatInpc);
+                           <div class="px-2 d-flex" style="width:100%;">
+                                <button class="button px-3 mr-3" @onclick="@(e => EditarClick(data))">
+                                    <i class="fa-solid fa-pencil"></i>
+                                    <div>Editar</div>
+                                </button>
+
+                                <button class="button px-3 mr-3 bg-danger" @onclick="@(e => EliminarClick(data))">
+                                    <i class="fa-solid fa-pencil"></i>
+                                    <div>Eliminar</div>
+                                </button>
+                            </div>
+                        }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </div>
+
+    </div>
+
+</div>
+
+@if(AgregarCatVisible){
+    <AgregarCatINPCVtn UltimoCatalogo="@CatSeleccionado" OnClosed="@(e => AgregarCat_Closed())" Editar="@EditarCatalogo" />
+}
+@if(EliminarCat){
+    <ConfirmacionDialog Titulo="Eliminando Catalogo" StringContent="¿Desear eliminar el catalogo de INPC?" OnCancel="@(e => EliminarCat = false)" OnAccept="@(e => EliminarCat_Accepted())" />
+}
+
+@code {
+    private SfGrid<CatInpc> DataGrid {get;set;}
+    private List<CatInpc> DatosGrid {get;set;}
+
+    private bool AgregarCatVisible = false, EliminarCat = false, EditarCatalogo = false;
+    private CatInpc CatSeleccionado {get;set;}
+
+
+    protected override void OnInitialized()
+    {
+        CargarDatos();
+    }
+
+    private void CargarDatos(){
+        var _datos = tarifasService.ObtenerCatalogoINPC().ToList();
+        DatosGrid = (from i in _datos orderby i.Af descending , i.Mf descending select i).ToList();
+        CatSeleccionado = DatosGrid.First();
+    }
+
+    private void AgregarCat_Click(){
+        if(AgregarCatVisible){
+            return;
+        }
+        EditarCatalogo = false;
+        AgregarCatVisible = true;
+    }
+    private void AgregarCat_Closed(){
+        CargarDatos();
+        AgregarCatVisible = false;
+    }
+    private void EditarClick(CatInpc data){
+        if(AgregarCatVisible){
+            return;
+        }
+
+        EditarCatalogo = true;
+        this.CatSeleccionado = data;
+        AgregarCatVisible = true;
+
+    }
+    private void EliminarClick(CatInpc data){
+        this.CatSeleccionado = data;
+        EliminarCat = true;
+    }
+    private void EliminarCat_Accepted(){
+        tarifasService.EliminarCatalogoINPC(CatSeleccionado);
+        EliminarCat = false;
+        CargarDatos();
+    }
+}

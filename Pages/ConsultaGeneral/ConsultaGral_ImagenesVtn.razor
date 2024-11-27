@@ -1,0 +1,91 @@
+﻿@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@inject IJSRuntime JSRuntime
+@inject SicemService sicemService
+
+@if(Show){
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@CerrarModal" Filas="@(new double[]{600,30})" Columnas="@(new double[]{1010})">
+        <Content>
+            <div class="container-fluid p-2" style="grid-row: 1/2; grid-column: 1/2; overflow-y:auto; overflow-x:hidden; margin-right:2rem;">
+                <div class="row">
+                    @foreach (var item in listaDocumentos) {
+                        <div class="col-3">
+                            <div class="card shadow-sm sicem-card-image" @onclick="@(() => MostarDocumento(item))">
+                                <img class="card-img-top" src="@string.Format("{2}/Documento/{0}/{1}?W=200&H=250", OficinaActual, item.Id_Imagen, apiurl)" alt="@item.Archivo" style="height:250px;" loading="lazy" />
+                                <div class="card-body">
+                                    <p class="card-text">@item.Descripcion</p>
+                                    <div class="d-flex justify-content-center">
+                                        @if (item.Extencion.ToLower() == "pdf") {
+                                            <span class="badge badge-success">PDF</span>
+                                        }
+                                        else {
+                                            <span class="badge badge-info">IMAGEN</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <small class="text-muted">Agregado el @item.Fecha_Insert.ToString()</small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="container-fluid p-2 " style="grid-row: 2/3; grid-column: 1/2;">
+                Total Documentos @listaDocumentos.Count
+            </div>
+
+            <VisorImagen @ref="xvisorImagen" Show="@visorImagenVisible" Id_Imagen="@documentoSeleccionado.Id_Imagen" Descripcion="@documentoSeleccionado.Descripcion" CerrarModal="@CerrarVisorImagen" />
+
+        </Content>
+    </VentanaSecundaria>
+}
+
+
+@code {
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public bool Show { get; set; }
+    [Parameter] public int? Id_Padron { get; set; }
+    public string Titulo = "DOCUMENTOS";
+    private string apiurl = "http://nerus.sytes.net:8739/Api";
+    public int OficinaActual{ get; set; }
+
+    private VisorImagen xvisorImagen {get;set;}
+    private List<ConsultaGral_Documentos> listaDocumentos;
+    private ConsultaGral_Documentos documentoSeleccionado = new ConsultaGral_Documentos();
+    private bool visorImagenVisible = false;
+
+    /*********** FUNCIONES***********/
+    protected override void OnInitialized(){
+        this.apiurl = sicemService.ObtenerDireccionApi();
+    }
+    public async Task Inicializar(List<ConsultaGral_Documentos> items) {
+        await JSRuntime.InvokeVoidAsync("ConfigurateDragg", null);
+        listaDocumentos = items;
+        documentoSeleccionado = new ConsultaGral_Documentos();
+    }
+    protected async Task Cerrar_Modal() {
+        await CerrarModal.InvokeAsync("");
+    }
+
+    private async void MostarDocumento(ConsultaGral_Documentos xi) {
+        documentoSeleccionado = xi;
+        if (documentoSeleccionado.Extencion != "pdf") {
+            visorImagenVisible  = true;
+            xvisorImagen.OficinaActual= this.OficinaActual;
+            await xvisorImagen.Inicializar(xi);
+        }else{
+            var targetURl = string.Format("{2}/Api/Documento/{0}/{1}?W=200&H=250", OficinaActual, xi.Id_Imagen, apiurl);
+            await JSRuntime.InvokeVoidAsync("OpenNewTabUrl",targetURl);
+        }
+    }
+
+    private void CerrarVisorImagen(){
+        visorImagenVisible  = false;
+    }
+
+}

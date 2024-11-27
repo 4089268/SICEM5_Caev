@@ -1,0 +1,86 @@
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Micromedicion.Models
+@inject IJSRuntime JSRuntime
+
+@if (Visible){
+
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@CerrarModal" Filas="@(new double[] { 50, 620})" Columnas="@(new double[]{ 1150 })">
+        <Content>
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" Disabled="true">Generar Reporte <i class="fa fa-file-pdf-o ml-2" aria-hidden="true"></i></MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="dataGrid" DataSource="@datosGrid" AllowPaging="@allowPaging" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridPageSettings PageSize="500"></GridPageSettings>
+                    <GridColumns>
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Estatus)" HeaderText="Estatus" TextAlign="TextAlign.Left" Width="100" />
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Contrato)" HeaderText="Contrato" TextAlign="TextAlign.Center" Width="90" />
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Usuario)" HeaderText="Usuario" TextAlign="TextAlign.Left" Width="200" />
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Sb)" HeaderText="Subsitema" TextAlign="TextAlign.Center" Width="60" />
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Sector)" HeaderText="Sector" TextAlign="TextAlign.Center" Width="60" />
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Localidad)" HeaderText="Localidad" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Colonia)" HeaderText="Colonia" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Tipo_usuario)" HeaderText="Tipo Usuario" TextAlign="TextAlign.Left" Width="160" />
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Servicio)" HeaderText="Servicio" TextAlign="TextAlign.Left" Width="190" />
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Medidor)" HeaderText="Medidor" TextAlign="TextAlign.Center" Width="90" />
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Diametro)" HeaderText="Diametro" TextAlign="TextAlign.Center" Width="80" />
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Marca)" HeaderText="Marca" TextAlign="TextAlign.Left" Width="100" />
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Funcionando)" HeaderText="Funcionando" TextAlign="TextAlign.Center" Width="120" />
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Modelo)" HeaderText="Modelo" TextAlign="TextAlign.Left" Width="90" />
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Fecha_inst)" HeaderText="Fecha Inst." TextAlign="TextAlign.Center" Width="160" />
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Trabajo)" HeaderText="Trabajo" TextAlign="TextAlign.Left" Width="200" />
+                        <GridColumn Field="@nameof(Micromedicion_Padron.Fecha_realizo)" HeaderText="Fecha Reali." TextAlign="TextAlign.Center" Width="160" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+        </Content>
+    </VentanaSecundaria>
+
+}
+
+@code {
+
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    public string Titulo { get; set; } = "Detalle Padron";
+    private bool allowPaging = false;
+
+    SfGrid<Micromedicion_Padron> dataGrid;
+    public Micromedicion_Padron[] datosGrid;
+
+    private async Task Cerrar_Modal() {
+        this.datosGrid = new Micromedicion_Padron[] { };
+        await CerrarModal.InvokeAsync("");
+    }
+
+
+    //"******** Funciones Generales ********"
+    public async Task Inicializar(Micromedicion_Padron[] datos){
+        if(datos.Length > 1000) {
+            allowPaging = true;
+        }
+        else{
+            allowPaging = false;
+        }
+        this.datosGrid = datos;
+        await Task.Delay(100);
+    }
+    private async Task GenerarExcel() {
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+}

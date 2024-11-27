@@ -1,0 +1,191 @@
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.ControlRezago.Models
+@inject IJSRuntime JSRuntime
+@inject ControlRezagoService controlRezService 
+
+@if(Visible) {
+    <div class="busy-control">
+
+        <div id="draggable" class="SicemDialog-control" style="width:auto; height:auto;">
+        
+            @* *********** Cabecera *********** *@
+            <div class="SicemDialog-header">
+                <div>EFICIENCIA ORDENES POR TRABAJO </div>
+                <MatIcon @onclick="@Cerrar_Modal" Class="close-icon" style="margin-left: auto;" Icon="clear"></MatIcon>
+            </div>
+
+            @* *********** Contenido *********** *@
+            <div class="SicemDialog-content" style="@ObtnerDimensiones()">
+                
+                <div class="d-flex align-items-center m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+
+                    <div class="d-flex mx-2 align-items-center" style="width:18rem;">
+                        <div class="font-weight-bold" style="width: 100%; text-transform: uppercase;">Dias:</div>
+                        <div style="width:auto;">
+                            <SfNumericTextBox Value="@dias" TValue="int?" Format="n0" ShowSpinButton="false" CssClass="e-small w-100">
+                                <NumericTextBoxEvents TValue="int?" ValueChange="OnChange_Dias"></NumericTextBoxEvents>
+                            </SfNumericTextBox>
+                        </div>
+                    </div>
+
+                    <div class="d-flex mx-2 align-items-center" style="width:22rem;">
+                        <div class="font-weight-bold" style="width:100%; text-transform:uppercase;"> Trabajo: </div>
+                        <select class="form-select form-select-lg ml-1" @onchange="ComboBox_Trabajo_Changed" style="height:28px; width:180px;">
+                            @foreach (var xKey in cat_trabajos.Keys) {
+                                <option value="@xKey">@cat_trabajos[xKey]</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div style="width:4rem;" />
+
+                    <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem; padding:0rem 4rem;" OnClick="@Procesar">Procesar </MatButton>
+                </div>
+
+                <div class="d-flex align-items-center m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                    <div class="w-100 d-flex align-items-center">
+                        <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                        <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" Disabled="true">Generar Reporte <i class="fa fa-file-pdf-o ml-2" aria-hidden="true"></i></MatButton>
+                    </div>
+                </div>
+
+                <div class="m-1 p-2 border rounded bg-white" style="grid-row: 3/4; grid-column: 1/2;">
+                    <SfGrid @ref="dataGrid" DataSource="@datosGrid" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                        <GridColumns>
+                            <GridColumn Field="@nameof(ControlRezago_Eficacia_Detalle.Trabajador)" HeaderText="Trabajador" TextAlign="TextAlign.Left" Width="180" />
+                            <GridColumn Field="@nameof(ControlRezago_Eficacia_Detalle.Ord_Tot)" HeaderText="Total Ordenes" TextAlign="TextAlign.Center" Width="80" />
+                            <GridColumn Field="@nameof(ControlRezago_Eficacia_Detalle.Ord_efe)" HeaderText="Ordenes Efectivas" TextAlign="TextAlign.Center" Width="80" />
+                            <GridColumn Field="@nameof(ControlRezago_Eficacia_Detalle.Porc_efic_ord)" HeaderText="Porc. Efect." TextAlign="TextAlign.Center" Width="80" />
+                            <GridColumn Field="@nameof(ControlRezago_Eficacia_Detalle.Imp_gestionado )" HeaderText="Imp. Gestionado" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                            <GridColumn Field="@nameof(ControlRezago_Eficacia_Detalle.Imp_cobrado)" HeaderText="Imp. Cobrado" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                            <GridColumn Field="@nameof(ControlRezago_Eficacia_Detalle.Porc_efic_cob)" HeaderText="Por Efect." TextAlign="TextAlign.Center" Width="80"/>
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <BusyIndicator Busy="@busyIndicator" ContentText="CargandoDatos" />
+
+}
+
+@code {
+
+    #region  "******** Parametros ********"
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter]
+    public EventCallback CerrarModal { get; set; }
+    [Parameter]
+    public DateTime Fecha1 {get;set;}
+    [Parameter]
+    public DateTime Fecha2 {get;set;}
+    [Parameter]
+    public int Subsistema {get;set;}
+    [Parameter]
+    public int Sector {get;set;}
+
+    List<int> GridFilas = new List<int>(){50,50,540};
+    List<int> GridColumnas = new List<int>(){1150};
+    #endregion
+    #region "******** Funciones Base ********"
+    private async Task Cerrar_Modal() {
+        this.datosGrid = new ControlRezago_Eficacia_Detalle[]{};
+        await CerrarModal.InvokeAsync("");
+    }
+    private string ObtnerDimensiones() {
+        var xB = new System.Text.StringBuilder();
+        xB.Append("height: 100%; width:100%; ");
+        xB.Append("display:grid; ");
+        xB.Append("grid-template-rows: ");
+        foreach (int FilaH in GridFilas) {
+            xB.Append(string.Format("{0}px ", FilaH));
+        }
+        xB.Append("; ");
+
+        xB.Append("grid-template-columns: ");
+        foreach (int ColW in GridColumnas) {
+            xB.Append(string.Format("{0}px ", ColW));
+        }
+        xB.Append("; ");
+
+        return xB.ToString();
+    }
+    #endregion
+
+
+    //"******** Variables ********"
+
+    SfGrid<ControlRezago_Eficacia_Detalle> dataGrid;
+    public ControlRezago_Eficacia_Detalle[] datosGrid;
+    public Dictionary<int,string> cat_trabajos = new Dictionary<int, string>();
+    int Id_Oficina = 0;
+    private bool busyIndicator = false;
+    private int id_trabajo_selected = 0;
+    private int dias = 12;
+
+
+    //"******** Funciones Generales ********"
+    public async Task Inicializar(Dictionary<int, string> catalogo) {
+        await JSRuntime.InvokeVoidAsync("ConfigurateDragg", null);
+        cat_trabajos = catalogo;
+        await Procesar();
+        busyIndicator = false;
+    }
+
+    private async Task Procesar() {
+        if(id_trabajo_selected > 0){
+            busyIndicator = true;
+            await Task.Delay(100);
+            datosGrid = controlRezService.ControlRezago_EficaciaDetalle(Id_Oficina, this.Fecha1.ToString("yyyyMMdd"), this.Fecha2.ToString("yyyyMMdd"),id_trabajo_selected, dias);
+            await Task.Delay(100);
+            busyIndicator = false;
+        }
+    }
+
+    private async Task ComboBox_Trabajo_Changed(ChangeEventArgs e) {
+        int tmpId = int.Parse(e.Value.ToString());
+        this.id_trabajo_selected = tmpId;
+        await Procesar();
+    }
+    public async Task OnChange_Dias(Syncfusion.Blazor.Inputs.ChangeEventArgs<int?> args) {
+        dias = (int)args.Value;
+        await Procesar();
+    }
+
+    private async Task GenerarExcel(){
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private async Task GenerarPdf(){
+        string titulo = string.Format("Ingresos por Conceptos del {0} al {1}", this.Fecha1.ToString("dd/MM/yyyy"), this.Fecha2.ToString("dd/MM/yyyy"));
+        List<PdfHeaderFooterContent> xconts = new List<PdfHeaderFooterContent>();
+        xconts.Add(
+            new PdfHeaderFooterContent() {
+                Type = ContentType.Text,
+                Value = titulo,
+                Position = new PdfPosition() { X = 10, Y = 10 },
+                Style = new PdfContentStyle() {
+                    TextBrushColor = "#000000",
+                    FontSize = 13
+                }
+            }
+        );
+
+        await this.dataGrid.PdfExport(new PdfExportProperties {
+            PageOrientation = PageOrientation.Landscape,
+            Header = new PdfHeader {
+                Contents = xconts
+            },
+            FileName = string.Format("sicem_IngresosxDias{0}.pdf", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+}

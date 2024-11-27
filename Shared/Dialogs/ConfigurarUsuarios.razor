@@ -1,0 +1,145 @@
+﻿@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Calendars
+@inject IMatToaster Toaster
+@inject IJSRuntime JSRuntime
+@inject SicemService sicemService
+@inject ConsultaGralService consultaGralService;
+
+@if (Show) {
+
+    <VentanaSecundaria Titulo="CONFIGURAR USUARIOS" CerrarVentana="@CerrarModal" Filas="@(new double[]{40, 440})" Columnas="@(new double[]{ 880 })">
+        <Content>
+            
+            <div class="px-1 py-2 d-flex flex-row align-items-center justify-content-center" style="grid-row: 1/2; grid-column: 1/2;">
+                <input class="px-2" type="text" style="width:340px; height:100%" placeholder="Buscar"  @bind="@stringSearch" @onkeyup="@InputSearch_KeyUp"/>
+                <input class="ml-auto px-3" type="button" value="Agregar Usuario" style="height:100%" @onclick="@AgregarUsuario_Click" />
+            </div>
+
+            <div class="p-1 d-flex flex-column align-items-center justify-content-center" style="grid-row: 2/3; grid-column: 1/2;">
+                @if (Busy) {
+                    <div class="spinner-border" role="status"> </div>
+                }
+                else {
+                    <SfGrid @ref="dataGrid" DataSource="@catUsuarios" AllowResizing="true" Height="100%" AllowSorting="true" RowHeight="28">
+                        <GridColumns>
+                            <GridColumn Field=@nameof(Usuario.Nombre) HeaderText="Nombre" TextAlign="TextAlign.Left" Width="140"></GridColumn>
+                            <GridColumn Field=@nameof(Usuario.Usuario1) HeaderText="Usuario" TextAlign="TextAlign.Left" Width="80"></GridColumn>
+                            <GridColumn Field=@nameof(Usuario.Administrador) HeaderText="Admin" TextAlign="TextAlign.Center" Width="68">
+                                <Template>
+                                    @{
+                                        var config = (context as Usuario);
+                                        <input type="checkbox" checked=@config.Administrador disabled />
+                                    }
+                                </Template>
+                            </GridColumn>
+                            <GridColumn Field=@nameof(Usuario.Inactivo) HeaderText="Inactivo" TextAlign="TextAlign.Center" Width="68">
+                                <Template>
+                                    @{
+                                        var config = (context as Usuario);
+                                        <input type="checkbox" checked=@config.Inactivo @onchange="@((e)=> CheckBoxModificarUsuario_Click(config.Id, "Inactivo", e.Value) )" />
+                                    }
+                                </Template>
+                            </GridColumn>
+                            <GridColumn HeaderText="" TextAlign="TextAlign.Left" Width="120">
+                                <Template>
+                                    @{
+                                        var config = (context as Usuario);
+                                        <div class="d-flex px-2" style="height:20px;">
+                                            <input class="btnAccion user-select-none" type="button" value="Modificar" @onclick=@(e => BotonModificarUsuario_Click(config)) />
+                                        </div>
+                                    }
+                                </Template>
+                            </GridColumn>
+                        </GridColumns>
+                    </SfGrid>
+                }
+            </div>
+            
+        </Content>
+    </VentanaSecundaria>
+
+    <ModificarUsuario @ref="ModificarUsuarioVtn" Visible="@ModificarUsuarioVtn_Visible" CerrarModal="@ModificarUsuario_Closed" />
+  
+}
+
+
+@code {
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public bool Show { get; set; } = true;
+    private SfGrid<Usuario> dataGrid { get; set; }
+    private List<Usuario> catUsuarios { get; set; }
+    private bool Busy = false;
+    private string stringSearch = "";
+    private ModificarUsuario ModificarUsuarioVtn { get; set; }
+    private bool ModificarUsuarioVtn_Visible { get; set; } = false;
+
+    public async Task Inicializar() {
+
+        catUsuarios = sicemService.ObtenerListadoUsuarios().ToList();
+
+        // Generar Catalogo de oficinas model
+        //try {
+        //    var tmpOfi = sicemService.ObtenerEnlaces().Where(item => item.Inactivo != true).ToArray();
+        //    GenerarCatalogoOficinas(tmpOfi);
+        //}
+        //catch (Exception){
+        //    Toaster.Add("Error al conectarse con el servidor, inténtelo más tarde.", MatToastType.Warning);
+        //    await Task.Delay(100);
+        //    await Cerrar_Modal();
+        //}
+
+        await Task.Delay(100);
+        this.Busy = false;
+    }
+    protected async Task Cerrar_Modal(){
+        await CerrarModal.InvokeAsync(null);
+    }
+
+    private async Task AgregarUsuario_Click(){
+        if (ModificarUsuarioVtn_Visible){
+            return;
+        }
+        ModificarUsuarioVtn_Visible = true;
+        ModificarUsuarioVtn.Titulo = "CREAR NUEVO USUARIO";
+        await ModificarUsuarioVtn.Inicializar();
+        await Task.Delay(100);
+    }
+    private async Task BotonModificarUsuario_Click(Usuario u){
+        if (ModificarUsuarioVtn_Visible) {
+            return;
+        }
+        ModificarUsuarioVtn_Visible = true;
+        ModificarUsuarioVtn.Titulo = $"MODIFICAR USUARIO {u.Nombre.ToUpper()}";
+        var _idsOpciones = sicemService.ObtenerListaOpcionesDelUsuario(idUsuario:u.Id).Select(item => (int) item.IdOpcion).ToList<int>();
+        var _idsOficinas = sicemService.ObtenerOficinasDelUsuario(idUsuario: u.Id).Select(item => (int) item.Id).ToList<int>();
+        ModificarUsuarioVtn.OpcionesSeleccionadas = _idsOpciones;
+        ModificarUsuarioVtn.OficinasSeleccionadas = _idsOficinas;
+        ModificarUsuarioVtn.NuevoUsuario = u;
+        await ModificarUsuarioVtn.Inicializar(modif:true);
+        await Task.Delay(100);
+    }
+    private async Task CheckBoxModificarUsuario_Click(int idUsuario, string opcion, object val){
+        await Task.Delay(100);
+    }
+
+    private async Task ModificarUsuario_Closed(){
+        ModificarUsuarioVtn_Visible = false;
+        this.Busy = true;
+        await Task.Delay(100);
+
+        this.catUsuarios = sicemService.ObtenerListadoUsuarios().ToList();
+
+        await Task.Delay(100);
+        this.Busy = false;
+    }
+
+    private async Task InputSearch_KeyUp(KeyboardEventArgs e){
+        if(e.Key == "Enter"){
+            await dataGrid.SearchAsync(stringSearch);
+        }
+    }
+}

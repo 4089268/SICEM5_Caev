@@ -1,0 +1,197 @@
+@using Sicem_Blazor.Padron.Models
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Navigations
+@inject IMatToaster Toaster
+
+<VentanaSecundaria Titulo="@Titulo" Filas="@gridFilas" Columnas="@gridColumnas" CerrarVentana="CerrarModal" >
+    <Content>
+        <div class="border rounded bg-white d-flex align-itenms-center p-2">
+            <button class="button px-4" >Accion 2</button>
+        </div>
+        <div class="border rounded bg-white p-2">
+            <SfTab Height="100%">
+                <TabItems>
+                    <TabItem>
+                        <ChildContent>
+                            <TabHeader Text="Resumen Por Sectores"></TabHeader>
+                        </ChildContent>
+                        <ContentTemplate>
+                            <div class="h-100">
+                                <ResumenSectorView DatosGrid="@DatosResumenSector" OnDetailClick="@(e => MostrarVentanaDetalle(1,e))"/>
+                            </div>
+                        </ContentTemplate>
+                    </TabItem>
+                    <TabItem Content="Facebook is an online social networking service headquartered in Menlo Park, California. Its website waslaunched on February 4, 2004, by Mark Zuckerberg with his Harvard College roommates and fellow students EduardoSaverin, Andrew McCollum, Dustin Moskovitz and Chris Hughes.">
+                        <ChildContent>
+                            <TabHeader Text="Resumen Por Tarifas"></TabHeader>
+                        </ChildContent>
+                        <ContentTemplate>
+                            <div class="h-100">
+                                <ResumenTarifaView DatosGrid="@DatosResumenTarifa" OnDetailClick="@(e => MostrarVentanaDetalle(2,e))" />
+                            </div>
+                        </ContentTemplate>
+                    </TabItem>
+                    <TabItem>
+                        <ChildContent>
+                            <TabHeader Text="Resumen Por Colonias"></TabHeader>
+                        </ChildContent>
+                        <ContentTemplate>
+                            <div class="h-100">
+                                <ResumenColoniaView DatosGrid="@DatosResumenColonia" OnDetailClick="@(e => MostrarVentanaDetalle(3,e))"/>
+                            </div>
+                        </ContentTemplate>
+                    </TabItem>
+                </TabItems>
+            </SfTab>
+            
+        </div>
+    </Content>
+</VentanaSecundaria>
+
+<Padron_DetalleUsuariosVtn @ref="VtnPadronDetalle" Visible="@VtnPadronDetalle_Visible" CerrarModal="@( e => VtnPadronDetalle_Visible = false)" />
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+
+@code{
+    [Parameter] public EventCallback OnClosed {get;set;}
+    [Parameter] public IEnumerable<Padron_DetallePadron> Datos {get;set;}
+    [Parameter] public string Titulo {get;set;} = "RESUMEN DE USUARIOS CON ESTATUS XXXX DEL XXX AL XXXX";
+    [Parameter] public IEnlace Enlace {get;set;}
+    private double[] gridFilas = new double[]{40, .7};
+    private double[] gridColumnas = new double[]{800};
+
+    private bool busyDialog = false;
+    private List<ResumenSector> DatosResumenSector {get;set;}
+    private List<ResumenTarifa> DatosResumenTarifa {get;set;}
+    private List<ResumenColonia> DatosResumenColonia {get;set;}
+
+    private Padron_DetalleUsuariosVtn VtnPadronDetalle  {get;set;}
+    private bool VtnPadronDetalle_Visible {get;set;} = false;
+        
+
+    private async Task CerrarModal(){
+        await OnClosed.InvokeAsync();
+    }
+
+    protected override void OnInitialized()
+    {
+        var _task = new List<Task>();
+        _task.Add( Task.Factory.StartNew( () => CalcularDatosSector() ));
+        _task.Add( Task.Factory.StartNew( () => CalcularDatosTarifa() ));
+        _task.Add( Task.Factory.StartNew( () => CalcularDatosColonias() ));
+
+        Task.WaitAll(_task.ToArray());
+    }
+
+
+    private void CalcularDatosSector(){
+        var _tmpData = Datos.GroupBy(item => item.Sector).Select(g => new ResumenSector(){
+            Sector = g.Key,
+            Usuarios = g.Count(),
+            Subtotal = g.Sum(i => i.Subtotal),
+            IVA = g.Sum( i => i.Iva),
+            Total = g.Sum(i => i.Total)
+        }).OrderBy(item => item.Sector).ToList();
+
+        _tmpData.Add(
+            new ResumenSector(){
+                Sector = "TOTAL",
+                Usuarios = _tmpData.Sum(i=>i.Usuarios),
+                Subtotal = _tmpData.Sum(i=>i.Subtotal),
+                IVA = _tmpData.Sum(i=>i.IVA),
+                Total = _tmpData.Sum(i=>i.Total)
+            }
+        );
+
+        DatosResumenSector = _tmpData;
+    }
+    private void CalcularDatosTarifa(){
+        var _tmpData = Datos.GroupBy(item => item.Tarifa).Select(g => new ResumenTarifa(){
+            Tarifa = g.Key,
+            Usuarios = g.Count(),
+            Subtotal = g.Sum(i => i.Subtotal),
+            IVA = g.Sum( i => i.Iva),
+            Total = g.Sum(i => i.Total)
+        }).OrderBy(item => item.Tarifa).ToList();
+
+        _tmpData.Add(
+            new ResumenTarifa(){
+                Tarifa = "TOTAL",
+                Usuarios = _tmpData.Sum(i=>i.Usuarios),
+                Subtotal = _tmpData.Sum(i=>i.Subtotal),
+                IVA = _tmpData.Sum(i=>i.IVA),
+                Total = _tmpData.Sum(i=>i.Total)
+            }
+        );
+
+        DatosResumenTarifa = _tmpData;
+    }
+    private void CalcularDatosColonias(){
+        var _tmpData = Datos.GroupBy(item => item.Colonia).Select(g => new ResumenColonia(){
+            Colonia = g.Key,
+            Usuarios = g.Count(),
+            Subtotal = g.Sum(i => i.Subtotal),
+            IVA = g.Sum( i => i.Iva),
+            Total = g.Sum(i => i.Total)
+        }).OrderBy(item => item.Colonia).ToList();
+
+        _tmpData.Add(
+            new ResumenColonia(){
+                Colonia = "TOTAL",
+                Usuarios = _tmpData.Sum(i=>i.Usuarios),
+                Subtotal = _tmpData.Sum(i=>i.Subtotal),
+                IVA = _tmpData.Sum(i=>i.IVA),
+                Total = _tmpData.Sum(i=>i.Total)
+            }
+        );
+
+        DatosResumenColonia = _tmpData;
+    }
+
+    private async Task MostrarVentanaDetalle(int op, string filtro){
+        if(VtnPadronDetalle_Visible){
+            return;
+        }
+
+        busyDialog = true;
+        await Task.Delay(100);
+        
+        var tmpDatos = new List<Padron_DetallePadron>(); 
+        var newTitle = Titulo;
+        if(filtro == "TOTAL"){
+            tmpDatos = Datos.ToList();
+        
+        }else{
+            switch(op){
+                // Sectores
+                case 1:
+                    tmpDatos = Datos.Where( item => item.Sector == filtro).ToList();
+                    newTitle = newTitle + $" DEL SECTOR {filtro} ";
+                    break;
+
+                // Tarifas
+                case 2:
+                    tmpDatos = Datos.Where( item => item.Tarifa == filtro).ToList();
+                    newTitle = newTitle + $" CON TARIFA {filtro} ";
+                    break;
+
+                // Colonias
+                case 3:
+                    tmpDatos = Datos.Where( item => item.Colonia == filtro).ToList();
+                    newTitle = newTitle + $" DEL LA COLONIA {filtro} ";
+                    break;
+            }
+            
+        }
+        
+        if(tmpDatos.Count() <= 0){
+            Toaster.Add("No hay datos disponibles para mostrar", MatToastType.Warning);
+        }else {
+            VtnPadronDetalle_Visible = true;
+            VtnPadronDetalle.Enlace = this.Enlace;
+            await VtnPadronDetalle.Inicializar(tmpDatos.ToArray(), newTitle);
+        }
+
+        await Task.Delay(100);
+        busyDialog = false;
+    }
+}

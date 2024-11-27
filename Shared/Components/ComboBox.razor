@@ -1,0 +1,28 @@
+<div class="MyCombobox @CustomClass" style=@($"width:{Width}px; height:{Height}px;")>
+    <select @onchange=@SelectOnChange>
+        @foreach (var key in Options.Keys) {
+            <option value=@key selected=@((key==InitValue)?true:false) >@Options[@key] </option>
+        }
+    </select>
+</div>
+
+@code{
+
+    [Parameter]
+    public int Width {get;set;} = 120;
+    [Parameter]
+    public int Height {get;set;} = 30;
+    [Parameter]
+    public int InitValue {get;set;} = 1;
+    [Parameter]  
+    public Dictionary<int, string> Options {get;set;}
+    [Parameter]  
+    public EventCallback<int> OnSelected {get;set;}
+    [Parameter]
+    public string CustomClass {get;set;} = "";
+    
+    async void SelectOnChange(ChangeEventArgs e){
+        await OnSelected.InvokeAsync(int.Parse(e.Value.ToString()));
+    }
+
+}

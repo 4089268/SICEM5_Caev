@@ -1,0 +1,124 @@
+﻿@page "/CatalogoTarifas/Historial"
+@inject IMatToaster Toaster
+@inject SicemService sicemService
+@inject ITarifasService tarifasService
+
+<div class="histTarifasRoot">
+
+    <div class="title-page" style="grid-area:1/1/2/2;">HISTORIAL TARIFAS @(oficinaSeleccionada==null?"":oficinaSeleccionada.Oficina)</div>
+
+    <nav aria-label="breadcrumb" style="grid-area:2/1/3/2;">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="./">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="./CatalogoTarifas">Catalogo Tarifas</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Historial Tarifas</li>
+        </ol>
+    </nav>
+
+	<div class="d-flex align-items-center p-2 border rounded bg-white">
+		<label class="px-2 text-uppercase font-weight-bold" style="margin-bottom: 0; color:#444;">Seleccionar Oficina</label> 
+        <ComboBox Options="@catalogoOficinas" InitValue="0" OnSelected="@OnComboBox_Change" Width="270"/>
+
+        <div style="width: 2rem;" />
+
+        @if(oficinaSeleccionada != null){
+            <div class="button px-3 py-2 bg-success mr-3" @onclick="OnExportExcel_Click" >
+                <i class="fa fa-file-excel mr-2"></i>
+                <span>Exportar Catalogo</span>
+            </div>
+        }
+
+	</div>
+
+	<div class="d-flex align-items-center p-2 border rounded bg-white" >
+		<SfGrid @ref="DataGrid" DataSource="@DatosGrid" AllowGrouping="true" TValue="HistTarifaItem" AllowResizing="true" AllowSorting="false" AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
+            <GridGroupSettings Columns="@(new string[] { "Af", "Mes", "TipoUsuario" })" ShowDropArea="false"></GridGroupSettings>
+            <GridColumns>
+                <GridColumn Field="@nameof(HistTarifaItem.Oficina)" HeaderText="Oficina" TextAlign="TextAlign.Left" Width="170" Visible="false" />
+                <GridColumn Field="@nameof(HistTarifaItem.Af)" HeaderText="Año" TextAlign="TextAlign.Center" Width="60" />
+                <GridColumn Field="@nameof(HistTarifaItem.Mes)" HeaderText="Mes" TextAlign="TextAlign.Center" Width="60" />
+                <GridColumn Field="@nameof(HistTarifaItem.TipoUsuario)" HeaderText="Tipo Usuario" TextAlign="TextAlign.Left" Width="140" />
+                <GridColumn Field="@nameof(HistTarifaItem.Desde)" HeaderText="Desde" TextAlign="TextAlign.Center" Width="90" Format="n0" />
+                <GridColumn Field="@nameof(HistTarifaItem.Hasta)" HeaderText="Hasta" TextAlign="TextAlign.Center" Width="90" Format="n0" />
+                <GridColumn Field="@nameof(HistTarifaItem.Costo)" HeaderText="Costo" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                <GridColumn Field="@nameof(HistTarifaItem.CostoBase)" HeaderText="Costo Base" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                <GridColumn Field="@nameof(HistTarifaItem.CuotaBase)" HeaderText="Cuota Base" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                <GridColumn Field="@nameof(HistTarifaItem.AdicionalM3)" HeaderText="Adicional M3" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+
+                <GridColumn Field="@nameof(HistTarifaItem.UltimAct)" HeaderText="Ultima Actualizacion" TextAlign="TextAlign.Center" Width="130" />
+
+            </GridColumns>
+        </SfGrid>
+	</div>
+
+</div>
+
+<style>
+    .histTarifasRoot{
+        display: grid;
+        width: 100%;
+        height: 100%;
+        grid-template-columns: 100%;
+        grid-template-rows: 4rem 3rem 5rem calc(100% - 13.5rem);
+        gap: .5rem;
+    }
+</style>
+
+<BusyIndicator Busy="@cargando" ContentText="Cargando datos..." />
+
+@code {
+    private SfGrid<HistTarifaItem> DataGrid { get; set; }
+    private List<HistTarifaItem> DatosGrid {get;set;}
+    private Dictionary<int, string> catalogoOficinas {get;set;}
+    
+    private Ruta oficinaSeleccionada { get; set; }
+
+    private bool cargando = true;
+
+    protected override void OnParametersSet(){
+        base.OnParametersSet();
+
+        //*** Generar el catalogo de oficinas
+        catalogoOficinas = new Dictionary<int, string>();
+        catalogoOficinas.Add(0, "SELECCIONE UNA OFICINA");
+        var _oficinas = sicemService.ObtenerOficinasDelUsuario().ToList();
+        _oficinas.ForEach(oficina => {
+            catalogoOficinas.Add(oficina.Id, oficina.Nombre);
+        });
+
+        this.cargando = false;
+    }
+
+    private async Task OnComboBox_Change(int idOficina) {
+        if(idOficina <= 0){
+            return;
+        }
+        oficinaSeleccionada = sicemService.ObtenerEnlaces().FirstOrDefault(item => item.Id == idOficina);
+        await ProcesarConsulta();
+    }
+
+	private async Task ProcesarConsulta() {
+        if(oficinaSeleccionada == null){
+            return;
+        }
+		this.cargando = true;
+		await Task.Delay(100);
+
+        var tmpDatos = tarifasService.ObtenerHistorialTarifaComplete(oficinaSeleccionada).ToList();
+        this.DatosGrid = tmpDatos;
+        DataGrid.Refresh();
+        await DataGrid.CollapseAllDetailRowAsync();
+        await DataGrid.CollapseAllGroupAsync();
+        
+		await Task.Delay(100);
+		this.cargando = false;
+	}
+
+    private async Task OnExportExcel_Click(){
+        var _options = new ExcelExportProperties(){
+            FileName = $"HistorialTarifas_{oficinaSeleccionada.Oficina}_{Guid.NewGuid().ToString().Replace("-","").Substring(0,10)}.xlsx"
+        };
+        await this.DataGrid.ExportToExcelAsync(_options);
+    }
+
+}

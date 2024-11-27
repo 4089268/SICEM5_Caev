@@ -1,0 +1,74 @@
+﻿@inject IJSRuntime JSRuntime
+
+<div class="vs-fondo">
+
+    <div id="@guid" class="vs-control" style="width:auto; height:auto;">
+
+        <div class="vs-header">
+            <div>@Titulo </div>
+            <MatIcon @onclick="@(e => CerrarVentana.InvokeAsync(e))" Class="close-icon" style="margin-left: auto;" Icon="clear"></MatIcon>
+        </div>
+
+        <div class="vs-content" style="@ObtnerDimensiones()">
+            @Content
+        </div>
+    </div>
+
+</div>
+
+
+@code {
+
+    [Parameter] public string Titulo { get; set; }
+    [Parameter] public EventCallback CerrarVentana { get; set; }
+    [Parameter] public IEnumerable<double> Columnas { get; set; }
+    [Parameter] public IEnumerable<double> Filas { get; set; }
+    [Parameter] public RenderFragment Content { get; set; }
+    [Parameter] public int Level { get; set; } = 1;
+    [Parameter] public bool Draggable { get; set; } = true;
+
+    private string guid = "vtn" + Guid.NewGuid().ToString().Replace("-", "");
+
+    private string ObtnerDimensiones() {
+        var xB = new System.Text.StringBuilder();
+        xB.Append("height: 100%; width:100%; ");
+        xB.Append("gap: 4px; ");
+        xB.Append("display:grid; ");
+        xB.Append("grid-template-rows: ");
+        foreach (double FilaH in Filas) {
+            if(FilaH < 1){
+                xB.Append(string.Format("{0}vh ", (FilaH * 100) ));
+            }else{
+                xB.Append(string.Format("{0}px ", FilaH));
+            }
+        }
+        xB.Append("; ");
+
+        //**** Generar columnas
+        xB.Append("grid-template-columns: ");
+        foreach (double ColW in Columnas) {
+            if(ColW < 1){
+                xB.Append(string.Format("{0}vw ", (ColW * 100) ));
+            }else{
+                xB.Append(string.Format("{0}px ", ColW));
+            }
+        }
+        xB.Append("; ");
+
+        return xB.ToString();
+    }
+
+    public async Task InitDragg() {
+        await Task.Delay(1000);
+        await JSRuntime.InvokeVoidAsync("ConfigurarVentanaDragg", $"#{guid}");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender){
+        if (firstRender){
+            if(Draggable){
+                await InitDragg();
+            }
+        }
+    }
+
+}

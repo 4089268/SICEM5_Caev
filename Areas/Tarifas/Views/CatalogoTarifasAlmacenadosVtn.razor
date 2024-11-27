@@ -1,0 +1,340 @@
+@using Sicem_Blazor.Tarifas.Data;
+@inject ITarifasService tarifaService
+@inject IMatToaster Toaster
+
+<VentanaSecundaria Titulo="Catalogo de Tarifas Almacenados" Filas="@gridFilas" Columnas="@gridColumnas" CerrarVentana="@(e => CerrarVentana(false))">
+    <Content>
+
+        @* Area Botones *@
+        <div class="d-flex align-items-center border rounded bg-white p-2" style="grid-area: 1/1/2/3;">
+
+            @if(ModoEdicion){
+                <button class="button px-3 py-2 mr-3 bg-success" @onclick="AplicarEdicion"> <i class="fas fa-save pr-2"></i><span>Aplicar Cambios</span></button>
+                <button class="button px-3 py-2 mr-3 bg-danger" @onclick="CancelarEdicion"> <i class="fas fa-ban pr-2"></i><span>Cancelar</span></button>
+            }else{
+                <button class="button px-3 py-2 mr-3" @onclick="@(e => CargarCatalogoTarifa())"> <i class="fas fa-sync pr-2"></i> <span>Recargar Catalogo</span></button>
+                @if(CabeceraTarifaSeleccionado == null){
+                    <div class="button px-3 py-2 mr-3 dissable"> <i class="fas fa-edit pr-2"></i> <span>Editar Catalogo</span></div>
+                    <div class="button px-3 py-2 mr-3 dissable"> <i class="fas fa-trash pr-2"></i> <span> Eliminar Catalogo</span></div>
+                }else{
+                    <button class="button px-3 py-2 mr-3 bg-success" @onclick="EditarCatalogoSeleccionado"> <i class="fas fa-edit pr-2"></i> <span>Editar Catalogo</span> </button>
+                    <button class="button px-3 py-2 mr-3 bg-danger" @onclick="EliminarCatalogoSeleccionado"><i class="fas fa-trash pr-2"></i> <span> Eliminar Catalogo</span></button>
+                }
+            }
+
+            @if(CabeceraTarifaSeleccionado != null){
+                <div class="h4 my-auto d-flex align-items-center">
+                    <strong class="mx-2">-</strong>
+                    @if(ModoEdicion){
+                        <strong class="mx-2">EDITANDO:</strong>
+                        <input class="h-100 px-4" style="width:400px;" type="text" @bind="tmpTituloCabecera" />
+                    }else{
+                        <span class="ml-1">@CabeceraTarifaSeleccionado.Descripcion.ToString()</span>
+                    }
+                </div>
+            }
+        </div>
+
+        @* Area Catalogo *@
+        <div class="border rounded bg-white p-2" style="grid-area: 2/1/3/2;">
+            <SfGrid @ref="DataGridTarifa" TValue="StoTarifa" DataSource="@DatosCabecerasTarifas" AllowResizing="true" Height="100%" Width="100%">
+                <GridEvents RowSelected="RowsSelected" OnRecordDoubleClick="RowDoubleClick" TValue="StoTarifa"/>
+                <GridColumns>
+                    <GridColumn Field="@nameof(StoTarifa.Descripcion)" HeaderText="Descripcion" Width="210" TextAlign="TextAlign.Left"/>
+                    <GridColumn Field="@nameof(StoTarifa.FechaCreacion)" HeaderText="Descripcion" Width="120" TextAlign="TextAlign.Center" />
+                    <GridColumn Field="@nameof(StoTarifa.FechaModificacion)" HeaderText="Descripcion" Width="120" TextAlign="TextAlign.Center"/>
+                </GridColumns>
+            </SfGrid>
+        </div>
+
+        @* Area Detalle *@
+        <div class="border rounded bg-white p-2" style="grid-area: @(ModoEdicion?"2/1/4/3":"2/2/3/3");">
+            @if(DatosTarifas.Count() > 0){
+                <SfGrid @ref="DataGridDetTarifa" TValue="ITarifa" DataSource="@DatosTarifasActual" AllowResizing="true" AllowGrouping="true" Height="100%" Width="100%">
+                    <GridGroupSettings ShowDropArea="false" Columns="@(new string[] {"Id_TipoUsuario"})">
+                        <CaptionTemplate>
+                            @{
+                                var group = (context as CaptionTemplateContext);
+                                <div style="font-weight:700;">@(DatosTarifasActual.Where(i=>i.Id_TipoUsuario.ToString().Equals(group.Key)).First().TipoUsuario)</div>
+                            }
+                        </CaptionTemplate>
+                    </GridGroupSettings>
+                    <GridColumns>
+                        <GridColumn Field="@nameof(ITarifa.Id_TipoUsuario)" HeaderText="Id Tipo Usuario" Width="auto" Visible="true" />
+                        <GridColumn Field="@nameof(ITarifa.TipoUsuario)" HeaderText="Tipo Usuario" TextAlign="TextAlign.Left" Width="120" Visible="false" />
+                        <GridColumn HeaderText="Rango" Width="120" TextAlign="TextAlign.Center">
+                            <Template>
+                            @{
+                                var data = (context as ITarifa);
+                                <div style="width:100%; text-align:center;">
+                                    <span>@(data.Hasta >= 900000 ? $"> {data.Desde} m3": $"{data.Desde} - {data.Hasta} m3" )</span>
+                                </div>
+                            }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(ITarifa.Desde)" HeaderText="Desde" TextAlign="TextAlign.Right" Width="100" Visible="false" />
+                        <GridColumn Field="@nameof(ITarifa.Hasta)" HeaderText="hasta" TextAlign="TextAlign.Right" Width="100" Visible="false" />
+                        <GridColumn Field="@nameof(ITarifa.CostoBase)" HeaderText="Cuota Base" Width="120" TextAlign="TextAlign.Right" Format="c2"/>
+                        <GridColumn Field="@nameof(ITarifa.Costo)" HeaderText="Costo Adicional" Width="120" TextAlign="TextAlign.Right" Format="c2"/>
+                        <GridColumn HeaderText="Acciones" Width="auto" TextAlign="TextAlign.Left" Visible="@ModoEdicion">
+                            <Template>
+                            @{
+                                var data = (context as ITarifa);
+                                <div class="px-2" style="width:100%;">
+                                    <button class="button px-3" @onclick="@( e => EditarTarifa_Click(data) )">
+                                        <i class="fa-solid fa-pencil"></i>
+                                        <div>Editar</div>
+                                    </button>
+                                </div>
+                            }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Width="auto" />
+                    </GridColumns>
+                </SfGrid>
+            }
+        </div>
+        
+        @* Boton Seleccionar Tarifa *@
+        @if(!ModoEdicion){
+            <div class="d-flex align-items-center" style="grid-area: 3/1/4/3;">
+                <div class="button py-2 mx-auto my-auto @(CabeceraTarifaSeleccionado==null?"dissable":"")" style="width: 20rem;" @onclick="@(e => CerrarVentana(true))">
+                    Seleccionar Tarifa
+                </div>
+            </div>
+        }
+
+    </Content>
+</VentanaSecundaria>
+
+<BusyIndicator Busy="@busyIndicator" ContentText="Cargando datos..." />
+<EditarTarifaVtn @ref="editarTarifaVtn" Visible="@editarTarifaVtnVisible" CerrarModal="EditarTarifa_Closed" Tarifa="@tarifaSeleccionada" ModificarBaseDatos="false"/>
+@if(ModalConfirmacionEliminacion){
+    <ConfirmacionDialog Titulo="@($"Eliminar catalogo: {CabeceraTarifaSeleccionadoTitulo}")" StringContent="¿Deseas Continuar Eliminando el Catalogo?" OnAccept="ModalEliminacion_Accept" OnCancel="ModalEliminacion_Cancel" />
+}
+
+
+@code{
+    [Parameter] public EventCallback<IEnumerable<ITarifa>> OnClosed {get;set;}
+    [Parameter] public StoTarifa StoTarifaSelect {get;set;}
+    [Parameter] public EventCallback<StoTarifa> StoTarifaSelectChanged {get;set;}
+
+    private SfGrid<StoTarifa> DataGridTarifa {get;set;}
+    private SfGrid<ITarifa> DataGridDetTarifa {get;set;}
+    private List<StoTarifa> DatosCabecerasTarifas {get;set;} = new List<StoTarifa>();
+    private List<ITarifa> DatosTarifas {get;set;} = new List<ITarifa>();
+    private List<ITarifa> DatosTarifasTemporal {get;set;} = new List<ITarifa>();
+    private List<ITarifa> DatosTarifasActual {
+        get {
+            if(ModoEdicion){
+                return DatosTarifasTemporal;
+            }else{
+                return DatosTarifas;
+            }
+        }
+    }
+
+    private double[] gridFilas = new double[]{40, .75, 40};
+    private double[] gridColumnas = new double[]{.4, .4};
+    private bool busyIndicator = false;
+    private StoTarifa CabeceraTarifaSeleccionado {get;set;}
+    private string CabeceraTarifaSeleccionadoTitulo {
+        get {
+            return CabeceraTarifaSeleccionado == null?"":CabeceraTarifaSeleccionado.Descripcion;
+        }
+    }
+    private bool ModoEdicion = false;
+    private bool ModalConfirmacionEliminacion = false;
+    private string tmpTituloCabecera = "";
+    private EditarTarifaVtn editarTarifaVtn {get;set;}
+    private bool editarTarifaVtnVisible = false;
+    private ITarifa tarifaSeleccionada {get;set;}
+
+
+    // Funciones
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCatalogoTarifa();
+    }
+
+    private async Task CargarCatalogoTarifa(bool resetSeleccion = true){
+        busyIndicator = true;
+        await Task.Delay(100);
+
+        DatosCabecerasTarifas.Clear();
+        var _tmpData = tarifaService.ObtenerCustomCatalogoTarifas().ToList();
+        if(_tmpData == null){
+            Toaster.Add("Error al obtener el catalogo de tarifas", MatToastType.Danger);
+        }else{
+            DatosCabecerasTarifas = _tmpData;
+            DataGridTarifa.Refresh();
+        }
+
+        if(resetSeleccion){
+            CabeceraTarifaSeleccionado = null;
+        }
+
+        await Task.Delay(100);
+        busyIndicator = false;
+    }
+    private async Task CargarDetalleTarifa(StoTarifa context){
+        busyIndicator = true;
+        await Task.Delay(100);
+
+        DatosTarifas.Clear();
+        var _tmpData = tarifaService.ObtenerDetalleCustomCatalogoTarifas(context.Id).ToList();
+        if(_tmpData == null){
+            Toaster.Add("Error al obtener el detalle del catalogo de tarifas", MatToastType.Danger);
+        }else{
+            if(_tmpData.Count() <= 0){
+                Toaster.Add("No tarifas datos disponibles para este registro", MatToastType.Warning);
+            }else{
+                DatosTarifas = _tmpData;
+            }
+        }
+
+        await Task.Delay(100);
+        busyIndicator = false;
+    }
+
+    private async Task CerrarVentana(bool r){
+        // regresar una lista de tarifas
+        var _resul = new List<ITarifa>();
+        if(r){
+            try{
+                await StoTarifaSelectChanged.InvokeAsync(CabeceraTarifaSeleccionado);
+            }catch(Exception){}
+            await OnClosed.InvokeAsync(DatosTarifas);
+        }else{
+            await OnClosed.InvokeAsync(null);
+        }
+    }
+
+    //****** Eventos Datagrid ******
+    private async Task RowsSelected(RowSelectEventArgs<StoTarifa> args){
+        if(ModoEdicion){
+            args.Cancel = true;
+            return;
+        }
+
+        if(args.Data == null){
+            this.CabeceraTarifaSeleccionado = null;
+            return;
+        }
+        this.CabeceraTarifaSeleccionado = args.Data;
+        await CargarDetalleTarifa(args.Data);
+    }
+    private async Task RowDoubleClick(RecordDoubleClickEventArgs<StoTarifa> args){
+        if(args.RowData == null){
+            return;
+        }
+        this.CabeceraTarifaSeleccionado = args.RowData;
+        await CerrarVentana(true);
+    }
+
+    // Acciones Catalogo
+    private async Task EditarCatalogoSeleccionado(){
+        ModoEdicion = true;
+        tmpTituloCabecera = CabeceraTarifaSeleccionadoTitulo;
+
+        // Crear copia de datos tarifas
+        this.DatosTarifasTemporal = this.DatosTarifas.ToList();
+        StateHasChanged();
+        await Task.Delay(100);
+    }
+    private async Task EliminarCatalogoSeleccionado(){
+        ModalConfirmacionEliminacion = true;
+        await Task.Delay(100);
+    }
+
+    // Acciones Ediciones
+    private async Task CancelarEdicion(){
+        this.ModoEdicion = false;
+        await Task.Delay(100);
+    }
+    private async Task AplicarEdicion(){
+
+        await ModificarTituloCabecera(tmpTituloCabecera);
+
+        // Preprarar catalogo a actualizar
+        var _listaDatos = new List<StoDetTarifa>();
+        foreach(var _tarifa in DatosTarifasTemporal){
+            var _newStoDetTarifa = new StoDetTarifa();
+            _newStoDetTarifa.IdStoTarifa = CabeceraTarifaSeleccionado.Id;
+            _newStoDetTarifa.IdTarifa = _tarifa.Id_Tarifa;
+            _newStoDetTarifa.IdTipoUsuario = _tarifa.Id_TipoUsuario;
+            _newStoDetTarifa.Desde = _tarifa.Desde;
+            _newStoDetTarifa.Hasta = _tarifa.Hasta;
+            _newStoDetTarifa.Costo = _tarifa.Costo;
+            _newStoDetTarifa.CostoBase = _tarifa.CostoBase;
+            _newStoDetTarifa.CuotaBase = _tarifa.CuotaBase;
+            _newStoDetTarifa.AdicionalM3 = _tarifa.AdicionalM3;
+            _listaDatos.Add(_newStoDetTarifa);
+        }
+
+        tarifaService.ActualizarCustomCatalogoTarifas(CabeceraTarifaSeleccionado.Id, _listaDatos);
+        //ActualziarDatosTarifas();
+
+        await CargarCatalogoTarifa();
+
+        this.ModoEdicion = false;
+        await Task.Delay(100);
+    }
+    private async Task ModificarTituloCabecera(string titulo){
+        busyIndicator = true;
+        await Task.Delay(100);
+        
+        var _newItem = new StoTarifa();
+        _newItem.Descripcion = titulo;
+        _newItem.Id = CabeceraTarifaSeleccionado.Id;
+
+        tarifaService.ActualizarCabeceraCustomCatalogoTarifas(CabeceraTarifaSeleccionado.Id, _newItem);
+
+        await Task.Delay(100);
+        busyIndicator = false;
+
+    }
+
+    // Modal Confirmacion eliminacion
+    private async Task ModalEliminacion_Accept(object args){
+        busyIndicator = true;
+        ModalConfirmacionEliminacion = false;
+        await Task.Delay(100);
+
+        tarifaService.EliminarCustomCatalogoTarifas(CabeceraTarifaSeleccionado.Id);
+        await CargarCatalogoTarifa();
+
+        busyIndicator = false;
+        await Task.Delay(100);
+
+    }
+    private async Task ModalEliminacion_Cancel(object args){
+        ModalConfirmacionEliminacion = false;
+        await Task.Delay(100);
+    }
+
+    //**** Funciones Editar tarifas ******/
+    private void EditarTarifa_Click(ITarifa tarifa){
+        if(editarTarifaVtnVisible){
+            return;
+        }        
+        if(tarifaSeleccionada != tarifa){
+            this.tarifaSeleccionada = tarifa;
+        }
+        editarTarifaVtnVisible = true;
+    }
+    public void EditarTarifa_Closed(bool ok){
+        if(ok){
+            var _tarifa = DatosTarifasTemporal.Where( item=> item.Id_Tarifa == tarifaSeleccionada.Id_Tarifa).FirstOrDefault();
+            _tarifa.Desde = tarifaSeleccionada.Desde;
+            _tarifa.Hasta = tarifaSeleccionada.Hasta;
+            _tarifa.Costo = tarifaSeleccionada.Costo;
+            _tarifa.CostoBase = tarifaSeleccionada.CostoBase;
+            _tarifa.CuotaBase = tarifaSeleccionada.CuotaBase;
+            _tarifa.AdicionalM3 = tarifaSeleccionada.AdicionalM3;
+            this.DataGridDetTarifa.Refresh();
+        }
+        this.editarTarifaVtnVisible = false;
+    }
+
+}

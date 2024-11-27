@@ -1,0 +1,70 @@
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Recaudacion.Data
+@using Sicem_Blazor.Recaudacion.Models
+@inject IJSRuntime JSRuntime
+
+@if (MostrarVentana) {
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@Cerrar_Modal" Filas="@(new double[] { 50, 610 })" Columnas="@(new double[]{1100})">
+        <Content>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="DataGrid" DataSource="@IngresosConceptos" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(IngresosxConceptos.Descripcion)" HeaderText="Concepto" TextAlign="TextAlign.Left" Width="280" />
+                        <GridColumn Field="@nameof(IngresosxConceptos.Conc_Con_Iva)" HeaderText="Concepto Con IVa" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosxConceptos.Iva)" HeaderText="IVA" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosxConceptos.Aplicado_Con_Iva)" HeaderText="Aplicado Con Iva" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosxConceptos.Conc_Sin_Iva)" HeaderText="Conc Sin Iva" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosxConceptos.Total_Aplicado)" HeaderText="Total Aplicado" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosxConceptos.Usuarios)" HeaderText="Usuarios" TextAlign="TextAlign.Center" Width="140" Format="n0" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+}
+
+@code {
+
+    [Parameter] public bool MostrarVentana { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    public IEnlace Enlace { get; set; }
+    public string Titulo = "RECAUDACION INGRESOS POR CONCEPTOS";
+
+    private SfGrid<IngresosxConceptos> DataGrid {get;set;}
+    public List<IngresosxConceptos> IngresosConceptos {get;set;}
+
+
+    //"******** Funciones ********"
+    public void Inicializar(IEnlace enlace, IEnumerable<IngresosxConceptos> datos) {
+        this.Enlace = enlace;
+        this.IngresosConceptos = datos.ToList();
+    }
+    private async Task Cerrar_Modal() {
+        if(IngresosConceptos != null){
+            this.IngresosConceptos.Clear();
+        }
+        await CerrarModal.InvokeAsync("");
+    }    
+    private async Task GenerarExcel() {
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_ingresosxConceptos_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private void FiltrarDatos(ChangeEventArgs e) {
+        //Filtrar datos
+        //ProcesarDatosGrafica();
+    }
+
+}

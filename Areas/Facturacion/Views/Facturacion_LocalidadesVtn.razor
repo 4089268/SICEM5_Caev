@@ -1,0 +1,111 @@
+@using Sicem_Blazor.Facturacion.Models
+@inject FacturacionService facturacionService
+@inject IMatToaster MatToaster
+
+@if(Visible){
+    <VentanaSecundaria Titulo="@Titulo" Columnas="@ColumnasTemplate" Filas="@FilasTemplate" CerrarVentana="@CerrarModal">
+        <Content>
+
+            <div class="d-flex align-items-center border rounded p-2 mb-2 bg-white">
+                <div class="button bg-success px-3 py-2" @onclick="OnExportExcel_Click" >
+                    <i class="fa fa-file-excel mr-2"></i>
+                    <span>Exportar Historial</span>
+                </div>
+            </div>
+
+            <div class="border rounded p-2 mb-2 bg-white">
+                <SfGrid @ref="DataGrid" DataSource="@DatosGrid" AllowExcelExport="true" AllowResizing="true" Width="100%" Height="100%">
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Left" Width="40">
+                            <Template>
+                                @{
+                                    var data = (context as FacturacionLocalidad);
+                                    <div class="d-flex p-1">
+                                        <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Mostrar Colonias" @onclick=@( e => MostrarColonias_Click(data) ) >
+                                            <i class="fa fa-bookmark" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(FacturacionLocalidad.Localidad)" HeaderText="Localidad" TextAlign="TextAlign.Left" Width="220" />
+                        <GridColumn Field="@nameof(FacturacionLocalidad.Agua)" HeaderText="Agua" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionLocalidad.Drenaje)" HeaderText="Drenaje" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionLocalidad.Saneamiento)" HeaderText="Saneamiento" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionLocalidad.Actu)" HeaderText="Actu" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionLocalidad.Otros)" HeaderText="Otros" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionLocalidad.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionLocalidad.Iva)" HeaderText="IVA" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionLocalidad.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(FacturacionLocalidad.Usuarios)" HeaderText="Usuarios" TextAlign="TextAlign.Center" Width="100" Format="n0" />
+                        <GridColumn Field="@nameof(FacturacionLocalidad.M3Consumidos)" HeaderText="M3 Consumidos" TextAlign="TextAlign.Center" Width="110" Format="n0" />
+                        <GridColumn Field="@nameof(FacturacionLocalidad.M3Facturados)" HeaderText="M3 Facturados" TextAlign="TextAlign.Center" Width="110" Format="n0" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+
+    <Facturacion_ColoniasVtn @ref="FacturacionColoniasVtn" Enlace="@Enlace" Fecha="@Fecha" Subsistema="@Subsistema" Sector="@Sector" Visible="@facturacionColonias_visible" OnClose="@( e => facturacionColonias_visible = false)" Titulo="@($"{Enlace.Nombre} - Facturacion Por Colonias")"/>
+   
+}
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos..." />
+
+@code {
+    [Parameter] public EventCallback OnClose {get;set;}
+    [Parameter] public bool Visible {get;set;}
+    [Parameter] public DateTime Fecha {get;set;}
+    [Parameter] public int Subsistema {get;set;}
+    [Parameter] public int Sector {get;set;}
+    public IEnlace Enlace {get;set;}
+    public string Titulo {get;set;} = "Facturacion Por Localidades";
+
+    private SfGrid<FacturacionLocalidad> DataGrid {get;set;}
+    private List<FacturacionLocalidad> DatosGrid {get;set;}
+    private double[] ColumnasTemplate = new double[]{ .9};
+    private double[] FilasTemplate = new double[]{50, .8,};
+
+    private bool busyDialog  = false, facturacionColonias_visible = false;
+    private Facturacion_ColoniasVtn FacturacionColoniasVtn {get;set;}
+
+    public void Inicializar(IEnumerable<FacturacionLocalidad> datos, IEnlace enlace){
+        this.Enlace = enlace;
+        this.DatosGrid = datos.ToList();
+
+        Titulo=$"{Enlace.Nombre} - Facturacion Por Localidades";
+    }
+    private async Task CerrarModal(){
+        await OnClose.InvokeAsync(null);
+    }
+    private async Task OnExportExcel_Click(){
+        var _guid = Guid.NewGuid().ToString().Replace("-","").Substring(0,10);
+        var _titulo = Titulo.Replace(" - ",".").Replace(" ","_").ToString();
+        var _p = new ExcelExportProperties(){
+            FileName = $"{_titulo}-{_guid}.xlsx",
+            IncludeHiddenColumn = true
+        };
+        await DataGrid.ExportToExcelAsync(_p);
+    }
+
+    private async Task MostrarColonias_Click(FacturacionLocalidad context){
+        if(facturacionColonias_visible){
+            return;
+        }
+
+        busyDialog = true;
+        await Task.Delay(100);
+
+        var _datos = facturacionService.ObtenerFacturacionColonias(Enlace, Fecha.Year, Fecha.Month, Subsistema, Sector, context.IdLocalidad).ToList();
+        if(_datos.Count() > 0){
+            facturacionColonias_visible = true;
+            FacturacionColoniasVtn.Inicializar(_datos);
+        }else{
+            MatToaster.Add("Error al realizar la consulta", MatToastType.Danger);
+        }
+
+        await Task.Delay(100);
+        busyDialog = false;
+    }
+
+}

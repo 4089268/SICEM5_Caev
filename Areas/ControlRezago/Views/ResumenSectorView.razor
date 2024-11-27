@@ -1,0 +1,48 @@
+@using Sicem_Blazor.ControlRezago.Models
+
+<div class="d-flex align-itenms-center my-2">
+    <div class="button bg-success px-3 py-1" @onclick="OnExportExcel_Click">
+        <i class="fa fa-file-excel mr-2"></i>
+        <span>Exportar Datos</span>
+    </div>
+</div>
+
+<div style="height: calc(100% - 3.5rem);" >
+    <SfGrid @ref="DataGrid" DataSource="@DatosGrid" TValue="ResumenSector" AllowResizing="true" AllowSorting="true"  AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
+        <GridColumns> 
+            <GridColumn HeaderText="" TextAlign="TextAlign.Left" Width="40">
+                <Template>
+                    @{
+                        var data = (context as ResumenSector);
+                        <div class="d-flex p-1">
+                            <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Detalle" @onclick=@( e => OnClick(data) )>
+                                <i class="fa fa-bookmark" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    }
+                </Template>
+            </GridColumn>
+            <GridColumn Field="@nameof(ResumenSector.Sector)" HeaderText="Sector" TextAlign="TextAlign.Left" Width="170" />
+            <GridColumn Field="@nameof(ResumenSector.Usuarios)" HeaderText="Usuarios" TextAlign="TextAlign.Center" Width="115" Format="n0" />
+            <GridColumn Field="@nameof(ResumenSector.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="125" Format="c2" />
+            <GridColumn Field="@nameof(ResumenSector.IVA)" HeaderText="IVA" TextAlign="TextAlign.Right" Width="125" Format="c2" />
+            <GridColumn Field="@nameof(ResumenSector.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="125" Format="c2" />
+        </GridColumns>
+    </SfGrid>
+</div>
+
+@code {
+    public SfGrid<ResumenSector> DataGrid {get;set;}
+    [Parameter] public List<ResumenSector> DatosGrid {get;set;}
+    [Parameter] public EventCallback<string> OnDetailClick {get;set;}
+    private async Task OnClick(ResumenSector e){
+        await OnDetailClick.InvokeAsync(e.Sector);
+    }
+    private async Task OnExportExcel_Click(){
+        var _properties = new ExcelExportProperties(){
+            IncludeHiddenColumn = true,
+            FileName = $"REZAGO_POR_SECOTRES_{Guid.NewGuid().ToString().Replace("-","")}.xlsx"
+        };
+        await DataGrid.ExportToExcelAsync(_properties);
+    }
+}

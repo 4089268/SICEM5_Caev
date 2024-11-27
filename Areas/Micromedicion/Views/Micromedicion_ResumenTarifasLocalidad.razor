@@ -1,0 +1,60 @@
+@using Sicem_Blazor.Micromedicion.Models
+
+<div class="w-100 h-100">
+    <div class="m-1 p-2 border rounded bg-white">
+        <div class="w-100 d-flex align-items-center">
+            <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+        </div>
+    </div>
+
+    <div class="m-1 p-2 border rounded bg-white" style="width:100%; height: calc(100% - 4rem);">
+        <SfGrid @ref="DataGrid" DataSource="@DatosGrid" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowGrouping="true" Height="100%" Width="auto" EnableHover="true" RowHeight="22">
+            <GridGroupSettings Columns="@(new string[] { "Localidad"})" ShowDropArea="false">
+                <CaptionTemplate>
+                    @{
+                        var order = (context as CaptionTemplateContext);
+                        if(order.Key.Contains("--*--")){
+                            <div class="pt-4 pb-3">TOTAL</div>
+                        }else{
+                            <div Class="pt-4 pb-3"> @order.Key.ToString().ToUpper()</div>
+                        }
+                    }
+                </CaptionTemplate>
+            </GridGroupSettings>
+            <GridColumns>
+                <GridColumn Field="@nameof(Resumen_Tarifa.Localidad)" HeaderText="Localidad" TextAlign="TextAlign.Left" Width="280" />
+                <GridColumn Field="@nameof(Resumen_Tarifa.Descripcion)" HeaderText="Tarifa" TextAlign="TextAlign.Left" Width="280" />
+                <GridColumn Field="@nameof(Resumen_Tarifa.UsuMedidorFun)" HeaderText="Medidores Funcionando" TextAlign="TextAlign.Center" Width="150" Format="n0" />
+                <GridColumn Field="@nameof(Resumen_Tarifa.UsuMedidorNoFun)" HeaderText="Medidores No Funcionando" TextAlign="TextAlign.Center" Width="150" Format="n0" />
+                <GridColumn Field="@nameof(Resumen_Tarifa.UsuConMedidor)" HeaderText="Usu Con Medidor" TextAlign="TextAlign.Center" Width="150" Format="n0" />
+                <GridColumn Field="@nameof(Resumen_Tarifa.UsuSinMedidor)" HeaderText="Usu Sin Medidor" TextAlign="TextAlign.Center" Width="150" Format="n0" />
+                <GridColumn Field="@nameof(Resumen_Tarifa.UsuDren)" HeaderText="Tomas Con Drenaje" TextAlign="TextAlign.Center" Width="150" Format="n0" />
+                <GridColumn Field="@nameof(Resumen_Tarifa.UsuTomas)" HeaderText="Total Tomas" TextAlign="TextAlign.Center" Width="150" Format="n0" />
+            </GridColumns>
+        </SfGrid>
+    </div>
+</div>
+
+@code {
+
+    [Parameter] public IEnlace Enlace { get; set; }
+    [Parameter] public List<Resumen_Tarifa> DatosGrid {get;set;}
+    private SfGrid<Resumen_Tarifa> DataGrid {get;set;}
+    
+    protected override void OnParametersSet(){
+       if(DatosGrid != null){
+            DatosGrid = DatosGrid
+                .OrderBy(item => item.Localidad)
+                .OrderBy(item => item.IdTarifa)
+                .ToList();
+        }
+   }
+
+    
+    private async Task GenerarExcel() {
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("ResumenTomasxTarifasYLocalidades_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+}

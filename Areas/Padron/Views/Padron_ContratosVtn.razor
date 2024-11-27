@@ -1,0 +1,135 @@
+@using Sicem_Blazor.Padron.Models
+@inject IJSRuntime JSRuntime
+@inject PadronService padronService
+@inject NavigationManager NavManager
+
+@if (Visible) {
+
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@CerrarModal" Filas="@(new double[]{ 50, 50, 520 })" Columnas="@(new double[]{.85})">
+        <Content>
+
+            <!-- ****** Seleccionar Fecha ****** -->
+            <div class="d-flex align-items-center m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="mx-2 font-weight-bold" style="font-size: 1.1rem;"> Fecha:</div>
+                <input type="date" style="width:110px;" @bind-value="@Fecha1">
+                <div class="mx-2" style="font-size: 1.1rem;">-</div>
+                <input type="date" style="width:110px;" @bind-value="@Fecha2">
+                <MatButton Class="ml-5 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@Procesar">Procesar</MatButton>
+            </div>
+
+            <!-- ****** Filtro y Exportar ****** -->
+            <div class="d-flex align-items-center m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <div class="mx-2 font-weight-bold" style="font-size: 1.1rem;"> Tarifa: </div>
+                <ComboBox InitValue="0" Options="@cat_tarifas" OnSelected="@(val => FiltrarDatos(val))" Width="260" />
+                <MatButton Class="ml-4" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+            </div>
+
+            <!-- ****** DataGrid ****** -->
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 3/4; grid-column: 1/2;">
+                <SfGrid @ref="dataGrid" DataSource="@datosGrid" AllowPaging="@allowPagesGrid" AllowSorting="true" AllowResizing="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridPageSettings PageSize="1000"></GridPageSettings>
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="55">
+                            <Template>
+                                @{
+                                    var data = (context as Padron_Contratos);
+                                    <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Datos Generales" @onclick="@( e => MostrarEnConsultaGeneral(data))">
+                                        <i class="fa fa-address-book-o" aria-hidden="true"></i>
+                                    </button>
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(Padron_Contratos.Id_Contrato)" HeaderText="Contrato" TextAlign="TextAlign.Center" Width="90" />
+                        <GridColumn Field="@nameof(Padron_Contratos.Fecha_Contratado)" HeaderText="Fecha" TextAlign="TextAlign.Left" Width="130" />
+                        <GridColumn Field="@nameof(Padron_Contratos.Cuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="120" />
+                        <GridColumn Field="@nameof(Padron_Contratos.Localizacion)" HeaderText="Localizacion" TextAlign="TextAlign.Left" Width="140" />
+                        <GridColumn Field="@nameof(Padron_Contratos.Usuario)" HeaderText="Usuario" TextAlign="TextAlign.Left" Width="190" />
+                        <GridColumn Field="@nameof(Padron_Contratos.Tarifa_Contratada)" HeaderText="Tarifa Contr" TextAlign="TextAlign.Center" Width="120" />
+                        <GridColumn Field="@nameof(Padron_Contratos.Tarifa_Actual)" HeaderText="Tarifa Act" TextAlign="TextAlign.Center" Width="120" />
+                        <GridColumn Field="@nameof(Padron_Contratos.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Padron_Contratos.Iva)" HeaderText="IVA" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Padron_Contratos.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+
+    <BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+
+    @if (DatosGenerales_visible) {
+        <DatosGenerales_Dialog IdOficina="@EnlaceActual.Id" Cuenta="@CuentaActual" CerrarVentana="@(e => DatosGenerales_visible = false)" />
+    }
+}
+
+@code {
+
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    public string Titulo = "Contratos Realizados";
+    public IEnlace EnlaceActual = null;
+
+    SfGrid<Padron_Contratos> dataGrid;
+    public Padron_Contratos[] datos { get; set; }
+    public List<Padron_Contratos> datosGrid { get; set; }
+    Dictionary<int, string> cat_tarifas = new Dictionary<int, string>();
+
+    private bool allowPagesGrid = false, busyDialog = false;
+    private int idTarifaSeleccionada = 0;
+    private bool DatosGenerales_visible = false;
+    private string CuentaActual = "0";
+
+    //"******** Funciones ********"
+    private async Task Cerrar_Modal() {
+        this.datosGrid = new List<Padron_Contratos>();
+        await CerrarModal.InvokeAsync("");
+    }
+    public async Task Inicializar(Padron_Contratos[] _datos, Dictionary<int, string> _cat) {
+        if (_datos.Length > 1000) {
+            this.allowPagesGrid = true;
+        }
+        this.datos = _datos;
+        this.datosGrid = datos.ToList();
+        this.cat_tarifas = _cat;
+        this.cat_tarifas[0] = "TODOS";
+
+        await Task.Delay(100);
+    }
+    public async Task Procesar() {
+        busyDialog = true;
+        this.datos = padronService.ObtenerContratosRealizados(EnlaceActual, Fecha1.Year, Fecha1.Month);
+        FiltrarDatos(idTarifaSeleccionada);
+        busyDialog = false;
+        await Task.Delay(100);
+    }
+    private void MostrarEnConsultaGeneral(Padron_Contratos e) {
+        this.CuentaActual = e.Cuenta.ToString();
+        DatosGenerales_visible = true;
+    }
+    private async Task GenerarExcel() {
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private void FiltrarDatos(int id_tarifa_seleccionada) {
+        this.idTarifaSeleccionada = id_tarifa_seleccionada;
+        if (id_tarifa_seleccionada == 0) {
+            this.datosGrid = this.datos.ToList();
+        }
+        else {
+            var tmpData = this.datos.Where(item => item.Id_Tarifa_Actual == id_tarifa_seleccionada || item.Id_Tarifa_Contratada == id_tarifa_seleccionada).ToArray();
+            if (tmpData.Length > 0) {
+                this.datosGrid = tmpData.ToList();
+            }
+            else {
+                this.datosGrid = new List<Padron_Contratos>();
+            }
+        }
+    }
+
+}

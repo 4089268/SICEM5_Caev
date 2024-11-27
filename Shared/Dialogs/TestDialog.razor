@@ -1,0 +1,67 @@
+﻿@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@inject SicemService sicemService
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+@if (Show) {
+    <div class="busy-control">
+
+        <div @ref="MyElementReference" id="draggable" class="SicemDialog-control" style="width:940px; height:720px;">
+        
+            <div class="SicemDialog-header">
+                <h4>Movimientos @RazonSocial</h4>
+                <MatIcon @onclick="@Cerrar_Modal" Class="close-icon" style="margin-left: auto;" Icon="clear"></MatIcon>
+            </div>
+
+            <div class="SicemDialog-content">                        
+                <SfGrid DataSource="@movimientosItems" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="100%" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Center" Width="120" />
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Id_tipomovto)" HeaderText="tipo_movimiento" TextAlign="TextAlign.Center" Width="90" />
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Operacion)" HeaderText="Operacion" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Folio_movto)" HeaderText="Movimiento" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Cargo)" HeaderText="Cargo" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Abono)" HeaderText="Abono" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Saldo)" HeaderText="Saldo" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Quien)" HeaderText="Realizo" TextAlign="TextAlign.Left" Width="100" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+        </div>
+
+    </div>
+}
+
+@code {
+    [Parameter]
+    public EventCallback CerrarModal { get; set; }
+
+    [Parameter]
+    public bool Show { get; set;}
+
+    [Parameter]
+    public int Id_padron {get;set;}
+
+    [Parameter]
+    public string RazonSocial {get;set;}
+
+
+    ElementReference MyElementReference;
+    public List<ConsultaGreal_MovimientosResponse> movimientosItems { get; set; }
+
+
+    /******** FUNCIONES ********/
+    protected override void OnAfterRender(bool firstRender) {
+        JSRuntime.InvokeAsync<int>("ConfigurateDragg", MyElementReference);
+        base.OnAfterRender(firstRender);
+    }
+
+    protected async Task Cerrar_Modal() {
+        await CerrarModal.InvokeAsync("");
+    }
+    
+}

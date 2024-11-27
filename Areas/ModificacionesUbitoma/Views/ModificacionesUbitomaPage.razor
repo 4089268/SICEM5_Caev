@@ -1,0 +1,171 @@
+@page "/Consulta-Ubitoma"
+@using ModsUbitoma.Mods
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.ModsUbitoma.Models
+@using Sicem_Blazor.ModsUbitoma.Data
+@inject IMatToaster Toaster
+@inject IUbitomaService ubitomaService
+@inject SicemService sicemService
+
+<div class="layout-page1">
+
+    <div class="title-page" style="grid-area:1/1/2/2;">MODIFICACIONES UBITOMA</div>
+
+    <div class="border rounded bg-white px-2 d-flex align-items-center" style="grid-area:2/1/3/2;">
+        <SeleccionarFecha fecha1="@Fecha1" fecha2="@Fecha2" ProcesarParam="@Procesar" OcultarSector="true"  />
+    </div>
+
+    @* ****** Acciones ****** *@
+    <div class="border rounded bg-white d-flex align-items-center" style="grid-area:3/1/4/2;">
+        <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" @onclick="@(e => ExportarExcelClick())">Exportar Excel</MatButton>
+        <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" Disabled="true">Generar Reporte</MatButton>
+    </div>
+
+    @* ****** DataGrid ****** *@
+    <div class="border rounded bg-white p-2 d-flex" style="grid-area:4/1/6/2;">
+        <SfGrid @ref="dataGrid" DataSource="@datosResumen" TValue="ResumenOficina" AllowResizing="true" AllowSorting="true" AllowFiltering="false"
+                AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="100%" EnableHover="true" >
+            <GridColumns>
+                <GridColumn HeaderText="" TextAlign="TextAlign.Left" Width="80" >
+                    <Template>
+                        @{
+                           var data = (context as ResumenOficina); 
+                           <div class="d-flex p-1">
+                                <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Imagenes capuradas" @onclick="@(e => MostrarImagenesCapturadas(data))">
+                                    <i class="fa fa-camera" aria-hidden="true"></i>
+                                </button>
+                                <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Detalle Cuentas Modificadas" @onclick="@(e => MostarDetalle(data))">
+                                    <i class="fa fa-bookmark" aria-hidden="true"></i>
+                                </button>
+                           </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(ResumenOficina.Oficina)"  HeaderText="Oficina"           TextAlign="TextAlign.Left"      Width="140" />
+                <GridColumn Field="TotalModificaciones" HeaderText="Total Modificaciones"           TextAlign="TextAlign.Center"    Width="160" Format="n0"/>
+                <GridColumn Field="Geolocalizados" HeaderText="Geolocalizados"                      TextAlign="TextAlign.Center"    Width="160" Format="n0"/>
+                <GridColumn Field="ModificacionSituacionPredio" HeaderText="Mods Situacion"  TextAlign="TextAlign.Center"    Width="160" Format="n0"/>
+                <GridColumn Field="ModificacionTarifa" HeaderText="Mods Tarifas"                    TextAlign="TextAlign.Center"    Width="160" Format="n0"/>
+                <GridColumn Field="ModificacionGiro" HeaderText="Mods Giros"                        TextAlign="TextAlign.Center"    Width="160" Format="n0"/>
+                <GridColumn Field="Observaciones" HeaderText="Observaciones Capt"             TextAlign="TextAlign.Center"    Width="160" Format="n0"/>
+                <GridColumn Field="TotalImagenes" HeaderText="Imagenes Capt"                  TextAlign="TextAlign.Center"    Width="160" Format="n0"/>
+                <GridColumn HeaderText="" TextAlign="TextAlign.Left" Width="auto" />
+            </GridColumns>
+        </SfGrid>
+    </div>
+
+</div>
+
+@* ****** Dialogos y ventanas secundarias ****** *@
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+@if(VentanaDetalleVisible){
+    <DetalleModificacionesUbitoma Enlace="@EnlaceSeleccionado" FechaDesde="@Fecha1" FechaHasta="@Fecha2" OnClose="@(e => VentanaDetalleVisible = false)" />
+}
+@if(VentanaImagenesVisible){
+    <ImagenesCapturadasVtn Enlace="@EnlaceSeleccionado" Imagenes="@TempImagenes" CerrarModal="@(()=> VentanaImagenesVisible = false)" />
+}
+
+
+<style>
+    .actualizacion-info{
+        display: block;
+        border-radius: 1rem;
+        padding: 1rem;
+    }
+
+    .item{
+        display: flex;
+        flex-flow: column;
+        align-items: flex-start;
+        justify-content: center;
+        padding: .25rem 0rem;
+
+    }
+
+    .item-label{
+        font-size: .85rem;
+        font-weight: bold;
+        opacity: .8;
+    }
+
+    .item-value{
+        font-size: 1 rem;
+        text-transform: uppercase;
+        background-color: #f8f8f8;
+        padding: .5rem;
+        margin: 1px 0px;
+        width: 100%;
+        border:1px solid #44444444;
+        border-radius: 5px;
+    }
+
+</style>
+
+@code {
+    private SfGrid<ResumenOficina> dataGrid { get; set; }
+    private bool busyDialog = false;
+    private DateTime Fecha1, Fecha2;
+    private List<ResumenOficina> datosResumen { get; set; }
+    private IEnlace EnlaceSeleccionado {get;set;}
+    private List<ImagenInfoResponse> TempImagenes {get;set;}
+    private bool VentanaDetalleVisible = false;
+    private bool VentanaImagenesVisible = false;
+    
+
+    //********* Funciones  *********
+    protected override void OnInitialized() {
+        var _now = DateTime.Now;
+        this.Fecha1 = new DateTime(_now.Year, _now.Month, 1);
+        this.Fecha2 = new DateTime(_now.Year, _now.Month, DateTime.DaysInMonth(_now.Year, _now.Month));
+    }
+    public async Task Procesar(SeleccionarFechaEventArgs e){
+        this.busyDialog = true;
+        await Task.Delay(100);
+
+        this.Fecha1 = e.Fecha1;
+        this.Fecha2 = e.Fecha2;
+
+        var _request = new ConsultaRequest();
+        _request.FechaDesde = Fecha1;
+        _request.FechaHasta = Fecha2;
+
+        datosResumen = (await ubitomaService.ObtnerResumenPorOficinas(_request)).ToList();
+
+        await Task.Delay(100);
+        this.busyDialog = false;
+    }
+    
+    private async Task ExportarExcelClick(){
+        if(dataGrid.TotalItemCount > 0){
+            await this.dataGrid.ExportToExcelAsync();
+        }
+    }
+    public void MostarDetalle(ResumenOficina data){
+        if(VentanaDetalleVisible){
+            return;
+        }
+        if(data.TotalModificaciones <= 0){
+            Toaster.Add("No hay datos disponibles", MatToastType.Info);
+            return;
+        }
+        this.EnlaceSeleccionado = data.Enlace;
+        VentanaDetalleVisible = true;
+    }
+    public async Task MostrarImagenesCapturadas(ResumenOficina data){
+        if(VentanaImagenesVisible){
+            return;
+        }
+        this.EnlaceSeleccionado = data.Enlace;
+
+        busyDialog = true;
+        await Task.Delay(100);
+
+        TempImagenes = (await ubitomaService.ObtenerImagenesOficina(EnlaceSeleccionado, Fecha1, Fecha2)).ToList();
+        VentanaImagenesVisible = true;
+
+        await Task.Delay(100);
+        busyDialog = false;
+
+    }
+
+}

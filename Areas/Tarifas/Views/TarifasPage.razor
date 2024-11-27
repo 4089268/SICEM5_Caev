@@ -1,0 +1,363 @@
+@page "/CatalogoTarifas"
+@using System.Linq
+@using Sicem_Blazor.Data
+@using Sicem_Blazor.Tarifas.Data
+@inject IMatToaster Toaster
+@inject SicemService sicemService
+@inject ITarifasService tarifasService
+@inject NavigationManager navigationManager
+
+<div class="tarifasLayout">
+    <div style="grid-area:1/1/2/2;">
+        <div class="title-page" style="grid-area:1/1/2/2;">CATALOGO TARIFAS</div>
+    </div>
+
+    <nav aria-label="breadcrumb" style="grid-area:2/1/3/2;">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="./">Inicio</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Catalogo Tarifas</li>
+        </ol>
+    </nav>
+
+    <!-- ****** Acciones ****** -->
+    <div class="grid border rounded bg-white px-2 d-flex align-items-center" style="grid-area:3/1/4/2;">
+        <div class="mr-4">
+            <label class="mx-2 h5">Periodo:</label>
+            <select class="py-2 px-2" style="width:13rem;" @onchange="@OnPeriodoTarifasChanged"> 
+                @foreach (var item in CatTarifasGroup)
+                {
+                    <option value="@($"{item["Anio"]}-{item["Mes"]}")">@item["Descripcion"]</option>
+                }
+            </select>
+        </div>
+
+
+        <div class="button px-3 py-2 bg-success mr-3" @onclick="OnExportExcel_Click" >
+            <i class="fa fa-file-excel mr-2"></i>
+            <span>Exportar Catalogo</span>
+        </div>
+
+        <div class="button px-3 py-2 mr-3" @onclick="GenerarCatalogo_Click">
+            <i class="fa fa-sort-amount-up mr-2"></i>
+            <span>Generar Nuevo Catalogo</span>
+        </div>
+        
+        <div class="button px-3 py-2 mr-3 dissable" @onclick="@(e => navigationManager.NavigateTo("/CatalogoTarifas/Historial") )">
+            <i class="fa fa-clock mr-2"></i>
+            <span>Historial Tarifas Oficina</span>
+        </div>
+
+        <div class="button dissable px-3 py-2 mr-3" @onclick="PublicarTarifas_Click">
+            <i class="fa fa-cloud-upload mr-2"></i>
+            <span>Publicar Tarifas</span>
+        </div>
+
+    </div>
+
+    <!-- ****** Datagrid ****** -->
+    <div class="d-flex align-items-center" style="grid-area:4/1/5/2;">
+        
+        <!-- ****** Grid Catalogo Tarifas ******-->
+        <div class="border rounded bg-white p-2" style="width:100%; height:100%;">
+            <SfGrid @ref="dataGrid" DataSource="@Tarifas" TValue="ITarifa" AllowResizing="true" AllowSorting="true" AllowFiltering="false"
+                AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true" AllowGrouping="true">
+                <GridEvents RowSelected="DataGrid_RecordClick" TValue="ITarifa"></GridEvents>
+                <GridGroupSettings ShowDropArea="false" Columns="@(new string[] { "TipoUsuario" })">
+                    <CaptionTemplate>
+                        @{
+                            var group = (context as CaptionTemplateContext);
+                            <div style="font-weight:700;">@group.Key</div>
+                        }
+                    </CaptionTemplate>
+                </GridGroupSettings>
+                <GridColumns>
+                    <GridColumn Field="@nameof(ITarifa.TipoUsuario)" HeaderText="Tipo Usuario" TextAlign="TextAlign.Left" Width="120" />
+                    <GridColumn HeaderText="Rango" Width="120" TextAlign="TextAlign.Center">
+                        <Template>
+                        @{
+                            var data = (context as ITarifa);
+                            <div style="width:100%; text-align:center;">
+                                <span>@(data.Hasta >= 900000 ? $"> {data.Desde} m3": $"{data.Desde} - {data.Hasta} m3" )</span>
+                            </div>
+                        }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(ITarifa.Desde)" HeaderText="Desde" TextAlign="TextAlign.Right" Width="100" Visible="false" />
+                    <GridColumn Field="@nameof(ITarifa.Hasta)" HeaderText="hasta" TextAlign="TextAlign.Right" Width="100" Visible="false" />
+                    <GridColumn Field="@nameof(ITarifa.CostoBase)" HeaderText="Cuota Base" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                    <GridColumn Field="@nameof(ITarifa.Costo)" HeaderText="Costo Adicional" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                     <GridColumn HeaderText="Acciones" Width="auto" TextAlign="TextAlign.Left">
+                        <Template>
+                        @{
+                            var data = (context as ITarifa);
+                            <div class="px-2" style="width:100%;">
+                                <button class="button px-3" @onclick="@( e => EditarTarifa_Click(data) )">
+                                    <i class="fa-solid fa-pencil"></i>
+                                    <div>Editar</div>
+                                </button>
+                            </div>
+                        }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </div>
+        
+        <!-- ****** Panel comparacion tarifas ****** -->
+        @if(tarifaSeleccionada != null){
+            <div class="d-flex flex-column border rounded bg-white ml-2 p-2 cOficinas" style="width:480px; height:100%;">
+                <div style="height:10rem;">
+                    <div class="titulo">Comparar Oficinas</div>
+                    <div class="item"><div class="t"> Usuario:</div> @tarifaSeleccionada.TipoUsuario </div>
+                    <div class="item"><div class="t">Rango:</div> @(tarifaSeleccionada.Hasta >= 900000 ? $"> {tarifaSeleccionada.Desde} m3": $"{tarifaSeleccionada.Desde} - {tarifaSeleccionada.Hasta} m3" ) </div>
+                </div>
+
+                <div style="height: calc(100% - 10rem);">
+                    <SfGrid @ref="dataGridOficinas" DataSource="@TarifasOficina" TValue="Tarifa" AllowResizing="true" AllowSorting="true" Height="100%" Width="100%">
+                        <GridColumns>
+                            <GridColumn Field="@nameof(Tarifa.Oficina)" HeaderText="Oficina" TextAlign="TextAlign.Left" Width="160" />
+                            <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="auto">
+                                <Template>
+                                    @{
+                                        var tmpTarifa = (context as Tarifa);
+                                        @switch (tmpTarifa.Estatus) {
+                                            case 1:
+                                                <div class="datos-ofi">
+                                                    <div class="item">
+                                                        <div class="title">Costo:</div>
+                                                        <div class="@(tmpTarifa.Costo != tarifaSeleccionada.Costo?"data err":"data")">
+                                                            @(tmpTarifa.Costo.ToString("c2"))
+                                                        </div>
+                                                    </div>
+                                                    <div class="item">
+                                                        <div class="title">Costo Base:</div>
+                                                        <div class="@(tmpTarifa.CostoBase != tarifaSeleccionada.CostoBase?"data err":"data")">
+                                                            @(tmpTarifa.CostoBase.ToString("c2"))
+                                                        </div>
+                                                    </div>
+                                                    <div class="item">
+                                                        <div class="title">Cuta Base:</div>
+                                                        <div class="@(tmpTarifa.CuotaBase != tarifaSeleccionada.CuotaBase?"data err":"data")">
+                                                            @(tmpTarifa.CuotaBase.ToString("c2"))
+                                                        </div>
+                                                    </div>
+                                                    <div class="item">
+                                                        <div class="title">Adicional m3:</div>
+                                                        <div class="@(tmpTarifa.AdicionalM3 != tarifaSeleccionada.AdicionalM3?"data err":"data")">
+                                                            @(tmpTarifa.AdicionalM3.ToString("c2"))
+                                                        </div>
+                                                    </div>
+                                                </div>  
+                                                break;
+
+                                            case 2:
+                                                <i class="fas fa-exclamation-circle" style="color:red; font-size:1.5rem;"></i>
+                                                break;
+
+                                            default:
+                                                <div class="spinner-border p-2" role="status"> </div>
+                                                break;
+                                        }
+                                    }
+                                </Template>
+                            </GridColumn>
+
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+            </div>
+        }
+
+    </div>
+</div>
+
+@* ****** Ventanas Secundarias ****** *@
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+<EditarTarifaVtn @ref="editarTarifaVtn" Visible="@editarTarifaVtnVisible" CerrarModal="EditarTarifa_Closed" Tarifa="@tarifaSeleccionada"/>
+@if(publicarTarifaVtnVisible){
+    <PublicarTarifasVtn Cerrar="@(e => publicarTarifaVtnVisible = false)" />
+}
+
+@if(GenerarCatalogoVisible){
+    <GenerarCatalogoVtn Anio="@AnioSelect" Mes="@MesSelect" OnClosed="@(e => GenerarCatalogoVisible = false)"  />
+}
+
+<style>
+    .cOficinas .titulo{
+        font-size: 1.8rem;
+        font-weight: 600;
+        text-align:center;
+        margin:1rem 0rem;
+        text-transform: uppercase;
+        color: #555;
+    }
+    .cOficinas .item{
+        font-size: 1.4rem;
+        font-weight: 400;
+        margin: 0rem 0rem .5rem 0rem;
+        display:flex;
+        color: #555;
+    }
+        .cOficinas .item .t{
+            width:7rem;
+            font-weight: 600;
+        }
+        .datos-ofi {
+            display: flex;
+            flex-flow:column;
+            align-items: flex-start;
+        }
+
+        .datos-ofi .title{
+            font-size:1rem;
+            font-weight: 600;
+            width: 9rem;
+            text-align: left;
+        }
+
+        .datos-ofi .data{
+            font-size:1rem;
+            font-weight: 400;
+            color:green;
+        }
+
+        .datos-ofi .data.err{
+            color:red;
+        }
+
+</style>
+
+
+@code {
+
+    private SfGrid<ITarifa> dataGrid {get;set;}
+    private SfGrid<Tarifa> dataGridOficinas {get;set;}
+    private List<ITarifa> Tarifas {get;set;}
+    private List<Tarifa> TarifasOficina {get;set;}
+    private ITarifa tarifaSeleccionada {get;set;}
+    private List<Ruta> CatalogoOficinas {get;set;}
+    private EditarTarifaVtn editarTarifaVtn {get;set;}
+    private bool editarTarifaVtnVisible = false;
+    private bool publicarTarifaVtnVisible = false;
+    private bool GenerarCatalogoVisible = false;
+    private bool busyDialog = false;
+
+    private int AnioSelect = 2022;
+    private int MesSelect = 3;
+
+
+    private List<Dictionary<string, object>> CatTarifasGroup = new List<Dictionary<string, object>>();
+
+    protected override void OnInitialized(){
+        ObtenerCatlogosAgrupados();
+        var _periodo = CatTarifasGroup.First();
+        AnioSelect = ConvertUtils.ParseInteger(_periodo["Anio"]);
+        MesSelect = ConvertUtils.ParseInteger(_periodo["Mes"]);
+
+        ActualizarTarifas();
+
+    }
+    private void ActualizarTarifas(){
+        //Tarifas = tarifasService.ObtenerTarifasSicem().ToList();
+        Tarifas = tarifasService.ObtenerCatalogoTarifas(AnioSelect, MesSelect).ToList<ITarifa>();
+
+    }
+    public void DataGrid_RecordClick(RowSelectEventArgs<ITarifa> args) {
+        this.tarifaSeleccionada = args.Data;
+        InicializarConsultaOficina();
+    }
+    public void ObtenerCatlogosAgrupados(){
+        CatTarifasGroup = tarifasService.ObtenerCataloTarifasResumido().ToList();
+    }
+
+
+    //*** Eventos Realizar comprobacion oficinas ***
+    public void InicializarConsultaOficina(){
+        var Oficinas = sicemService.ObtenerOficinasDelUsuario().ToList();
+        var Tareas = new List<Task>();
+        TarifasOficina = new List<Tarifa>();
+        foreach(var oficina in Oficinas){
+            TarifasOficina.Add( new Tarifa(){
+                Estatus = 0,
+                IdOficina = oficina.Id,
+                Oficina = oficina.Nombre,
+                Id_Tarifa = tarifaSeleccionada.Id_Tarifa
+            });
+            Tareas.Add( new Task( () => RealizarConsultaOficina(oficina, tarifaSeleccionada.Id_Tarifa) ));
+        }
+
+        foreach (var tarea in Tareas) { tarea.Start(); }
+    }
+    public void RealizarConsultaOficina(IEnlace ruta, int IdTarifa) {
+        var result = tarifasService.ObtenerTarifaOficina(ruta, IdTarifa);
+        
+        var _random = new Random();
+        var _sleepTime = _random.Next(100,3000);
+        System.Threading.Thread.Sleep(_sleepTime);
+
+        var _itemList = TarifasOficina.Where(item => item.IdOficina == ruta.Id && item.Id_Tarifa == IdTarifa).FirstOrDefault();
+        if( _itemList != null){
+            _itemList.Estatus = result.Estatus;
+            _itemList.Id_TipoUsuario = result.Id_TipoUsuario;
+            _itemList.TipoUsuario = result.TipoUsuario;
+            _itemList.Desde = result.Desde;
+            _itemList.Hasta =  result.Hasta;
+            _itemList.Costo =  result.Costo;
+            _itemList.CostoBase =  result.CostoBase;
+            _itemList.CuotaBase =  result.CuotaBase;
+            _itemList.AdicionalM3 =  result.AdicionalM3;
+        }
+        this.dataGridOficinas.Refresh();
+    }
+
+    //*** Eventos Editar Tarifa ***
+    private void EditarTarifa_Click(ITarifa tarifa){
+        if(editarTarifaVtnVisible){
+            return;
+        }        
+        if(tarifaSeleccionada != tarifa){
+            this.tarifaSeleccionada = tarifa;
+            InicializarConsultaOficina();
+        }
+        editarTarifaVtnVisible = true;
+    }
+    private void EditarTarifa_Closed(bool e){
+        if(e){
+            ActualizarTarifas();
+        }
+        this.editarTarifaVtnVisible = false;
+    }
+
+
+    //***** Eventos UI
+    private async Task OnPeriodoTarifasChanged(ChangeEventArgs e){
+        busyDialog = true;
+        await Task.Delay(100);
+
+        var arrs = e.Value.ToString().Split("-");
+        AnioSelect = ConvertUtils.ParseInteger(arrs[0]);
+        MesSelect = ConvertUtils.ParseInteger(arrs[1]);
+
+        ActualizarTarifas();
+
+        await Task.Delay(100);
+        busyDialog = false;
+
+    }
+    private async Task OnExportExcel_Click(){
+        var _options = new ExcelExportProperties(){
+            FileName = $"CatalogoTarifas_{DateTime.Now.ToString("ddMMyyyy")}_{Guid.NewGuid().ToString().Replace("-","").Substring(0,10)}.xlsx"
+        };        
+        await this.dataGrid.ExportToExcelAsync(_options);
+    }
+    private void PublicarTarifas_Click(){
+    }
+
+    private void GenerarCatalogo_Click(){
+        if(GenerarCatalogoVisible){
+            return;
+        }
+        GenerarCatalogoVisible = true;
+    }
+
+}

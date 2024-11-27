@@ -1,0 +1,82 @@
+﻿@page "/SicemMaps"
+@using Syncfusion.Blazor.Maps
+@inject IJSRuntime JSRuntime
+
+<select style="width:200px; height:45px; position:absolute; z-index:666;" @onchange="@OnCombobox_SelectionChanged">
+    @foreach (var item in catOficinas) {
+        <option value="@item.Id">@item.Oficina</option>
+    }
+</select>
+
+<div class="w-100 h-100">
+    @*<div id="myMap" style="position:relative; width: 100%; height: 100%;"></div>*@    
+    <SfMaps @ref="@myMap" Width="100%" Height="100%">
+        <MapsZoomSettings Enable="true" ZoomFactor="@zoomMap" MaxZoom="19" Toolbars="@toolBarMap"></MapsZoomSettings>
+        <MapsCenterPosition Latitude="@centerMap_Latitud" Longitude="@centerMap_Longitud"></MapsCenterPosition>
+        <MapsLayers>
+            <MapsLayer LayerType="ShapeLayerType.Bing" TValue="MapMark" Key="AnN2MVAtaoQCcn4kmk6Um8PtJrnc0M9VbGUGLpNsW3sV563r0bE2-LAHTFTpDHAz" BingMapType="BingMapType.CanvasLight">
+                <MapsMarkerSettings>
+                    <MapsMarker DataSource="MarkerDataSource" TValue="MapMark" Visible="true" Height="30" Width="30" AnimationDuration="0" Fill="blue"
+                                Shape="MarkerType.Balloon" LatitudeValuePath="Latitude" LongitudeValuePath="Longitude">
+                        <MapsMarkerTooltipSettings Visible="true" ValuePath="Descripcion"></MapsMarkerTooltipSettings>
+                    </MapsMarker>
+                </MapsMarkerSettings>
+            </MapsLayer>
+        </MapsLayers>
+    </SfMaps>
+</div>
+
+
+@code {
+    private SfMaps myMap;
+    private string[] toolBarMap = new String[] { "Zoom", "ZoomIn", "ZoomOut", "Pan", "Reset" };
+    private double centerMap_Latitud = 20.213382, centerMap_Longitud = -87.436819;
+    private double zoomMap = 5;
+    public MapMark[] MarkerDataSource { get; set; } = new MapMark[] { };
+
+    private List<OficinaPos> catOficinas;
+
+    protected override async Task OnInitializedAsync(){
+        catOficinas = new List<OficinaPos>();
+        catOficinas.Add(new OficinaPos() { Id = 1, Oficina = "TULUM", Latitude = 20.213382, Longitude = -87.246819});
+        catOficinas.Add(new OficinaPos() { Id = 3, Oficina = "PLAYA DEL CARMEN", Latitude = 20.649426, Longitude = -87.079422 });
+        catOficinas.Add(new OficinaPos() { Id = 4, Oficina = "CANCUN", Latitude = 21.160459, Longitude = -86.856004 });
+        catOficinas.Add(new OficinaPos() { Id = 5, Oficina = "BACALR", Latitude = 18.684390, Longitude = -88.395647 });
+        catOficinas.Add(new OficinaPos() { Id = 6, Oficina = "CHETUMAL", Latitude = 18.519444, Longitude = -88.300642 });
+
+
+        await Task.Delay(100);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        //await JSRuntime.InvokeAsync<Task>("loadMap");
+        await Task.Delay(100);
+    }
+
+    private void OnCombobox_SelectionChanged(ChangeEventArgs e){
+        var id = int.Parse(e.Value.ToString());
+        var _ofi = catOficinas.Where(item => item.Id == id ).FirstOrDefault();
+        if (_ofi == null) {
+            return;
+        }
+
+        var center = new MapsCenterPosition();
+        center.Latitude = _ofi.Latitude;
+        center.Longitude = _ofi.Longitude;
+        this.myMap.ZoomByPosition( center, 12 );
+    }
+
+    public class MapMark {
+        public double Latitude;
+        public double Longitude;
+        public string Descripcion;
+    }
+
+    public class OficinaPos{
+        public int Id;
+        public string Oficina;
+        public double Latitude;
+        public double Longitude;
+    }
+
+}

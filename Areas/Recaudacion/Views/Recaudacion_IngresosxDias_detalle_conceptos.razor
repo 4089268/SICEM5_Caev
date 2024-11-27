@@ -1,0 +1,64 @@
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Recaudacion.Data
+@using Sicem_Blazor.Recaudacion.Models
+@inject IJSRuntime JSRuntime
+
+@if (MostrarVentana) {
+    <VentanaSecundaria Titulo="@Titulo" Filas="@GridFilas" Columnas="@GridColumnas" CerrarVentana="@Cerrar_Modal">
+        <Content>
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" Disabled="true">Generar Reporte <i class="fa fa-file-pdf-o ml-2" aria-hidden="true"></i></MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="DataGrid" DataSource="@Datos" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDetalleConceptos.Descripcion)" HeaderText="Descripcion" TextAlign="TextAlign.Left" Width="220" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDetalleConceptos.Concepto_Con_Iva)" HeaderText="Conc Con Iva" TextAlign="TextAlign.Right" Width="140"  Format="c2"/>
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDetalleConceptos.Iva)" HeaderText="Iva" TextAlign="TextAlign.Right" Width="140" Format="c2"/>
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDetalleConceptos.Aplicado_Con_Iva)" HeaderText="Apli Con Iva" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDetalleConceptos.Concepto_Sin_Iva)" HeaderText="Conc Sin Iva" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDetalleConceptos.Total_Aplicado)" HeaderText="Total Aplic" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDetalleConceptos.Usuarios)" HeaderText="Usuarios" TextAlign="TextAlign.Center" Width="110" Format="n0" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+        </Content>
+    </VentanaSecundaria>
+}
+
+@code {
+
+    [Parameter] public bool MostrarVentana { get; set;}
+    [Parameter] public EventCallback CerrarModal { get; set; }   
+    public string Titulo = "";
+
+    private List<double> GridFilas = new List<double>(){47,700};
+    private List<double> GridColumnas = new List<double>(){.85};
+
+    private SfGrid<Recaudacion_IngresosDetalleConceptos> DataGrid {get;set;}
+    private List<Recaudacion_IngresosDetalleConceptos> Datos {get;set;}
+
+
+    public void Inicializar(IEnumerable<Recaudacion_IngresosDetalleConceptos> datos, string localidad){
+        this.Datos = datos.ToList();
+        this.Titulo = $"DETALLE CONCEPTOS LOCALIDAD {localidad}";
+    }
+    private async Task Cerrar_Modal() {
+        if(Datos != null){
+            Datos.Clear();
+        }
+        this.Titulo = "DETALLE CONCEPTOS RECAUDADOS";
+        await CerrarModal.InvokeAsync("");
+        
+    }
+    private async Task GenerarExcel(){
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_ingresosConceptosDetalle_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+}

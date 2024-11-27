@@ -1,0 +1,255 @@
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Recaudacion.Data
+@using Sicem_Blazor.Recaudacion.Models
+@inject IJSRuntime JSRuntime
+
+@if (MostrarVentana) {
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@CerrarModal" Filas="@(new Double[] { 50, 620 })" Columnas="@(new Double[]{.85})">
+        <Content>
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <div class="mx-2 font-weight-bold" style="font-size: 1.1rem;"> Tipo de Usuario: </div>
+                    <select class="form-select form-select-lg mr-4" @onchange="FiltrarDatos" style="height:28px; margin-left:10px; width:200px">
+                        <option style="font-size: 1.2rem;" value="0" selected>TODOS</option>
+                        <option style="font-size: 1.2rem;" value="1">MEDIDO</option>
+                        <option style="font-size: 1.2rem;" value="2">PROMEDIO</option>
+                        <option style="font-size: 1.2rem;" value="3">FIJO</option>
+                    </select>
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="DataGrid" DataSource="@IngresosTipoUsuarios_filtrados" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="100%" 
+                        EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Id_Concepto)" HeaderText="Id" TextAlign="TextAlign.Center" Width="60" Format="n0" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Descripcion)" HeaderText="Concepto" TextAlign="TextAlign.Left" Width="240" />
+
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Dom_Sbt)" Visible="false" HeaderText="Domestico Sub." TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Dom_IVA)" Visible="false" HeaderText="Domestico IVA" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Dom_Tot)" Visible="false" HeaderText="Domestico Total" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Hot_Sbt)" Visible="false" HeaderText="Hotelero Sub." TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Hot_IVA)" Visible="false" HeaderText="Hotelero IVA" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Hot_Tot)" Visible="false" HeaderText="Hotelero Total" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Com_Sbt)" Visible="false" HeaderText="Comercial Sub." TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Com_IVA)" Visible="false" HeaderText="Comercial IVA" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Com_Tot)" Visible="false" HeaderText="Comercial Total" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Ind_Sbt)" Visible="false" HeaderText="Industrial Sub." TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Ind_IVA)" Visible="false" HeaderText="Industrial IVA" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Ind_Tot)" Visible="false" HeaderText="Industrial Total" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Pub_Sbt)" Visible="false" HeaderText="Publico Sub." TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Pub_IVA)" Visible="false" HeaderText="Publico IVA" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Pub_Tot)" Visible="false" HeaderText="Publico Total" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Subtotal)" Visible="false" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.IVA)"    Visible="false" HeaderText="IVA" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+                        <GridColumn Field="@nameof(IngresosTipoUsuario.Total)" Visible="false" HeaderText="Total" TextAlign="TextAlign.Right" Width="130" Format="c2" />
+
+                        <GridColumn HeaderText="Domesticos" TextAlign="TextAlign.Center" Width="335">
+                            <HeaderTemplate>
+                                <div class="colorT1" style="grid-area: 1/1/2/4;">Domesticos</div>
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var data = (context as IngresosTipoUsuario);
+                                    <div class="customCol">
+                                        <div class="item colorT1">@data.Dom_Sbt.ToString("c2")</div>
+                                        <div class="item colorT1">@data.Dom_IVA.ToString("c2")</div>
+                                        <div class="item colorT1">@data.Dom_Tot.ToString("c2")</div>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+
+                        <GridColumn HeaderText="Hotelero" TextAlign="TextAlign.Center" Width="335">
+                            <HeaderTemplate>
+                                <div class="colorT2" style="grid-area: 1/1/2/4;">Hotelero</div>
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var data = (context as IngresosTipoUsuario);
+                                    <div class="customCol">
+                                        <div class="item colorT2">@data.Hot_Sbt.ToString("c2")</div>
+                                        <div class="item colorT2">@data.Hot_IVA.ToString("c2")</div>
+                                        <div class="item colorT2">@data.Hot_Tot.ToString("c2")</div>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+
+                        <GridColumn HeaderText="Comercial" TextAlign="TextAlign.Center" Width="335">
+                            <HeaderTemplate>
+                                <div class="colorT3">COMERCIAL</div>
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var data = (context as IngresosTipoUsuario);
+                                    <div class="customCol">
+                                        <div class="item colorT3">@data.Com_Sbt.ToString("c2")</div>
+                                        <div class="item colorT3">@data.Com_IVA.ToString("c2")</div>
+                                        <div class="item colorT3">@data.Com_Tot.ToString("c2")</div>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+
+                        <GridColumn HeaderText="Comercial" TextAlign="TextAlign.Center" Width="335">
+                            <HeaderTemplate>
+                                <div class="colorT3">INDUSTRIAL</div>
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var data = (context as IngresosTipoUsuario);
+                                    <div class="customCol">
+                                        <div class="item colorT4">@data.Ind_Sbt.ToString("c2")</div>
+                                        <div class="item colorT4">@data.Ind_IVA.ToString("c2")</div>
+                                        <div class="item colorT4">@data.Ind_Tot.ToString("c2")</div>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+
+                        <GridColumn HeaderText="Comercial" TextAlign="TextAlign.Center" Width="335">
+                            <HeaderTemplate>
+                                <div class="colorT3">PUBLICO</div>
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var data = (context as IngresosTipoUsuario);
+                                    <div class="customCol">
+                                        <div class="item colorT5">@data.Pub_Sbt.ToString("c2")</div>
+                                        <div class="item colorT5">@data.Pub_IVA.ToString("c2")</div>
+                                        <div class="item colorT5">@data.Pub_Tot.ToString("c2")</div>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+
+                        <GridColumn HeaderText="TOTAL" TextAlign="TextAlign.Center" Width="345">
+                            <Template>
+                                @{
+                                    var data = (context as IngresosTipoUsuario);
+                                    <div class="customCol">
+                                        <div class="item">@data.Subtotal.ToString("c2")</div>
+                                        <div class="item">@data.IVA.ToString("c2")</div>
+                                        <div class="item">@data.Total.ToString("c2")</div>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+
+                    </GridColumns>
+                </SfGrid>
+            </div>
+            
+
+        </Content>
+    </VentanaSecundaria>
+    
+    <style>
+        .e-headercell .customHead{
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+            .e-headercell .customHead .item{
+                text-align: center;
+            }
+
+        .e-rowcell{
+            font-weight: normal !important;
+        }
+            .e-rowcell .customCol{
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                grid-template-rows:auto;
+            }
+                .e-rowcell .customCol .item {
+                    text-align:right;
+                    margin-right:2px;
+                    font-weight:600;
+                }
+
+        .colorT1{
+            color:cornflowerblue;
+        }
+        .colorT2{
+            color:indianred;
+        }
+        .colorT3 {
+            color:darkslategrey;
+        }
+        .colorT4{
+            color:darkkhaki;
+        }
+        .colorT5 {
+            color:teal;
+        }
+
+    </style>
+
+}
+
+@code {
+
+    [Parameter] public bool MostrarVentana { get; set;}
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 {get;set;}
+    [Parameter] public DateTime Fecha2 {get;set;}
+    [Parameter] public int Subsistema {get;set;}
+    [Parameter] public int Sector {get;set;}
+    public IEnlace Enlace { get; set; }
+    public string Titulo {get; set;} = "RECAUDACION DE INGRESOS POR TARIFAS";
+
+    private SfGrid<IngresosTipoUsuario> DataGrid {get;set;}
+    private List<IngresosTipoUsuario> IngresosTipoUsuarios {get;set;}
+    private List<IngresosTipoUsuario> IngresosTipoUsuarios_filtrados {get;set;}
+
+
+    //******** Funciones ********
+    public void Inicializar(IEnlace enlace, IEnumerable<IngresosTipoUsuario> datos) {
+        this.Enlace = enlace;
+        this.IngresosTipoUsuarios = datos.ToList();
+        ProcesarDatos();
+    }
+    private async Task Cerrar_Modal() {
+        if(IngresosTipoUsuarios != null){
+            IngresosTipoUsuarios.Clear();
+        }
+        await CerrarModal.InvokeAsync("");
+    }
+
+    private void ProcesarDatos(){
+        this.IngresosTipoUsuarios_filtrados = IngresosTipoUsuarios.ToList();
+        FiltrarDatos(new ChangeEventArgs(){Value = 0} );
+    }
+    private void FiltrarDatos(ChangeEventArgs e){
+        int valueSelected = int.Parse(e.Value.ToString());
+        var tmpData = IngresosTipoUsuarios.Where(item => item.Id_TipoCalculo == valueSelected).ToList();
+        this.IngresosTipoUsuarios_filtrados = tmpData;
+        switch (valueSelected) {
+
+            case 1:
+                Titulo = $"{Enlace.Nombre} - INGRESOS POR TARIFAS Y TIPO DE CALCULO MEDIDO";
+                break;
+            case 2:
+                Titulo = $"{Enlace.Nombre} - INGRESOS POR TARIFAS Y TIPO DE CALCULO PROMEDIO";
+                break;
+            case 3:
+                Titulo = $"{Enlace.Nombre} - INGRESOS POR TARIFAS Y TIPO DE CALCULO FIJO";
+                break;
+            default:
+                Titulo = $"{Enlace.Nombre} - INGRESOS POR TARIFAS";
+                break;
+
+        }
+    }
+
+    private async Task GenerarExcel(){
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_tiposUsuario_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", "")),
+            IncludeHiddenColumn = true
+        });
+    }
+
+}

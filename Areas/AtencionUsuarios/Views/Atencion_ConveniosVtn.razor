@@ -1,0 +1,140 @@
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.DropDowns
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavManager
+
+@if (Visible) {
+    <VentanaSecundaria Titulo="@Titulo" Filas="@GridFilas" Columnas="@GridColumnas" CerrarVentana="@Cerrar_Modal" >
+        <Content>
+
+            <div class="d-flex align-items-center m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+
+                <div class="ml-4 font-weight-bold" style="font-size: 1.1rem;"> Tipo Usuario: </div>
+                <select class="form-select form-select-lg" @onchange="@((ChangeEventArgs e) => ComboBox_SelectionChanged("tipoUsuario",e.Value))" style="height:28px; margin-left:10px; width:210px">
+                    <option style="font-size: 1.2rem;" value="-1" selected>TODOS</option>
+                    @foreach (int itemKey in cat_tipoUsuarios.Keys) {
+                        <option style="font-size: 1.2rem;" value="@itemKey">@cat_tipoUsuarios[itemKey]</option>
+                    }
+                </select>
+
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 3/4; grid-column: 1/2;">
+                <SfGrid @ref="DataGrid" DataSource="@DatosGrid" AllowPaging="@allowPagesGrid" AllowSorting="true" AllowResizing="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridPageSettings PageSize="1000"></GridPageSettings>
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="55">
+                            <Template>
+                                @{
+                                    var data = (context as Atencion_Convenios);
+                                    if (data.Contrato > 0) {
+                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Mostrar en Consulta General" @onclick="@( e => MostrarEnConsultaGeneral(data))">
+                                            <i class="fa fa-address-book-o" aria-hidden="true"></i>
+                                        </button>
+                                    }
+                                }
+                            </Template>
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(Atencion_Convenios.Folio)" HeaderText="Folio" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(Atencion_Convenios.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Center" Width="130" />
+                        <GridColumn Field="@nameof(Atencion_Convenios.Concepto)" HeaderText="Concepto" TextAlign="TextAlign.Left" Width="210" />
+                        <GridColumn Field="@nameof(Atencion_Convenios.Contrato)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(Atencion_Convenios.Nombre)" HeaderText="Nombre" TextAlign="TextAlign.Left" Width="210" />
+                        <GridColumn Field="@nameof(Atencion_Convenios.TipoUsuario)" HeaderText="Tipo Usuario" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Atencion_Convenios.MesesAdeudo)" HeaderText="M. A." TextAlign="TextAlign.Center" Width="80" />
+                        <GridColumn Field="@nameof(Atencion_Convenios.Adeudo)" HeaderText="Adeudo" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                        <GridColumn Field="@nameof(Atencion_Convenios.Anticipo)" HeaderText="Anticipo" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                        <GridColumn Field="@nameof(Atencion_Convenios.Convenio)" HeaderText="Convenio" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                        <GridColumn Field="@nameof(Atencion_Convenios.Saldo)" HeaderText="Saldo" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                        <GridColumn Field="@nameof(Atencion_Convenios.Parcialidades)" HeaderText="Parcialidades" TextAlign="TextAlign.Center" Width="90" />
+
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+}
+
+@code {
+
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    public string Titulo {get;set;}
+    
+    private List<double> GridFilas = new List<double>() { 50, 50, .8 };
+    private List<double> GridColumnas = new List<double>() { .85 };
+    
+    SfGrid<Atencion_Convenios> DataGrid {get;set;}
+    public List<Atencion_Convenios> Datos {get;set;}
+    public List<Atencion_Convenios> DatosGrid {get;set;}
+
+    Dictionary<int, string> cat_tipoUsuarios = new Dictionary<int, string>();
+
+    int id_tipoUsuario_select = -1;
+    bool allowPagesGrid = false;
+
+    public void Inicializar(IEnumerable<Atencion_Convenios> datos) {
+        if (datos.Count() > 3000) {
+            this.allowPagesGrid = true;
+        }
+        this.Datos = datos.ToList();
+        this.DatosGrid = datos.ToList();
+        CalcularCatalogos();
+    }
+    private void CalcularCatalogos() {
+        cat_tipoUsuarios = new Dictionary<int, string>();
+        foreach (Atencion_Convenios item in Datos) {
+            if (!cat_tipoUsuarios.ContainsKey(item.Id_TipoUsuario)) {
+                cat_tipoUsuarios.Add(item.Id_TipoUsuario, item.TipoUsuario);
+            }
+        }
+    }
+    private void MostrarEnConsultaGeneral(Atencion_Convenios e) {
+        //NavManager.NavigateTo($"/ConsultaGeneral/{e.Contrato}");
+    }
+    private async Task GenerarExcel() {
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private void ComboBox_SelectionChanged(string sender, object value) {
+        switch (sender) {
+            case "tipoUsuario":
+                id_tipoUsuario_select = int.Parse(value.ToString());
+                break;
+        }
+        FiltrarDatos();
+    }
+
+    private void FiltrarDatos() {
+        IEnumerable<Atencion_Convenios> tmpData = Datos;
+        if (id_tipoUsuario_select >= 0) {
+            tmpData = tmpData.Where(item => item.Id_TipoUsuario == id_tipoUsuario_select).ToArray<Atencion_Convenios>();
+        }
+        this.DatosGrid = tmpData.ToList();
+    }
+
+    private async Task Cerrar_Modal() {
+        this.DatosGrid = new List<Atencion_Convenios>();
+        this.allowPagesGrid = false;
+        await CerrarModal.InvokeAsync("");
+    }
+
+}

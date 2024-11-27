@@ -1,0 +1,283 @@
+@page "/Configuracion/Conceptos"
+@using Sicem_Blazor.Conceptos.Models
+@using Sicem_Blazor.Conceptos.Data
+@inject IMatToaster Toaster
+@inject SicemService sicemService
+@inject ConceptosService conceptosService
+
+<div class="tarifasLayout">
+    <div style="grid-area:1/1/2/2;">
+        <div class="title-page text-uppercase" style="grid-area:1/1/2/2;">CATALOGO CONCEPTOS @(OficinaSeleccionada != null?OficinaSeleccionada.Nombre:"")</div>
+    </div>
+
+    <nav aria-label="breadcrumb" style="grid-area:2/1/3/2;">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="./">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="./Configuracion">Configuracion</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Conceptos</li>
+        </ol>
+    </nav>
+
+    <div class="grid border rounded bg-white px-2 d-flex align-items-center" style="grid-area:3/1/4/2;">
+
+        @**** Combo box oficina ****@
+        <label class="pr-2 mb-0">OFICINA:</label>
+        <div class="MyCombobox mr-3" style="width:17rem; height:2.5rem;">
+            <select @onchange=@OnComboboxOficinas_SelectionChanged>
+                <option value="0" disabled selected>SELECCIONE UNA OFICINA</option>
+                @foreach (var item in catOficinas) {
+                    <option value=@item.Id>@item.Nombre</option>
+                }
+            </select>
+        </div>
+
+        @**** Boton Exportar Excel ****@
+        @if(datosConceptos != null){
+            <div class="button px-3 py-2 bg-success mr-3" @onclick="OnExportExcel_Click" >
+                <i class="fa fa-file-excel mr-2"></i>
+                <span>Exportar Catalogo</span>
+            </div>
+        }
+
+        @* *** Boton Publicar Cambios ****@
+        @if(ConceptosModificados.Count > 0){
+            <div class="button px-3 py-2" @onclick="OnPublicar_Click" >
+                <i class="fa fa-cloud-upload mr-2"></i>
+                <span>Publicar Conceptos (@ConceptosModificados.Count)</span>
+            </div>
+        }
+
+    </div>
+
+    <div class="d-flex align-items-center" style="grid-area:4/1/5/2;">
+        
+        <!-- ****** Grid Catalogo Tarifas ******-->
+        <div class="border rounded bg-white p-2" style="width:100%; height:100%;">
+
+            <div class="d-flex align-items-center p-1" style="height:4rem;">
+                <div class="d-flex align-items-center border rounded p-2" style="width: 24rem; height:100%; font-size:1.1rem;">
+                    <i class="fa fa-search ml-2 mr-2" style="color:#555;"></i>
+                    <input type="text" placeholder="Buscar Concepto" @bind-value="searchText" @onkeyup="OnGridSearch_KeyUp" style="border: none; outline:none; background-color:#fff; width:100%; box-shadow:none;" />
+                    @if(searchText.Trim().Length > 1){
+                        <i class="fa fa-close link-btn aling ali align-self-start m m-1" aria-hidden="true" style="width: 1rem;height: 1rem;color: #333;text-decoration: none !important;" @onclick="ClearSearch_Click"></i>
+                    }
+                </div>
+            </div>
+
+            <div class="p-1" style="width: 100%; height: calc(100% - 4.5rem);">
+                <SfGrid @ref="dataGrid" DataSource="@datosGrid" TValue="Concepto" AllowResizing="true" AllowSorting="true" AllowFiltering="false"
+                    AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
+                    <GridEvents RowSelected="OnDataGrid_SelectionChanged" TValue="Concepto"></GridEvents>
+                    <GridColumns>
+                        <GridColumn HeaderText="" Width="50" TextAlign="TextAlign.Center">
+                            <Template>
+                            @{
+                                var data = (context as Concepto);
+                                @if(ConceptosModificados.Contains(data.Id_Concepto)){
+                                    <span class="badge rounded-pill bg-warning px-4 py-1">M</span>
+                                }
+                            }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(Concepto.Id_Concepto)" HeaderText="Id Concepto" TextAlign="TextAlign.Center" Width="110" />
+                        <GridColumn Field="@nameof(Concepto.Descripcion)" HeaderText="Concepto" TextAlign="TextAlign.Left" Width="200" />
+                        <GridColumn Field="@nameof(Concepto.Importe)" HeaderText="Importe" TextAlign="TextAlign.Right" Width="110" Format="c2"/>
+                        <GridColumn Field="@nameof(Concepto.Inactivo)" HeaderText="Inactivo" TextAlign="TextAlign.Center" Width="100" DisplayAsCheckBox="true"/>
+                        <GridColumn Field="@nameof(Concepto.Id_TipoConcepto)" HeaderText="Tipo Concepto" TextAlign="TextAlign.Center" Width="120" />
+                        <GridColumn Field="@nameof(Concepto.Credito)" HeaderText="Credito" TextAlign="TextAlign.Center" Width="100"  DisplayAsCheckBox="true"/>
+                        <GridColumn Field="@nameof(Concepto.Mostrar)" HeaderText="Mostrar" TextAlign="TextAlign.Center" Width="100"  DisplayAsCheckBox="true"/>
+                        <GridColumn Field="@nameof(Concepto.Id_Estatus)" HeaderText="Id Estatus" TextAlign="TextAlign.Center" Width="100" Visible="false" />
+                        <GridColumn Field="@nameof(Concepto.Costo_Estatico)" HeaderText="Costo Estatico" TextAlign="TextAlign.Center" Width="120" DisplayAsCheckBox="true"/>
+                        <GridColumn Field="@nameof(Concepto.Estatus)" HeaderText="Estatus" TextAlign="TextAlign.Center" Width="110" />
+                        <GridColumn HeaderText="Acciones" TextAlign="TextAlign.Left">
+                            <Template>
+                            @{
+                                var data = (context as Concepto);
+                                <div class="d-flex align-items-center px-2" style="width:100%;">
+
+                                    <button class="button px-3 mr-3" @onclick="@(e => OnEditarConcepto_Click(data))">
+                                        <i class="fa fa-pencil mr-2"></i>
+                                        <div>Editar</div>
+                                    </button>
+
+                                    @if(this.ConceptosModificados.Contains(data.Id_Concepto) ){
+                                        <button class="button px-3 bg-danger" @onclick="@(e => OnCancelEdit_Click(data))">
+                                            <i class="fa fa-ban mr-2"></i>
+                                            <div>Cancelar</div>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            </Template>
+                        </GridColumn>
+                    </GridColumns>
+                </SfGrid>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@if(EditarConceptoVtn_Visible){
+    <EditarConceptoVtn Concepto="@ConceptoSeleccionado" Cerrar="OnEditarConcepto_Closed" CatEstatus="catConceptos" />
+}
+@if(PublicarConceptosVtn_Visible){
+    List<Concepto> _tmpDatos = datosGrid.Where(item => ConceptosModificados.Contains(item.Id_Concepto)).ToList();
+    <PublicarConceptosVtn Oficina="OficinaSeleccionada" Conceptos="_tmpDatos" Cerrar="OnPublicar_Closed" />
+}
+
+<BusyIndicator Busy="cargando" ContentText="Cargando Datos..." />
+
+
+
+@code {
+    [Parameter] public RenderFragment ChildContent { get; set; }
+
+    private SfGrid<Concepto> dataGrid {get;set;}
+    private List<Concepto> datosGrid {get;set;}
+    private List<Concepto> datosConceptos {get;set;}
+    private List<IEnlace> catOficinas = new List<IEnlace>();
+    private Dictionary<int,string> catConceptos = new Dictionary<int,string>();
+
+    private bool cargando {get;set;} = true;
+    private IEnlace OficinaSeleccionada {get;set;}
+    private Concepto ConceptoSeleccionado {get;set;}
+    private bool EditarConceptoVtn_Visible = false;
+    private bool PublicarConceptosVtn_Visible = false;
+    private List<int> ConceptosModificados = new List<int>();
+
+    private string searchText {get;set;} = "";
+
+    protected override void OnParametersSet(){
+        catOficinas = sicemService.ObtenerOficinasDelUsuario().ToList();
+        cargando = false;
+    }
+    private async Task OnComboboxOficinas_SelectionChanged(ChangeEventArgs e){
+        cargando = true;
+        await Task.Delay(200);
+
+        var _idOficina = int.TryParse(e.Value.ToString(),out int tmpI)?tmpI:0;
+        var _tmpOfi = this.catOficinas.FirstOrDefault(item => item.Id == _idOficina);
+        if(_tmpOfi == null){
+            return;
+        }
+        this.OficinaSeleccionada = sicemService.ObtenerEnlaces(id_oficina:_tmpOfi.Id).FirstOrDefault();
+
+        ConceptosModificados.Clear();
+        CargarCatalogoEstatus(); 
+        CargarCatalogoConceptos();
+
+        this.dataGrid.Refresh();
+        await Task.Delay(200);
+        cargando = false;
+        await Task.Delay(200);
+
+    }
+    
+    private void CargarCatalogoConceptos(){
+        datosConceptos = conceptosService.ObtenerCatalogoConceptos(OficinaSeleccionada).ToList();
+        datosGrid = conceptosService.ObtenerCatalogoConceptos(OficinaSeleccionada).ToList();
+    }
+    private void CargarCatalogoEstatus(){
+        catConceptos = conceptosService.ObtenerCatalogoEstatus(OficinaSeleccionada);
+    }
+
+
+    private async Task OnExportExcel_Click(){
+        var _name = $"Sicem_CatalogoConceptos_{OficinaSeleccionada.Nombre}_{Guid.NewGuid().ToString().Replace("-","").Substring(0,10)}.xlsx";
+        var _options = new ExcelExportProperties(){
+            IncludeHiddenColumn = true,
+            FileName = _name
+        };
+        await this.dataGrid.ExportToExcelAsync(_options);
+    }
+    private void OnDataGrid_SelectionChanged(RowSelectEventArgs<Concepto> e){
+        ConceptoSeleccionado = e.Data;
+    }
+    private void OnEditarConcepto_Click(Concepto c){
+        
+        if(EditarConceptoVtn_Visible){
+            return;
+        }
+
+        if(this.ConceptoSeleccionado == null){
+            this.ConceptoSeleccionado = c;
+        }else{
+            if(this.ConceptoSeleccionado.Id_Concepto != c.Id_Concepto){
+                this.ConceptoSeleccionado = c;
+            }
+        }
+
+        EditarConceptoVtn_Visible = true;
+        
+    }
+    private void OnEditarConcepto_Closed(Concepto result){
+        this.EditarConceptoVtn_Visible = false;
+        if(result != null){
+            ConceptosModificados.Add(result.Id_Concepto);
+            var _item = this.datosGrid.FirstOrDefault(item => item.Id_Concepto == result.Id_Concepto);
+            _item.Importe = result.Importe;
+            _item.Id_Estatus = result.Id_Estatus;
+            _item.Estatus = result.Estatus;
+            _item.Credito = result.Credito;
+            _item.Mostrar = result.Mostrar;
+            _item.Costo_Estatico = result.Costo_Estatico;
+            _item.Inactivo = result.Inactivo;
+            dataGrid.Refresh();
+        }
+    }
+    private void OnCancelEdit_Click(Concepto c){
+        if(this.ConceptosModificados.Contains(c.Id_Concepto)){
+           this.ConceptosModificados.Remove(c.Id_Concepto);
+           var _conceptoOriginal = this.datosConceptos.FirstOrDefault(item => item.Id_Concepto == c.Id_Concepto);
+           if( _conceptoOriginal != null){
+               var _item = this.datosGrid.FirstOrDefault(item => item.Id_Concepto == c.Id_Concepto);
+               if(_item != null){
+                    _item.Importe = _conceptoOriginal.Importe;
+                    _item.Id_Estatus = _conceptoOriginal.Id_Estatus;
+                    _item.Estatus = _conceptoOriginal.Estatus;
+                    _item.Credito = _conceptoOriginal.Credito;
+                    _item.Mostrar = _conceptoOriginal.Mostrar;
+                    _item.Inactivo = _conceptoOriginal.Inactivo;
+                    _item.Costo_Estatico = _conceptoOriginal.Costo_Estatico;
+                    dataGrid.Refresh();
+               }
+           }
+        }
+    }
+    private void OnPublicar_Click(){
+        if(ConceptosModificados.Count <= 0 || OficinaSeleccionada == null){
+            return;
+        }
+        PublicarConceptosVtn_Visible = true;
+    }
+    private async Task OnPublicar_Closed(bool result){
+        PublicarConceptosVtn_Visible = false;
+        
+        if(result){
+            cargando = true;
+            await Task.Delay(200);
+
+            ConceptosModificados.Clear();
+            CargarCatalogoEstatus(); 
+            CargarCatalogoConceptos();
+
+            this.dataGrid.Refresh();
+            await Task.Delay(200);
+            cargando = false;
+            await Task.Delay(200);
+
+        }
+    }
+
+    private async Task OnGridSearch_KeyUp(KeyboardEventArgs e){
+        if(e.Key == "Enter") {
+            await dataGrid.SearchAsync(searchText);
+        }
+    }
+    private async Task ClearSearch_Click(){
+        this.searchText = "";
+        await OnGridSearch_KeyUp( new KeyboardEventArgs(){Key = "Enter"});
+    }
+
+}

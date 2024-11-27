@@ -1,0 +1,101 @@
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Charts
+@using Sicem_Blazor.Recaudacion.Models
+@using Sicem_Blazor.Recaudacion.Data
+@inject IJSRuntime JSRuntime
+
+@if (MostrarVentana) {
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@Cerrar_Modal" Filas="@(new double[] { 50, 450})" Columnas="@(new double[]{610, 410})">
+        <Content>
+
+            <div class="m-1 p-2 border rounded bg-white" style=" grid-area: 1/1/2/3;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-area: 2/1/3/2;">
+                <SfGrid @ref="DataGrid" DataSource="@ListaDatos" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="100%" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(Ingresos_FormasPago.Id)" HeaderText="Id" TextAlign="TextAlign.Left" Width="20" Visible="false" />
+                        <GridColumn Field="@nameof(Ingresos_FormasPago.Forma_Pago)" HeaderText="Forma de Pago" TextAlign="TextAlign.Left" Width="210" />
+                        <GridColumn Field="@nameof(Ingresos_FormasPago.Cobrado)" HeaderText="Cobrado" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(Ingresos_FormasPago.Arqueo)" HeaderText="Arqueo" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(Ingresos_FormasPago.Diferencia)" HeaderText="Diferencia" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-area: 2/2/3/3;">
+                <SfAccumulationChart Title="INGRESOS POR TIPO DE PAGO">
+                    <AccumulationChartSeriesCollection>
+                        <AccumulationChartSeries DataSource="@ItemsGrafica" XName="Descripcion" YName="Valor1">
+                            <AccumulationDataLabelSettings Visible="true" Name="AccumulatioText" Position="AccumulationLabelPosition.Outside">
+                                <AccumulationChartConnector Type="ConnectorType.Curve" Length="20px" />
+                            </AccumulationDataLabelSettings>
+                        </AccumulationChartSeries>
+                    </AccumulationChartSeriesCollection>
+                    <AccumulationChartLegendSettings Visible="true" Position="LegendPosition.Bottom"></AccumulationChartLegendSettings>
+                </SfAccumulationChart>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+}
+
+@code {
+
+    [Parameter] public bool MostrarVentana { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    public IEnlace Enlace { get; set; }
+    public string Titulo = "INGRESOS POR FORMAS DE PAGO";
+
+    private SfGrid<Ingresos_FormasPago> DataGrid {get;set;}
+    public List<Ingresos_FormasPago> ListaDatos {get;set;}
+    public List<ChartItem> ItemsGrafica { get; set; }
+
+
+    //"******** Funciones ********"
+    public void Inicializar(IEnlace enlace, IEnumerable<Ingresos_FormasPago> datos) {
+        this.Enlace = enlace;
+        this.ListaDatos = datos.OrderBy(item => item.Orden).ToList();
+        ProcesarDatosGrafica();
+    }
+    private async Task Cerrar_Modal() {
+        if(ListaDatos != null){
+            ListaDatos.Clear();
+        }
+        await CerrarModal.InvokeAsync("");
+    }
+    private async Task GenerarExcel() {
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_ingresosxConceptos_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private void ProcesarDatosGrafica(){
+        ItemsGrafica = new List<ChartItem>();
+        ListaDatos.Where(item => item.Id > 0).ToList().ForEach(item => {
+
+            //*** Calcular porcentaje
+            var _text = "";
+            try {
+                var _por = (item.Cobrado / ListaDatos.Where(item => item.Id > 0).Sum(item => item.Cobrado)) * 100;
+                _text = $"{_por.ToString("n2")}%";
+            }
+            catch (Exception){}
+
+            //*** Agregar item
+            ItemsGrafica.Add(new ChartItem {
+                Descripcion = item.Forma_Pago,
+                Valor1 = item.Cobrado,
+                AccumulatioText = _text
+            });
+        });
+
+    }
+
+}

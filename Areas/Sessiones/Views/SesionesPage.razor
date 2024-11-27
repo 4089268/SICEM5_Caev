@@ -1,0 +1,99 @@
+@page "/Sessiones"
+@using Sicem_Blazor.Sessiones.Models
+@using Sicem_Blazor.Sessiones.Data
+@implements ISesionSuscriber
+@implements IDisposable
+@inject IMatToaster Toaster
+@inject SicemService sicemService
+@inject SessionService sessionService
+
+<div class="histTarifasRoot">
+
+    <div class="title-page" style="grid-area:1/1/2/2;">SESIONES ACTIVAS</div>
+
+    <nav aria-label="breadcrumb" style="grid-area:2/1/3/2;">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="./">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="./Configuracion">Configuracion</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Sesiones Activas </li>
+        </ol>
+    </nav>
+
+	<div class="d-flex align-items-center p-2 border rounded bg-white">
+		
+	</div>
+
+	<div class="d-flex align-items-center p-2 border rounded bg-white" >
+		<SfGrid @ref="DataGrid" DataSource="@DatosGrid" TValue="Sesion" AllowResizing="true" AllowSorting="false" AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
+            <GridColumns>
+                <GridColumn Field="@nameof(Sesion.IdSesion)" HeaderText="Id" TextAlign="TextAlign.Left" Width="240" />
+                <GridColumn Field="@nameof(Sesion.NombreUsuario)" HeaderText="Usuario" TextAlign="TextAlign.Left" Width="280" />
+                <GridColumn Field="@nameof(Sesion.FechaInicio)" HeaderText="Inicio" TextAlign="TextAlign.Center" Width="200" Format="dd MMM yyyy HH:mm" />
+                <GridColumn Field="@nameof(Sesion.IpAddress)" HeaderText="Ip Address" TextAlign="TextAlign.Center" Width="200" />
+                <GridColumn HeaderText="Acciones">
+                    <Template>
+                        @{
+                            var data = (context as Sesion);
+                            <div>
+                                <button class="button px-3 bg-danger" @onclick="@(e => CerrarSesionClick(data))"> <i class="fa fa-ban mr-2 mb-1" /> <span>Cerrar Sesion</span></button>
+                            </div>
+                        }
+                    </Template>
+                </GridColumn>
+            </GridColumns>
+        </SfGrid>
+	</div>
+
+</div>
+
+<style>
+    .histTarifasRoot{
+        display: grid;
+        width: 100%;
+        height: 100%;
+        grid-template-columns: 100%;
+        grid-template-rows: 4rem 3rem 5rem calc(100% - 13.5rem);
+        gap: .5rem;
+    }
+</style>
+
+<BusyIndicator Busy="@cargando" ContentText="Cargando datos..." />
+
+@code {
+    private SfGrid<Sesion> DataGrid { get; set; }
+    private List<Sesion> DatosGrid {get;set;}
+    public string IDSesionSuscriber {get;set;} = Guid.NewGuid().ToString();
+
+    private bool cargando = true;
+
+    protected override async Task OnParametersSetAsync(){
+        base.OnParametersSet();
+        sessionService.AddSuscriber(this);
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos(){
+        this.cargando = true;
+        await Task.Delay(100);
+        DatosGrid = sessionService.ObtenerListaSesiones().ToList();
+        await Task.Delay(100);
+        this.cargando = false;
+    }
+
+    private async Task CerrarSesionClick(Sesion data){
+        sessionService.FinalizarSesion(data.IdSesion);
+        await CargarDatos();
+    }
+
+
+    //**** Implementacion de interfaces
+    public void Dispose() {
+        sessionService.RemoveSuscriber(this.IDSesionSuscriber);
+    }
+    public void SessionAdded(){
+        DatosGrid = sessionService.ObtenerListaSesiones().ToList();
+        InvokeAsync( () => StateHasChanged());
+    }
+
+}
+

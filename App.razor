@@ -1,0 +1,23 @@
+﻿
+@using MatBlazor
+
+<CascadingValue Value="connectionInfo">
+    <Router AppAssembly="@typeof(Program).Assembly">
+        <Found Context="routeData">
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            <MatPortalHost ></MatPortalHost>
+            <MatToastContainer />
+        </Found>
+        <NotFound>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <div class="d-flex justify-content-center align-content-center" style="min-height:50vh;">
+                    <h4>Error 404</h4>
+                </div>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingValue>
+
+@code{
+    [Parameter] public ConnectionInfo connectionInfo { get; set; }
+}

@@ -1,0 +1,119 @@
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.DropDowns
+@inject IJSRuntime JSRuntime
+@inject IMatToaster Toaster
+@inject OrdenesService ordenesService 
+
+@if (Visible) {
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@Cerrar_Modal" Filas="@(new double[] { 50, 580 })" Columnas="@(new double[] { 1010 })">
+        <Content>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="dataGrid" DataSource="@datosGrid" AllowPaging="@allowPagesGrid" AllowSorting="true" AllowResizing="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridPageSettings PageSize="1000"></GridPageSettings>
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="55">
+                            <Template>
+                                @{
+                                    var data = (context as Ordenes_Capturacion);
+                                    <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Ver Detalle" @onclick="@( e => MostrarDetalle(data))">
+                                        <i class="fa fa-file-text-o" aria-hidden="true"></i>
+                                    </button>
+                                }
+                            </Template>
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(Ordenes_Capturacion.Descripcion)" HeaderText="Capturo" TextAlign="TextAlign.Left" Width="220" />
+                        <GridColumn Field="@nameof(Ordenes_Capturacion.Pendientes)" HeaderText="Pendientes" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(Ordenes_Capturacion.En_Ejecucion)" HeaderText="En Ejecucion" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(Ordenes_Capturacion.Realizadas)" HeaderText="Realizadas" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(Ordenes_Capturacion.Canceladas)" HeaderText="Canceladas" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(Ordenes_Capturacion.Ejecutadas)" HeaderText="Ejecutadsa" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(Ordenes_Capturacion.No_Ejecutadas)" HeaderText="No Ejecutadas" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(Ordenes_Capturacion.Total)" HeaderText="Total" TextAlign="TextAlign.Center" Width="100" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+
+    <BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+    <Ordenes_DetalleVtn @ref="vtn_detalle" Visible="@vtn_detalle_visible" CerrarModal="@(()=> vtn_detalle_visible = false)" Fecha1="@Fecha1" Fecha2="@Fecha2" Subsistema="@Subsistema" Sector="@Sector" Filtro_Genero="false" Filtro_Estatus="false" />
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema {get;set;}
+    [Parameter] public int Sector { get; set; }
+    public string Titulo = "Ordenes Agrupadas Por Captura";
+    public Ruta OficinaActual = null ;
+
+    private SfGrid<Ordenes_Capturacion> dataGrid;
+    public List<Ordenes_Capturacion> datosGrid { get; set; } = new List<Ordenes_Capturacion>();
+    private bool allowPagesGrid = false;
+    private bool busyDialog = false, vtn_detalle_visible = false;
+    private Ordenes_DetalleVtn vtn_detalle;
+
+
+    //"******** Funciones Generales ********"
+    private async Task Cerrar_Modal() {
+        this.datosGrid.Clear();
+        this.allowPagesGrid = false;
+        await CerrarModal.InvokeAsync("");
+    }
+    public async Task Inicializar(Ordenes_Capturacion[] _datos) {
+        if(_datos.Length > 2000){
+            this.allowPagesGrid = true;
+        }
+        this.datosGrid = _datos.ToList();
+        await Task.Delay(100);
+    }
+    private async Task MostrarDetalle(Ordenes_Capturacion data){
+        if(!vtn_detalle_visible){
+            this.busyDialog = true;
+            await Task.Delay(100);
+
+            var titulo = $"{OficinaActual.Oficina} / Ordenes Capturadas por {data.Descripcion} del {Fecha1.ToString("dd/MM/yyyy")} al  {Fecha2.ToString("dd/MM/yyyy")}";
+            var datos = ordenesService.ObtenerOrdenesDetalle(OficinaActual.Id, Fecha1.ToString("yyyyMMdd"), Fecha2.ToString("yyyyMMdd"), Subsistema, Sector, "id_estatus:9, id_capturacion:data.Id");
+
+            if(datos == null){
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (datos.Length <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            vtn_detalle_visible = true;
+            await vtn_detalle.Inicializar(datos, titulo);
+            
+            await Task.Delay(100);
+            this.busyDialog = false;
+        }
+    }
+
+    private async Task GenerarExcel() {
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+}

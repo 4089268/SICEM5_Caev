@@ -1,0 +1,283 @@
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Recaudacion.Data
+@using Sicem_Blazor.Recaudacion.Models
+@inject SicemService sicemService
+@inject IRecaudacionService recaudacionService
+@inject IJSRuntime JSRuntime
+@inject IMatToaster Toaster
+
+@if (MostrarVentana) {
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@Cerrar_Modal" Filas="@(new double[]{ 50, 460, 180 })" Columnas="@(new double[]{.85})">
+        <Content>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+
+                    <div class="mx-2 font-weight-bold" style="font-size: 1.1rem;"> Numero de Pagos: </div>
+
+                    <input class="" type="number" min="10" max="50" @bind-value="@numeroPagos" style="width:7rem; height:2.4rem;" />
+
+                    <MatButton Class="ml-2 mr-2" Raised="true" Style="height:2.4rem;" OnClick="@ProcesarDatos">Procesar</MatButton>
+
+                    <MatButton Class="ml-5 mr-2" Raised="true" Style="height:2.4rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <div class="d-flex h-100">
+
+                    <div class="m-1" style="width:65%;">
+                        <SfGrid @ref="DataGrid" DataSource="@PagosMayores" AllowSorting="true" AllowResizing="true" AllowFiltering="false" AllowExcelExport="true"
+                                AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true" RowHeight="18">
+                            <GridEvents RowSelected="RowSelectHandler" TValue="Recaudacion_PagosMayores"></GridEvents>
+
+                            <GridColumns>
+                                <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="55">
+                                    <Template>
+                                        @{
+                                            var data = (context as Recaudacion_PagosMayores);
+                                            <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Mostrar en Consulta General" @onclick="@( e => MostrarEnConsultaGeneral(data))">
+                                                <i class="fa fa-address-book-o" aria-hidden="true"></i>
+                                            </button>
+                                        }
+                                    </Template>
+                                </GridColumn>
+                                <GridColumn Field="@nameof(Recaudacion_PagosMayores.Id_Cuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="90" />
+                                <GridColumn Field="@nameof(Recaudacion_PagosMayores.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Center" Width="140" />
+                                <GridColumn Field="@nameof(Recaudacion_PagosMayores.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                                <GridColumn Field="@nameof(Recaudacion_PagosMayores.Iva)" HeaderText="Iva" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                                <GridColumn Field="@nameof(Recaudacion_PagosMayores.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                                <GridColumn Field="@nameof(Recaudacion_PagosMayores.Sucursal)" HeaderText="Sucursal" TextAlign="TextAlign.Left" Width="140" />
+                                <GridColumn Field="@nameof(Recaudacion_PagosMayores.Id_Venta)" HeaderText="Id Venta" TextAlign="TextAlign.Center" Width="120" />
+                                <GridColumn Field="@nameof(Recaudacion_PagosMayores.Nombre)" HeaderText="Usuario" TextAlign="TextAlign.Left" Width="210" />
+                                <GridColumn Field="@nameof(Recaudacion_PagosMayores.Direccion)" HeaderText="Direccion" TextAlign="TextAlign.Left" Width="210" />
+                                <GridColumn Field="@nameof(Recaudacion_PagosMayores.Id_Publico)" HeaderText="Id Publico" TextAlign="TextAlign.Center" Width="90" Format="n0" />
+                            </GridColumns>
+                        </SfGrid>
+                    </div>
+
+                    <div class="m-1 d-flex flex-column h-100" style="width:34%;">
+
+                        <div class="w-100" style="height: calc(100% - 110px);">
+                            <SfGrid DataSource="@PagosMayores_Detalle_Filtrado" AllowSorting="true" AllowResizing="true" AllowFiltering="false"
+                                    AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true" RowHeight="24">
+                                <GridColumns>
+                                    <GridColumn Field="@nameof(Recaudacion_PagosMayores_Items.Concepto)" HeaderText="Concepto" TextAlign="TextAlign.Left" Width="100" />
+                                    <GridColumn Field="@nameof(Recaudacion_PagosMayores_Items.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="80" Format="c2" />
+                                    <GridColumn Field="@nameof(Recaudacion_PagosMayores_Items.Iva)" HeaderText="Iva" TextAlign="TextAlign.Right" Width="70" Format="c2" />
+                                    <GridColumn Field="@nameof(Recaudacion_PagosMayores_Items.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="80" Format="c2" />
+                                </GridColumns>
+                            </SfGrid>
+                        </div>
+
+                        <div class="w-100 mt-3 d-flex flex-column pagosMay" style="height:110px">
+                            <div class="w-100 d-flex my-1 align-items-center">
+                                <div class="w-100" style="font-weight: bold; text-align:right; padding-right:10px;">SUBTOTAL:</div>
+                                <input type="text" class="px-2" style="text-align:right;" value="@(t_subtotal.ToString("c2"))" />
+                            </div>
+                            <div class="w-100 d-flex my-1 align-items-center">
+                                <div class="w-100" style="font-weight: bold; text-align:right; padding-right:10px;">IVA:</div>
+                                <input type="text" class="px-2" style="text-align:right;" value="@(t_iva.ToString("c2"))" />
+                            </div>
+                            <div class="w-100 d-flex my-1 align-items-center">
+                                <div class="w-100" style="font-weight: bold; text-align:right; padding-right:10px;">TOTAL:</div>
+                                <input type="text" class="px-2" style="text-align:right;" value="@(t_total.ToString("c2"))" />
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded d-flex justify-content-around bg-white pagosMay" style="grid-row: 3/4; grid-column: 1/2;">
+                <div class="d-flex flex-column px-2" style="width:50%">
+                    <div class="w-100 d-flex my-1 align-items-center">
+                        <div class="" style="font-weight: bold; text-align:right; padding-right:10px; width:120px;">Cuenta:</div>
+                        <input type="text" class="px-2" value="@(datosUsuario.Id_Cuenta.ToString())" />
+                    </div>
+                    <div class="w-100 d-flex my-1 align-items-center">
+                        <div class="" style="font-weight: bold; text-align:right; padding-right:10px; width:120px;">Nombre:</div>
+                        <input type="text" class="px-2" value="@(datosUsuario.Razon_Social.ToString())" />
+                    </div>
+                    <div class="w-100 d-flex my-1 align-items-center">
+                        <div class="" style="font-weight: bold; text-align:right; padding-right:10px; width:120px;">Direccion:</div>
+                        <input type="text" class="px-2" value="@(datosUsuario.Direccion.ToString())" />
+                    </div>
+                    <div class="w-100 d-flex my-1 align-items-center">
+                        <div class="" style="font-weight: bold; text-align:right; padding-right:10px; width:120px;">Colonia:</div>
+                        <input type="text" class="px-2" value="@(datosUsuario.Colonia.ToString())" />
+                    </div>
+                    <div class="w-100 d-flex my-1 align-items-center">
+                        <div class="" style="font-weight: bold; text-align:right; padding-right:10px; width:120px;">Giro:</div>
+                        <input type="text" class="px-2" value="@(datosUsuario.Giro.ToString())" />
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column px-2" style="width:40%">
+                    <div class="w-100 d-flex my-1 align-items-center">
+                        <div class="" style="font-weight: bold; text-align:right; padding-right:10px; width:120px;">Estatus:</div>
+                        <input type="text" class="px-2" value="@(datosUsuario.Estatus.ToString())" />
+                    </div>
+                    <div class="w-100 d-flex my-1 align-items-center">
+                        <div class="" style="font-weight: bold; text-align:right; padding-right:10px; width:120px;">Tarifa:</div>
+                        <input type="text" class="px-2" value="@(datosUsuario.Tarifa.ToString())" />
+                    </div>
+                    <div class="w-100 d-flex my-1 align-items-center">
+                        <div class="" style="font-weight: bold; text-align:right; padding-right:10px; width:120px;">Servicios:</div>
+                        <input type="text" class="px-2" value="@(datosUsuario.Servicios.ToString())" />
+                    </div>
+                    <div class="w-100 d-flex my-1 align-items-center">
+                        <div class="" style="font-weight: bold; text-align:right; padding-right:10px; width:120px;">Medidor:</div>
+                        <input type="text" class="px-2" value="@(datosUsuario.Medidor.ToString())" />
+                    </div>
+                    <div class="w-100 d-flex my-1 align-items-center">
+                        <div class="" style="font-weight: bold; text-align:right; padding-right:10px; width:120px;">Meses Adeudo:</div>
+                        <input type="text" class="px-2" value="@(datosUsuario.Meses_Adeudo.ToString())" />
+                    </div>
+                </div>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+
+    <BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+    @if(DatosGenerales_visible){
+        <DatosGenerales_Dialog IdOficina="@Enlace.Id" Cuenta="@cuentaSeleccionada" CerrarVentana="@(e => DatosGenerales_visible = false)"/>
+    }
+
+
+    <style>
+        .pagosMay input[type=text] {
+            border-radius: 0px !important;
+            width: 100%;
+            height: 22px;
+            box-shadow: none;
+        }
+    </style>
+}
+
+@code {
+
+    [Parameter] public bool MostrarVentana { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    public IEnlace Enlace { get; set; }
+    public string Titulo {get;set;} = "INGRESOS DETALLADOS MAS ALTOS";
+    
+    private SfGrid<Recaudacion_PagosMayores> DataGrid {get;set;}
+
+    private List<Recaudacion_PagosMayores> PagosMayores { get; set; }
+    private List<Recaudacion_PagosMayores_Items> PagosMayores_Detalle { get; set; }
+    private List<Recaudacion_PagosMayores_Items> PagosMayores_Detalle_Filtrado { get; set; }
+    private DatosUsuario datosUsuario = new DatosUsuario();
+
+    private bool busyDialog = false, DatosGenerales_visible = false;
+    private int numeroPagos = 10;
+    private string cuentaSeleccionada = "0";
+    
+
+    private decimal t_subtotal = 0;
+    private decimal t_iva = 0;
+    private decimal t_total = 0;
+
+
+    public async Task Inicializar(IEnlace enlace) {
+        this.Enlace = enlace;
+        this.Titulo = $"{Enlace.Nombre} - INGRESOS DETALLADOS MAS ALTOS DEL {this.Fecha1.ToString("dd/MM/yyyy")} AL {this.Fecha2.ToString("dd/MM/yyyy")} ";
+        this.PagosMayores_Detalle_Filtrado = new List<Recaudacion_PagosMayores_Items>();
+        await ProcesarDatos();
+    }
+    private async Task Cerrar_Modal() {
+        this.PagosMayores.Clear();
+        this.PagosMayores_Detalle.Clear();
+        datosUsuario = new DatosUsuario();
+        t_subtotal = 0;
+        t_iva = 0;
+        t_total = 0;
+
+        await CerrarModal.InvokeAsync("");
+    }
+
+
+    //******** Funciones Generales ********
+
+    private void RowSelectHandler(RowSelectEventArgs<Recaudacion_PagosMayores> e) {
+
+        //this.busyDialog = true;
+        //await Task.Delay(100);
+
+        string idVentaSelected = e.Data.Id_Venta;
+        int idPadronSelected = e.Data.Id_Padron;
+
+        var tmpList = new List<Recaudacion_PagosMayores_Items>();
+        decimal tmp_subtotal = 0;
+        decimal tmp_iva = 0;
+        decimal tmp_total = 0;
+
+        foreach (Recaudacion_PagosMayores_Items item in this.PagosMayores_Detalle) {
+            if (item.Id_Venta == idVentaSelected) {
+                tmpList.Add(new Recaudacion_PagosMayores_Items {
+                    Id_Venta = item.Id_Venta,
+                    Concepto = item.Concepto,
+                    Subtotal = item.Subtotal,
+                    Iva = item.Iva,
+                    Total = item.Total
+                });
+
+                tmp_subtotal += item.Subtotal;
+                tmp_iva += item.Iva;
+                tmp_total += item.Total;
+            }
+        }
+
+        this.PagosMayores_Detalle_Filtrado = tmpList;
+        this.t_subtotal = tmp_subtotal;
+        this.t_iva = tmp_iva;
+        this.t_total = tmp_total;
+
+        this.datosUsuario = sicemService.ObtenerDatosUsuarios(Enlace.Id, idPadronSelected);
+
+        //await Task.Delay(100);
+        //this.busyDialog = false;
+    }
+
+    private async Task ProcesarDatos() {
+        busyDialog = true;
+        await Task.Delay(100);
+
+        var dateRange = new DateRange(Fecha1, Fecha2, Subsistema, Sector);
+
+        Recaudacion_PagosMayores_Response tmpResponse = recaudacionService.ObtenerPagosMayores(Enlace, dateRange, this.numeroPagos);
+        if (tmpResponse == null) {
+            Toaster.Add("Error al procesar la consulta, intentelo mas tarde.", MatToastType.Danger);
+        }
+        else {
+            this.PagosMayores = tmpResponse.PagosMayores.ToList();
+            this.PagosMayores_Detalle = tmpResponse.PagosMayores_Detalle.ToList();
+        }
+
+        await Task.Delay(100);
+        busyDialog = false;
+    }
+
+    private async Task GenerarExcel() {
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_ingresosxDias_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+    private void MostrarEnConsultaGeneral(Recaudacion_PagosMayores e){
+        if(DatosGenerales_visible == true){
+            return;
+        }
+        this.cuentaSeleccionada = e.Id_Cuenta.ToString();
+        DatosGenerales_visible = true;
+    }
+
+
+}

@@ -1,0 +1,117 @@
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Calendars
+@using Sicem_Blazor.Micromedicion.Models
+@inject IJSRuntime JSRuntime
+
+@if (Visible) {
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@CerrarModal" Filas="@(new double[] {50, 480, 160 })" Columnas="@(new double[] { 1020 })">
+        <Content>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" Disabled="true">Generar Reporte <i class="fa fa-file-pdf-o ml-2" aria-hidden="true"></i></MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="dataGrid" DataSource="@datosGrid" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(Micromedicion_Anomalia.Anomalia)" HeaderText="Anomalia" TextAlign="TextAlign.Left" Width="220" />
+                        <GridColumn Field="@nameof(Micromedicion_Anomalia.Ene)" HeaderText="Ene" TextAlign="TextAlign.Center" Width="60" />
+                        <GridColumn Field="@nameof(Micromedicion_Anomalia.Feb)" HeaderText="Feb" TextAlign="TextAlign.Center" Width="60" />
+                        <GridColumn Field="@nameof(Micromedicion_Anomalia.Mar)" HeaderText="Mar" TextAlign="TextAlign.Center" Width="60" />
+                        <GridColumn Field="@nameof(Micromedicion_Anomalia.Abr)" HeaderText="Abr" TextAlign="TextAlign.Center" Width="60" />
+                        <GridColumn Field="@nameof(Micromedicion_Anomalia.May)" HeaderText="May" TextAlign="TextAlign.Center" Width="60" />
+                        <GridColumn Field="@nameof(Micromedicion_Anomalia.Jun)" HeaderText="Jun" TextAlign="TextAlign.Center" Width="60" />
+                        <GridColumn Field="@nameof(Micromedicion_Anomalia.Jul)" HeaderText="Jul" TextAlign="TextAlign.Center" Width="60" />
+                        <GridColumn Field="@nameof(Micromedicion_Anomalia.Ago)" HeaderText="Ago" TextAlign="TextAlign.Center" Width="60" />
+                        <GridColumn Field="@nameof(Micromedicion_Anomalia.Sep)" HeaderText="Sep" TextAlign="TextAlign.Center" Width="60" />
+                        <GridColumn Field="@nameof(Micromedicion_Anomalia.Oct)" HeaderText="Oct" TextAlign="TextAlign.Center" Width="60" />
+                        <GridColumn Field="@nameof(Micromedicion_Anomalia.Nov)" HeaderText="Nov" TextAlign="TextAlign.Center" Width="60" />
+                        <GridColumn Field="@nameof(Micromedicion_Anomalia.Dic)" HeaderText="Dic" TextAlign="TextAlign.Center" Width="60" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 3/4; grid-column: 1/2;">
+                <SfChart Title="" Height="146">
+                    <ChartPrimaryXAxis Title="" ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+                    <ChartPrimaryYAxis Title="Anomalias"></ChartPrimaryYAxis>
+                    <ChartTooltipSettings Enable="true" Header="Ingresos" Shared="true" Format="${point.x} ${series.name}: ${point.y}"></ChartTooltipSettings>
+                    <ChartSeriesCollection>
+                        <ChartSeries DataSource="@itemsGrafica" XName="Descripcion" YName="Valor1" Type="ChartSeriesType.Column">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="true"></ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    </ChartSeriesCollection>
+                </SfChart>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+}
+
+@code {
+
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    public string Titulo = "Detalle Anomalias Anual";
+
+    SfGrid<Micromedicion_Anomalia> dataGrid { get; set; }
+    public List<Micromedicion_Anomalia> datosGrid { get; set;}
+    public List<ChartItem> itemsGrafica { get; set; }
+
+    //"******** Funciones ********"
+    private async Task Cerrar_Modal() {
+        this.datosGrid.Clear();
+        await CerrarModal.InvokeAsync("");
+    }
+    public async Task Inicializar(Micromedicion_Anomalia[] datos){
+        this.datosGrid = datos.ToList();
+        if (datosGrid.Count > 0) {
+            ProcesarDatosGrafica();
+        }
+        await Task.Delay(100);
+    }
+
+    private void ProcesarDatosGrafica() {
+        Micromedicion_Anomalia xTotales = null;
+        foreach (Micromedicion_Anomalia xi in datosGrid) {
+            if (xi.Id_Anomalia == 0) {
+                xTotales = xi;
+            }
+        }
+
+        itemsGrafica = new List<ChartItem>();
+        itemsGrafica.Add(new ChartItem{Descripcion="ENERO",      Valor1 = (Decimal)xTotales.Ene });
+        itemsGrafica.Add(new ChartItem{Descripcion="FEBRERO",    Valor1 = (Decimal)xTotales.Feb});
+        itemsGrafica.Add(new ChartItem{Descripcion="MARZO",      Valor1 = (Decimal)xTotales.Mar});
+        itemsGrafica.Add(new ChartItem{Descripcion="ABRIL",      Valor1 = (Decimal)xTotales.Abr});
+        itemsGrafica.Add(new ChartItem{Descripcion="MAYO",       Valor1 = (Decimal)xTotales.May});
+        itemsGrafica.Add(new ChartItem{Descripcion="JUNIO",      Valor1 = (Decimal)xTotales.Jun});
+        itemsGrafica.Add(new ChartItem{Descripcion="JULIO",      Valor1 = (Decimal)xTotales.Jul});
+        itemsGrafica.Add(new ChartItem{Descripcion="AGOSTO",     Valor1 = (Decimal)xTotales.Ago});
+        itemsGrafica.Add(new ChartItem{Descripcion="SEPTIEMBRE", Valor1 = (Decimal)xTotales.Sep });
+        itemsGrafica.Add(new ChartItem{Descripcion="OCTUBRE",    Valor1 = (Decimal)xTotales.Oct });
+        itemsGrafica.Add(new ChartItem{Descripcion="NOVIEMBRE",  Valor1 = (Decimal)xTotales.Nov});
+        itemsGrafica.Add(new ChartItem{Descripcion="DICIEMBRE",  Valor1 = (Decimal)xTotales.Dic});
+
+
+    }
+    private async Task GenerarExcel() {
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+}

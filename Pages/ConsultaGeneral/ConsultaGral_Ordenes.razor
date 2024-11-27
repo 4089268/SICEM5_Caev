@@ -1,0 +1,569 @@
+﻿@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Calendars
+@inject IJSRuntime JSRuntime
+
+@if (Show) {
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@Cerrar_Modal" Filas="@(new double[]{ .52, 250})" Columnas="@(new double[]{.45, .4})">
+        <Content>
+            <div class="p-1" style="grid-row: 1 / 2; grid-column: 1 / 2; align-items: center;">
+                <div class="w-100 h-100">
+                    <SfGrid @ref="@MyDataGrid" DataSource="@listaOrdenes" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" EnableHover="true">
+                        <GridSelectionSettings EnableToggle="false" Mode="Syncfusion.Blazor.Grids.SelectionMode.Row" Type="Syncfusion.Blazor.Grids.SelectionType.Single"></GridSelectionSettings>
+                        <GridEvents RowSelected="@SelectionGrid_Changed" TValue="ConsultaGral_Ordenesresponse" RowDeselected="@SelectionGrid_Unselected"></GridEvents>
+                        <GridColumns>
+                            <GridColumn Field="@nameof(ConsultaGral_Ordenesresponse.Id_Orden)" HeaderText="Orden" TextAlign="TextAlign.Center" Width="100" />
+                            <GridColumn Field="@nameof(ConsultaGral_Ordenesresponse.Fecha_Genero)" HeaderText="Fecha Genero" TextAlign="TextAlign.Left" Width="130" />
+                            <GridColumn Field="@nameof(ConsultaGral_Ordenesresponse.Trabajo)" HeaderText="Trabajo" TextAlign="TextAlign.Left" Width="130" />
+                            <GridColumn Field="@nameof(ConsultaGral_Ordenesresponse.Tipo_OrdenDesc)" HeaderText="Tipo Orden" TextAlign="TextAlign.Left" Width="130" />
+                            <GridColumn Field=@nameof(ConsultaGral_Ordenesresponse.Ejecutada) HeaderText="Ejecutada" TextAlign="TextAlign.Center" Type="ColumnType.Boolean" EditType="EditType.BooleanEdit" DisplayAsCheckBox="true" Width="90"></GridColumn>
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+            </div>
+
+            <div class="p-1" style="grid-row: 1 / 2; grid-column: 2 / 3;">
+                <div class="fluid-container">
+                    <div class="col-12 p-1 d-flex align-items-center">
+                        <h4>DATOS DE LA ORDEN</h4>
+                    </div>
+                    <div class="row">
+                        <div class="col-7 d-flex flex-column " style="padding-right: 4px;">
+                            <div class="d-flex flex-row p-1">
+                                <div class="mr-2 font-weight-bold align-self-center" style="width: 100px; text-align: right;">FOLIO</div>
+                                @if (ordenSeleccionada != null) {
+                                    <SfTextBox Readonly="true" Value="@ordenSeleccionada.Id_Orden" Placeholder='' CssClass="e-small" />
+                                }
+                                else {
+                                    <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                }
+                            </div>
+                            <div class="d-flex flex-row p-1">
+                                <div class="mr-2 font-weight-bold align-self-center" style="width: 100px; text-align: right;">ESTATUS</div>
+                                @if (ordenSeleccionada != null) {
+                                    <SfTextBox Readonly="true" Value="@ordenSeleccionada.Estatus" Placeholder='' CssClass="e-small" />
+                                }
+                                else {
+                                    <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                }
+                            </div>
+                            <div class="d-flex flex-row p-1">
+                                <div class="mr-2 font-weight-bold align-self-center" style="width: 100px; text-align:right;">TRABAJO</div>
+                                @if (ordenSeleccionada != null) {
+                                    <SfTextBox Readonly="true" Value="@ordenSeleccionada.Trabajo" Placeholder='' CssClass="e-small" />
+                                }
+                                else {
+                                    <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                }
+                            </div>
+                            <div class="d-flex flex-row p-1">
+                                <div class="mr-2 font-weight-bold align-self-center" style="width: 100px; text-align:right;">GENERO</div>
+                                @if (ordenSeleccionada != null) {
+                                    <SfTextBox Readonly="true" Value="@ordenSeleccionada.Genero" Placeholder='' CssClass="e-small" />
+                                }
+                                else {
+                                    <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                }
+                            </div>
+                            <div class="d-flex flex-row p-1">
+                                <div class="mr-2 font-weight-bold align-self-center" style="width: 100px; text-align:right;">FECHA GEN.</div>
+                                @if (ordenSeleccionada != null) {
+                                    <SfTextBox Readonly="true" Value="@ordenSeleccionada.Fecha_Genero.ToString()" Placeholder='' CssClass="e-small" />
+                                }
+                                else {
+                                    <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                }
+                            </div>
+                            <div class="d-flex flex-row p-1">
+                                <div class="mr-2 font-weight-bold align-self-center" style="width: 100px; text-align:right;">IMPRIMIO</div>
+                                @if (ordenSeleccionada != null) {
+                                    <SfTextBox Readonly="true" Value="@ordenSeleccionada.Imprimio" Placeholder='' CssClass="e-small" />
+                                }
+                                else {
+                                    <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                }
+                            </div>
+                            <div class="d-flex flex-row p-1">
+                                <div class="mr-2 font-weight-bold align-self-center" style="width: 100px; text-align:right;">FECHA IMP.</div>
+                                @if (ordenSeleccionada != null) {
+                                    <SfTextBox Readonly="true" Value="@ordenSeleccionada.Fecha_Imprimio.ToString()" Placeholder='' CssClass="e-small" />
+                                }
+                                else {
+                                    <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                }
+                            </div>
+                        </div>
+
+                        <div class="col-5 d-flex flex-column" style="padding-left: 4px;">
+                            <div class="mr-2 font-weight-bold align-self-center" style="width: 140px; text-align: center;">DATOS DE LA ORDEN</div>
+                            @if (ordenSeleccionada != null) {
+                                <SfTextBox Readonly="true" Multiline=true Value="@ordenSeleccionada.Observaciones_Orden" Placeholder='' CssClass="e-small" style=" resize: none; height: 200px;" />
+                            }
+                            else {
+                                <SfTextBox Readonly="true" Multiline=true Value="" Placeholder='' CssClass="e-small" style=" resize: none; height: 200px;" />
+                            }
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-1" style="grid-row: 2 / 3; grid-column: 1 / 3; align-items: center;">
+                <MatTabGroup>
+                    <MatTab>
+                        <LabelContent>
+                            RESULTADO DE LA ORDEN
+                        </LabelContent>
+                        <ChildContent>
+                            <div class="fluid-container">
+                                <div class="row" style="padding-top:1.8rem;">
+                                    <div class="col-6 d-flex flex-column">
+                                        <div class="d-flex flex-row p-1">
+                                            <div class="mr-2 font-weight-bold align-self-center" style="width: 120px; text-align: right;">FECHA INICIO</div>
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Fecha_Ini.ToString()" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="d-flex flex-row p-1">
+                                            <div class="mr-2 font-weight-bold align-self-center" style="width: 120px; text-align: right;">FECHA FINAL</div>
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Fecha_Fin.ToString()" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="d-flex flex-row p-1">
+                                            <div class="mr-2 font-weight-bold align-self-center" style="width: 120px; text-align: right;">REALIZO</div>
+                                            @* @if(ordenSeleccionada != null){
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Realizo" Placeholder='' CssClass="e-small" />
+                                        }else{
+                                            <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                        } *@
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Realizo" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="d-flex flex-row p-1">
+                                            <div class="mr-2 font-weight-bold align-self-center" style="width: 120px; text-align: right;">CAPTURO</div>
+                                            @* @if(ordenSeleccionada != null){
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Capturo" Placeholder='' CssClass="e-small" />
+                                        }else{
+                                            <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                        } *@
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Capturo" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="d-flex flex-row p-1">
+                                            <div class="mr-2 font-weight-bold align-self-center" style="width: 120px; text-align: right;">FECHA CAPT.</div>
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Fecha_Capturo.ToString()" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="col-6 d-flex flex-column">
+                                        <div class="d-flex flex-row p-1">
+                                            <div class="mr-2 font-weight-bold align-self-center" style="width: 120px; text-align: right;">DURACION</div>
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Duracion.ToString()" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="d-flex flex-row p-1">
+                                            <div class="mr-2 font-weight-bold align-self-center" style="width: 120px; text-align: right;">EJECUTADA</div>
+                                            @if (ordenSeleccionada != null) {
+                                                @if (ordenSeleccionada.Ejecutada) {
+                                                    <SfTextBox Readonly="true" Value="Orden Ejecutada" Placeholder='' CssClass="e-small" />
+                                                }
+                                                else {
+                                                    <SfTextBox Readonly="true" Value="Orden No Ejecutada" Placeholder='' CssClass="e-small" />
+                                                }
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="d-flex flex-row p-1">
+                                            <div class="mr-2 font-weight-bold align-self-center" style="width: 120px; text-align: right;">RESPUESTA</div>
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Multiline=true Value="@ordenSeleccionada.Observaciones_Orden" Placeholder='' CssClass="e-small" style=" resize: none; height: 88px;" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Multiline=true Value="" Placeholder='' CssClass="e-small" style=" resize: none; height: 88px;" />
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </ChildContent>
+                    </MatTab>
+                    <MatTab>
+                        <LabelContent>
+                            DATOS DEL MEDIDOR
+                        </LabelContent>
+                        <ChildContent>
+                            <div class="row" style="padding-top:1.8rem;">
+                                <div class="col-8">
+                                    <div style="display: grid; display:grid; grid-template-columns: 94px auto auto auto auto; grid-template-rows: auto auto auto auto auto">
+                                        <div class="d-flex align-items-center justify-content-center" style="grid-row: 1/2; grid-column: 2/3;">MEDIDOR</div>
+                                        <div class="d-flex align-items-center justify-content-center" style="grid-row: 1/2; grid-column: 3/4;">MARCA</div>
+                                        <div class="d-flex align-items-center justify-content-center" style="grid-row: 1/2; grid-column: 4/5;">MODELO</div>
+                                        <div class="d-flex align-items-center justify-content-center" style="grid-row: 1/2; grid-column: 5/6;">DIAMETRO</div>
+
+
+                                        <div class="d-flex align-items-center justify-content-end pr-1" style="grid-row: 2/3; grid-column: 1/2;">REGISTRADO</div>
+                                        <div class="p-1" style="grid-row: 2/3; grid-column: 2/3;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Medidor_Reg" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="p-1" style="grid-row: 2/3; grid-column: 3/4;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Marca_Reg" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="p-1" style="grid-row: 2/3; grid-column: 4/5;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Modelo_Reg" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="p-1" style="grid-row: 2/3; grid-column: 5/6;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Diametro_Reg" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+
+                                        <div class="d-flex align-items-center justify-content-end pr-1" style="grid-row: 3/4; grid-column: 1/2;">ENCONTRADO</div>
+                                        <div class="p-1" style="grid-row: 3/4; grid-column: 2/3;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Medidor_Enc" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="p-1" style="grid-row: 3/4; grid-column: 3/4;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Marca_Enc" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="p-1" style="grid-row: 3/4; grid-column: 4/5;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Modelo_Enc" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="p-1" style="grid-row: 3/4; grid-column: 5/6;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Diametro_Enc" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+
+                                        <div class="d-flex align-items-center justify-content-end pr-1" style="grid-row: 4/5; grid-column: 1/2;">RETIRADO</div>
+                                        <div class="p-1" style="grid-row: 4/5; grid-column: 2/3;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Medidor_Ret" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="p-1" style="grid-row: 4/5; grid-column: 3/4;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Marca_Ret" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="p-1" style="grid-row: 4/5; grid-column: 4/5;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Modelo_Ret" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="p-1" style="grid-row: 4/5; grid-column: 5/6;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Diametro_Ret" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+
+                                        <div class="d-flex align-items-center justify-content-end pr-1" style="grid-row: 5/6; grid-column: 1/2;">INSTALADO</div>
+                                        <div class="p-1" style="grid-row: 5/6; grid-column: 2/3;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Medidor_Inst" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="p-1" style="grid-row: 5/6; grid-column: 3/4;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Marca_Inst" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="p-1" style="grid-row: 5/6; grid-column: 4/5;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Modelo_Inst" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="p-1" style="grid-row: 5/6; grid-column: 5/6;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Diametro_Inst" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div style="display: grid; display:grid; grid-template-rows: auto auto auto auto auto; grid-template-columns: auto auto;">
+
+                                        <div class="d-flex align-items-center justify-content-center" style="grid-row: 1/2; grid-column: 1/2;">ANOMALIA REG.</div>
+                                        <div class="d-flex align-items-center justify-content-center" style="grid-row: 1/2; grid-column: 2/3;">LECTURA REG.</div>
+                                        <div class="p-1" style="grid-row: 2/3; grid-column: 1/2;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Anomalia_Reg" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="p-1" style="grid-row: 2/3; grid-column: 2/3;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Lectura_Reg.ToString()" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+
+                                        <div class="d-flex align-items-center justify-content-center" style="grid-row: 3/4; grid-column: 1/2;">ANOMALIA ACT.</div>
+                                        <div class="d-flex align-items-center justify-content-center" style="grid-row: 3/4; grid-column: 2/3;">LECTURA ACT.</div>
+                                        <div class="p-1" style="grid-row: 4/5 grid-column: 1/2;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Anomalia_Act" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="p-1" style="grid-row: 4/5; grid-column: 2/3;">
+                                            @if (ordenSeleccionada != null) {
+                                                <SfTextBox Readonly="true" Value="@ordenSeleccionada.Lectura_Act.ToString()" Placeholder='' CssClass="e-small" />
+                                            }
+                                            else {
+                                                <SfTextBox Readonly="true" Value="" Placeholder='' CssClass="e-small" />
+                                            }
+                                        </div>
+                                        <div class="p-1" style="grid-row: 5/6; grid-column: 1/3;">
+                                            @if (ordenSeleccionada != null) {
+                                                <MatCheckbox Value="@ordenSeleccionada.ErrorLectura" Label="ERROR DE LECTURA" Disabled="true"></MatCheckbox>
+                                            }
+                                            else {
+                                                <MatCheckbox Value="false" Label="ERROR DE LECTURA" Disabled="true"></MatCheckbox>
+                                            }
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </ChildContent>
+                    </MatTab>
+                    <MatTab>
+                        <LabelContent>
+                            DATOS DE LA INSPECCION
+                        </LabelContent>
+                        <ChildContent>
+                            <div class="row" style="padding-top:1.8rem;">
+                                <div class="col-5">
+                                    <div style="display: grid; display:grid; grid-template-columns: 100px auto auto; grid-template-rows: auto auto auto auto auto">
+                                        <div class="d-flex align-items-center justify-content-center" style="grid-row: 1/2; grid-column: 2/3;">INICIAL</div>
+                                        <div class="d-flex align-items-center justify-content-center" style="grid-row: 1/2; grid-column: 3/4;">FINAL</div>
+                                        <div class="d-flex align-items-center justify-content-center" style="grid-row: 2/3; grid-column: 1/2;">LECTURA</div>
+                                        <div class="d-flex align-items-center justify-content-center" style="grid-row: 3/4; grid-column: 1/2;">CONSUMO EST.</div>
+                                        <div class="d-flex align-items-center justify-content-center" style="grid-row: 4/5; grid-column: 1/4;">PRUEBA DE MEDIDO 20-20</div>
+
+                                        <div class="p-1" style="grid-row: 2/3; grid-column: 2/3;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Lecutar_Ini.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="p-1" style="grid-row: 2/3; grid-column: 3/4;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Lecutar_Fin.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="p-1" style="grid-row: 3/4; grid-column: 2/4;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Consumo_Estimado.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="p-1 d-flex" style="grid-row: 5/6; grid-column: 1/4;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.PruebaMed_A.ToString()" Placeholder='' CssClass="e-small" />
+                                            <div class="mx-1"> -- </div>
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.PruebaMed_B.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-7">
+                                    <div style="display: grid; display:grid; grid-template-rows: auto auto auto auto auto auto; grid-template-columns: 80px auto 80px auto 80px auto 80px auto;">
+                                        <div class="d-flex align-items-center justify-content-center font-weight-bold" style="grid-row: 1/2; grid-column: 1/3;">SANITARIOS</div>
+                                        <div class="d-flex align-items-center justify-content-center font-weight-bold" style="grid-row: 1/2; grid-column: 3/5;">LLAVES</div>
+                                        <div class="d-flex align-items-center justify-content-center font-weight-bold" style="grid-row: 1/2; grid-column: 7/9;">PERSONAS</div>
+
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 2/3; grid-column: 1/2;">FV</div>
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 3/4; grid-column: 1/2;">FS</div>
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 4/5; grid-column: 1/2;">HNA</div>
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 5/6; grid-column: 1/2;">NORMALES</div>
+                                        <div class="p-1" style="grid-row: 2/3; grid-column: 2/3;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Sanit_FV.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="p-1" style="grid-row: 3/4; grid-column: 2/3;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Sanit_FS.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="p-1" style="grid-row: 4/5; grid-column: 2/3;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Sanit_HNA.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="p-1" style="grid-row: 5/6; grid-column: 2/3;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Sanit_Nor.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 2/3; grid-column: 3/4;">COCINA</div>
+                                        <div class="p-1" style="grid-row: 2/3; grid-column: 4/5">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Llav_Coc.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 3/4; grid-column: 3/4;">ARCO</div>
+                                        <div class="p-1" style="grid-row: 3/4; grid-column: 4/5;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Llav_Arc.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 4/5; grid-column: 3/4;">BAÑOS</div>
+                                        <div class="p-1" style="grid-row: 4/5; grid-column: 4/5;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Llav_Ban.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 5/6; grid-column: 3/4;">TOMAS</div>
+                                        <div class="p-1" style="grid-row: 5/6; grid-column: 4/5;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Llav_Tom.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 6/7; grid-column: 3/4;">TINACOS</div>
+                                        <div class="p-1" style="grid-row: 6/7; grid-column: 4/5;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Llav_Tinacos.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 2/3; grid-column: 5/6;">JARDIN</div>
+                                        <div class="p-1" style="grid-row: 2/3; grid-column: 6/7">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Llav_Jard.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 3/4; grid-column: 5/6;">LAVADO</div>
+                                        <div class="p-1" style="grid-row: 3/4; grid-column: 6/7;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Llav_Lavado.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 4/5; grid-column: 5/6;">PILAS</div>
+                                        <div class="p-1" style="grid-row: 4/5; grid-column: 6/7;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Llav_Pilas.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 5/6; grid-column: 5/6;">CISTERNAS</div>
+                                        <div class="p-1" style="grid-row: 5/6; grid-column: 6/7;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Llav_Cisterna.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 6/7; grid-column: 5/6;">OTROS</div>
+                                        <div class="p-1" style="grid-row: 6/7; grid-column: 6/7;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Llav_Otros.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 2/3; grid-column: 7/8;">ADULTOS</div>
+                                        <div class="p-1" style="grid-row: 2/3; grid-column: 8/9">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Person_Adultos.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 3/4; grid-column: 7/8;">MENORES</div>
+                                        <div class="p-1" style="grid-row: 3/4; grid-column: 8/9;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Person_Menore.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-center font-weight-bold" style="grid-row: 4/5; grid-column: 7/9;">DATOS SUGERIDOS</div>
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 5/6; grid-column: 7/8;">PROMEDIO</div>
+                                        <div class="p-1" style="grid-row: 5/6; grid-column: 8/9;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Promedio.ToString()" Placeholder='' CssClass="e-small" />
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-end pr-2" style="grid-row: 6/7; grid-column: 7/8;">TARIFA</div>
+                                        <div class="p-1" style="grid-row: 6/7; grid-column: 8/9;">
+                                            <SfTextBox Readonly="true" Value="@ordenSeleccionada.Tarifa" Placeholder='' CssClass="e-small" />
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </ChildContent>
+                    </MatTab>
+                </MatTabGroup>
+            </div>
+        </Content>
+    </VentanaSecundaria>
+}
+
+@code {
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public bool Show { get; set;}
+    [Parameter] public int? Id_Padron {get;set;}
+    public string Titulo = "CONSULTA ORDENES DE TRABAJO ";
+    SfGrid<ConsultaGral_Ordenesresponse> MyDataGrid {get;set;}
+    private List<ConsultaGral_Ordenesresponse> listaOrdenes;
+    private ConsultaGral_Ordenesresponse ordenSeleccionada = new ConsultaGral_Ordenesresponse();
+
+
+    /******** FUNCIONES ********/
+    public async Task Inicializar(List<ConsultaGral_Ordenesresponse>  items){
+        listaOrdenes = items;
+        await Task.Delay(100);
+    }
+    private void SelectionGrid_Changed(RowSelectEventArgs<ConsultaGral_Ordenesresponse> selectedRow){
+        if(selectedRow.Data != null){
+            ordenSeleccionada = selectedRow.Data;
+        }else{
+            ordenSeleccionada = new ConsultaGral_Ordenesresponse();
+        }
+    }
+    private void SelectionGrid_Unselected(){
+        @* ordenSeleccionada = null; *@
+    }    
+    protected async Task Cerrar_Modal() {
+		listaOrdenes = null;
+		ordenSeleccionada = new ConsultaGral_Ordenesresponse();
+        await CerrarModal.InvokeAsync("");
+    }
+}

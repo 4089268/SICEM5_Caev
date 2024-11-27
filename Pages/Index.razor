@@ -1,0 +1,38 @@
+﻿@page "/"
+@inject NavigationManager NavManager
+@inject IJSRuntime JSRuntime
+@inject SicemService sicemService
+
+<div id="imglogo" class="b d-flex justify-content-center align-items-center" 
+ style="height:75vh; opacity:0; padding-top:6rem;">
+    <img class="logoIndex" src="/img/caev-logo.png" />
+</div>
+
+
+<style>
+    body {
+        background-color: white;
+        background-image: url("./img/textures/texture.png");
+        background-position: center;
+        background-repeat: repeat;
+    }
+    .logoIndex{
+        height: 70%;
+    }
+    @@media (max-width: 580px) {
+        .logoIndex{
+            width: 90%;
+            
+        }
+    }
+
+
+</style>
+
+@code {
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        await JSRuntime.InvokeVoidAsync("fadeIn", "#imglogo", 600);
+    }
+
+}

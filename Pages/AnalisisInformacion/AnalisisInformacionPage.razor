@@ -1,0 +1,319 @@
+@page "/AnalisisInfo"
+@using Syncfusion.Blazor.Navigations
+@using Sicem_Blazor.Data.KML
+@using Microsoft.Extensions.Configuration
+@using System.IO
+@inject SicemService sicemService
+@inject IMatToaster MatToaster
+@inject IJSRuntime JSRuntime
+@inject IConfiguration Configuration
+
+<div class="d-flex flex-column w-100 h-100">
+
+    <div class="title-page" style="text-transform:uppercase;">Búsqueda Avanzada</div>
+
+    
+
+    @* **** Componente tabs **** *@
+    <div class="border rounded bg-white p-2" style="height: calc( 100% - 45px);" >
+        
+        <div class="div-tabs" style="height: 60px;">
+            <ul class="tabComponent">
+                <li class="tab @(mostrarResultados?"selected":"tabSelected")" style="cursor: pointer;" @onclick="@(e => mostrarResultados = false )">
+                    <a>Busqueda</a>
+                </li>
+                <li class="tab @(mostrarResultados?"tabSelected":"selected")" style="cursor: pointer;" @onclick="@(e => mostrarResultados = true )">
+                    <a>Resultados</a>
+                </li>
+            </ul>
+        </div>
+        
+        @* **** Area filtros **** *@
+        <div class="div-filtros w-100 @(mostrarResultados?"d-none":"d-block")" style=" height: calc(100% - 60px);">
+            <FiltroDatosComponent  ProcesarConsulta="@(e => RealizarConsulta(e) )" 
+                CatOficinas="@catOficinas" 
+                CatEstatus="@catEstatus"
+                CatTipoCalculo="@catTipoCalculo"
+                CatSetvicios="@catSetvicios"
+                CatTarifas="@catTarifas"
+                CatAnomalias="@catAnomalias"
+                CatGiro="@catGiro"
+                CatClaseUsuaro="@catClaseUsuaro" />
+        </div>
+
+        @* **** Area Resultados **** *@
+        <div class="div-resultados w-100 @(mostrarResultados?"d-block":"d-none")" style="height: calc(100% - 60px);">
+            <div class="p-2 d-flex align-items-center">
+
+                @* <div class="button px-3 py-2 mr-2" @onclick="@(e => mostrarResultados = false )" >
+                    <i class="fa fa-redo mr-2"></i>
+                    <span>Reiniciar Consulta</span>
+                </div> *@
+                
+                <div class="button px-3 py-2 bg-success mr-4" @onclick="ExportarExcel_Click" >
+                    <i class="fa fa-file-excel mr-2"></i>
+                    <span>Exportar Resultados</span>
+                </div>
+
+                <div class="button px-3 py-2 bg-success mr-4" @onclick="MostrarUbicaciones_Click" >
+                    <i class="fa fa-map-marker mr-2"></i>
+                    <span>Mostrar Ubicaciones</span>
+                </div>
+
+            </div>
+        
+            <div class="m-2 w-100 ns-small"  style="height: calc(100% - 106px)">
+                <SfGrid @ref="DataGrid" DataSource="@DatosGrid" AllowGrouping="true" TValue="CatPadron" AllowResizing="true" AllowSorting="true" AllowPaging="@enableGridPaging" AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true" RowHeight="14">
+                    <GridGroupSettings Columns="@(new string[] { "Oficina"})" ShowDropArea="false">
+                        <CaptionTemplate>
+                            @{
+                                var order = (context as CaptionTemplateContext);
+                                <div>OFICINA @order.Key - @order.Count.ToString("n0") cuentas</div>
+                            }
+                        </CaptionTemplate>
+                    </GridGroupSettings>
+                    <GridPageSettings PageSize="1000"></GridPageSettings>
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="65">
+                            <Template>
+                                @{
+                                    var data = (context as CatPadron);
+                                    <div class="d-flex px-2">
+                                        <button type="button" class="btn btn-primary btn-sm mr-2" data-toggle="tooltip" data-placement="top" title="Mostrar Datos General" @onclick="@( e => MostrarEnConsultaGeneral(data))" disabled="@(data.Id_Cuenta <= 0)">
+                                            <i class="fa fa-address-book-o" aria-hidden="true"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-primary btn-sm mr-2" data-toggle="tooltip" data-placement="top" title="Mostrar Ubicacion" @onclick="@( e => MostrarUbicacion_Click(data))" disabled="@(!data.TieneUbicacion)">
+                                            <i class="fa fa-map-marker" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(CatPadron.Oficina)" HeaderText="Oficina" TextAlign="TextAlign.Left" Width="170" />
+                        <GridColumn Field="@nameof(CatPadron.Id_Cuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="140" />
+                        <GridColumn Field="@nameof(CatPadron.RazonSocial)" HeaderText="Razon Social" TextAlign="TextAlign.Left" Width="210" />
+                        @* <GridColumn Field="@nameof(CatPadron.NomComercial)" HeaderText="Nombre Comercial" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(CatPadron.NomPropietario)" HeaderText="Nombre Propietario" TextAlign="TextAlign.Left" Width="180" /> *@
+                        <GridColumn Field="@nameof(CatPadron.Estatus)" HeaderText="Estatus" TextAlign="TextAlign.Center" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Poblacion)" HeaderText="Poblacion" TextAlign="TextAlign.Center" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Calculo)" HeaderText="Calculo" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.MesFacturado)" HeaderText="Mes Facturado" TextAlign="TextAlign.Center" Width="120" />
+                        @* <GridColumn Field="@nameof(CatPadron.Rfc)" HeaderText="RFC" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Curp)" HeaderText="Curp" TextAlign="TextAlign.Left" Width="120" /> *@
+                        <GridColumn Field="@nameof(CatPadron.Direccion)" HeaderText="Direccion" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Colonia)" HeaderText="Colonia" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Ciudad)" HeaderText="Ciudad" TextAlign="TextAlign.Left" Width="120" />
+                        @* <GridColumn Field="@nameof(CatPadron.Estado)" HeaderText="Estado" TextAlign="TextAlign.Left" Width="120" /> *@
+                        @* <GridColumn Field="@nameof(CatPadron.CodigoPostal)" HeaderText="Codigo Postal" TextAlign="TextAlign.Left" Width="120" /> *@
+                        <GridColumn Field="@nameof(CatPadron.Telefono1)" HeaderText="Telefono 1" TextAlign="TextAlign.Left" Width="120" />
+                        @* <GridColumn Field="@nameof(CatPadron.Telefono2)" HeaderText="Telefono 2" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.ReciboMail)" HeaderText="Recibo EMail" TextAlign="TextAlign.Center" Width="80" DisplayAsCheckBox="true" />
+                        <GridColumn Field="@nameof(CatPadron.Email)" HeaderText="Email" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.CallePpal)" HeaderText="Calle Principal" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.NumExt)" HeaderText="Numero Exterior" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.NumInt)" HeaderText="Numero Interior" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.CalleLat1)" HeaderText="Calle Lateral 1" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.CalleLat2)" HeaderText="Calle Lateral 2" TextAlign="TextAlign.Left" Width="120" /> *@
+                        <GridColumn Field="@nameof(CatPadron.Ruta)" HeaderText="Ruta" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Sb)" HeaderText="Subsistema" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Sector)" HeaderText="Sector" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Manzana)" HeaderText="Manzana" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Lote)" HeaderText="Lote" TextAlign="TextAlign.Left" Width="120" />
+                        @* <GridColumn Field="@nameof(CatPadron.Nivel)" HeaderText="Nivel" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Fraccion)" HeaderText="Fraccion" TextAlign="TextAlign.Left" Width="120" /> *@
+                        <GridColumn Field="@nameof(CatPadron.Toma)" HeaderText="Toma" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Localizacion)" HeaderText="Localizacion" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Giro)" HeaderText="Giro" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Estatus)" HeaderText="Estatus" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Mf)" HeaderText="Mf" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Af)" HeaderText="Af" TextAlign="TextAlign.Left" Width="120" />
+                        @* <GridColumn Field="@nameof(CatPadron.PromedioAnt)" HeaderText="Promedio Anterior" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.PromedioAct)" HeaderText="Promedio Act" TextAlign="TextAlign.Left" Width="120" /> *@
+                        <GridColumn Field="@nameof(CatPadron.MesAdeudoAct)" HeaderText="Meses Adeudo" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Servicio)" HeaderText="Servicio" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Clase_Usuario)" HeaderText="Clase Usuario" TextAlign="TextAlign.Center" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Tipo_Usuario)" HeaderText="Tipo Usuario" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Tarifa_Fija)" HeaderText="Tarifa Fija" TextAlign="TextAlign.Left" Width="120" />
+                        @* <GridColumn Field="@nameof(CatPadron.ConsumoFijo)" HeaderText="Consumo Fijo" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.ImporteFijo)" HeaderText="Importe Fijo Agua" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(CatPadron.ImporteFijoDren)" HeaderText="Importe Fijo Dren" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(CatPadron.ImporteFijoSane)" HeaderText="Importe Fijo Sane" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(CatPadron.Situacion)" HeaderText="Situacion" TextAlign="TextAlign.Left" Width="120" /> *@
+                        <GridColumn Field="@nameof(CatPadron.AnomaliaAct)" HeaderText="Anomalia" TextAlign="TextAlign.Left" Width="120" />
+                        @* <GridColumn Field="@nameof(CatPadron.LecturaAnt)" HeaderText="Lectura Anterior" TextAlign="TextAlign.Left" Width="120" /> *@
+                        <GridColumn Field="@nameof(CatPadron.LecturaAct)" HeaderText="Lectura Actual" TextAlign="TextAlign.Left" Width="120" />
+                        @* <GridColumn Field="@nameof(CatPadron.ConsumoAnt)" HeaderText="Consumo Anterior" TextAlign="TextAlign.Left" Width="120" /> *@
+                        <GridColumn Field="@nameof(CatPadron.ConsumoAct)" HeaderText="Consumo Actual" TextAlign="TextAlign.Left" Width="120" />
+                        @* <GridColumn Field="@nameof(CatPadron.Consumo_RealAnt)" HeaderText="Consumo Real Ant" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Consumo_RealAct)" HeaderText="Consumo Real Act" TextAlign="TextAlign.Left" Width="120" /> *@
+                        <GridColumn Field="@nameof(CatPadron.Calculo)" HeaderText="Calculo" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Calculo_Act)" HeaderText="Calculo Act" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(CatPadron.Iva)" HeaderText="Iva" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(CatPadron.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(CatPadron.EsMacromedidor)" HeaderText="Es Macromedidor" TextAlign="TextAlign.Center" Width="80" DisplayAsCheckBox="true"/>
+                        <GridColumn Field="@nameof(CatPadron.EsDraef)" HeaderText="Es DRAEF" TextAlign="TextAlign.Center" Width="80" DisplayAsCheckBox="true" />
+                        <GridColumn Field="@nameof(CatPadron.EsAltoconsumidor)" HeaderText="Es Alto Consumidor" TextAlign="TextAlign.Center" Width="80" DisplayAsCheckBox="true"/>
+                        <GridColumn Field="@nameof(CatPadron.Id_Medidor)" HeaderText="Medidor" TextAlign="TextAlign.Left" Width="120" />
+                        @* <GridColumn Field="@nameof(CatPadron.Diametro)" HeaderText="Diametro" TextAlign="TextAlign.Left" Width="120" /> *@
+                        <GridColumn Field="@nameof(CatPadron.Tipotoma)" HeaderText="Tipo Toma" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.MesFacturado)" HeaderText="Mes Facturado" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.FechaAlta)" HeaderText="Fecha Alta" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.FechaLecturaAct)" HeaderText="Fecha Lectura Ant" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.FechaFacturaAct)" HeaderText="Fecha Lectura Act" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(CatPadron.FechaVencimiento)" HeaderText="Fecha Vencimiento" TextAlign="TextAlign.Left" Width="120" />                
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+<BusyIndicator Busy="cargando" ContentText="Cargando datos..." />
+@if(DatosGenerales_visible){
+    <DatosGenerales_Dialog IdOficina="@OficinaActual" Cuenta="@CuentaActual" CerrarVentana="@(e => DatosGenerales_visible = false)"/>
+}
+@if(MostrarUbicaciones){
+    <MapaComponent OnClosed="@(e => MostrarUbicaciones = false)" MarkerDataSource="@MapPoints" />
+}
+
+
+@code {
+
+    private SfGrid<CatPadron> DataGrid {get;set;}
+    private List<CatPadron> DatosGrid {get;set;}
+    private bool cargando {get;set;} = false;
+    private bool mostrarResultados {get;set;} = false;
+    private bool enableGridPaging {get;set;}  = false;
+    
+
+    private Dictionary<int, string> catOficinas {get;set;}
+    private Dictionary<int,string> catEstatus {get;set;}
+    private Dictionary<int,string> catTipoCalculo {get;set;}
+    private Dictionary<int,string> catSetvicios {get;set;}
+    private Dictionary<int,string> catTarifas {get;set;}
+    private Dictionary<int,string> catAnomalias {get;set;}
+    private Dictionary<int,string> catGiro {get;set;}
+    private Dictionary<int,string> catClaseUsuaro {get;set;}
+    
+    private AnalisysInfoFilter FiltroBusqueda {get;set;} = new AnalisysInfoFilter();
+    private bool DatosGenerales_visible = false;
+    private string CuentaActual = "";
+    private int OficinaActual = 0;
+
+    private bool MostrarUbicaciones = false;
+    private List<MapMark> MapPoints {get;set;} = new List<MapMark>();
+    
+    protected override async Task OnParametersSetAsync(){
+        this.cargando = true;
+        await Task.Delay(200);
+
+        
+        var _oficinas = sicemService.ObtenerEnlaces().Where(item => item.Inactivo != true ).ToList();
+        catOficinas = new Dictionary<int, string>();
+        _oficinas.ForEach(ofi => {
+            catOficinas.Add(ofi.Id, ofi.Oficina);
+        });
+        
+        catEstatus = sicemService.ObtenerCatalogoEstatus(1, "CAT_PADRON");
+        catTipoCalculo = sicemService.ObtenerCatalogoTipoCalculo(1);
+        catSetvicios = sicemService.ObtenerCatalogoServicios(1);
+        catTarifas = sicemService.ObtenerCatalogoTarifas(1);
+        catAnomalias = sicemService.ObtenerCatalogoAnomalias(1);
+        catGiro = sicemService.ObtenerCatalogoGiros(1);
+        catClaseUsuaro = sicemService.ObtenerCatalogoClaseUsuario(1);
+        
+        await Task.Delay(200);
+        this.cargando = false;
+
+    }
+
+    private async Task RealizarConsulta(AnalisysInfoFilter datosFiltro){
+        if( datosFiltro == null ){
+            return;
+        }
+
+        if( datosFiltro.Id_Oficinas.Count() <= 0 ){
+            MatToaster.Add("Seleccione una oficina", MatToastType.Info);
+            return;
+        }
+
+        Console.WriteLine(datosFiltro.Localidad);
+
+        this.cargando = true;
+        await Task.Delay(200);
+
+        var _oficinas = sicemService.ObtenerEnlaces().Where(item => item.Inactivo != true && datosFiltro.Id_Oficinas.Contains(item.Id) ).ToList();
+        var _tmpDatos = sicemService.ObtenerAnalisisInfo(_oficinas, datosFiltro);
+        this.enableGridPaging = _tmpDatos.Count() > 1000;
+        this.DatosGrid = _tmpDatos;
+
+        this.mostrarResultados = true;
+
+        await Task.Delay(200);
+        this.cargando = false;
+    }
+
+    private async Task ExportarExcel_Click(){
+        cargando = true;
+        await Task.Delay(100);
+
+        var _tmpFolder = Configuration.GetValue<string>("TempFolder");
+        var _exportador = new ExportarExcel<CatPadron>(DatosGrid, new Uri(_tmpFolder) );
+        var _archivo = _exportador.GenerarExcel();
+
+        if(!String.IsNullOrEmpty(_archivo)){
+            var _endPointDownload = Configuration.GetSection("AppSettings").GetValue<string>("Direccion_Api");
+            var _targetUrl = $"{_endPointDownload}/download/{_archivo}";
+            await JSRuntime.InvokeVoidAsync("OpenNewTabUrl", _targetUrl);
+        }
+        
+        await Task.Delay(500);
+        cargando = false;
+    }
+    private void MostrarEnConsultaGeneral(CatPadron e){
+        this.CuentaActual = e.Id_Cuenta.ToString();
+        this.OficinaActual = e.Id_Oficina;
+        DatosGenerales_visible = true;
+    }
+    private void MostrarUbicacion_Click(CatPadron e){
+        var _newItem = new MapMark();
+        _newItem.Latitude = (double)e.Latitude;
+        _newItem.Longitude = (double)e.Longitude;
+        _newItem.Zoom = 17;
+        _newItem.Descripcion = $"{e.Id_Cuenta}";
+        _newItem.Subtitulo = e.RazonSocial;
+        _newItem.Padron = e;
+        MapPoints.Clear();
+        MapPoints.Add(_newItem);
+        
+        this.MostrarUbicaciones = true;
+    }
+
+    private void MostrarUbicaciones_Click(){
+        if(DatosGrid.Count() <= 0){
+            return;
+        }
+
+        MapPoints.Clear();
+        foreach(var pad in DatosGrid){
+             var _newItem = new MapMark();
+            _newItem.Latitude = (double)pad.Latitude;
+            _newItem.Longitude = (double)pad.Longitude;
+            _newItem.Zoom = 17;
+            _newItem.Descripcion = $"{pad.Id_Cuenta}";
+            _newItem.Subtitulo = pad.RazonSocial;
+            _newItem.Padron = pad;
+            _newItem.IdOficina = pad.Id_Oficina;
+            MapPoints.Add(_newItem);
+        }
+
+        this.MostrarUbicaciones = true;
+
+    }
+
+
+}

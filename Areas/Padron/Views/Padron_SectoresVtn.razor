@@ -1,0 +1,66 @@
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Padron.Models
+@inject IJSRuntime JSRuntime
+@inject PadronService padronService
+@inject NavigationManager NavManager
+
+@if (Visible) {
+
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@CerrarModal" Filas="@(new double[]{ 50, 670 })" Columnas="@(new double[]{.85})">
+        <Content>
+
+            <!-- ****** Filtro y Exportar ****** -->
+            <div class="d-flex align-items-center m-1 p-2 border rounded bg-white">
+                <MatButton Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+            </div>
+
+            <!-- ****** DataGrid ****** -->
+            <div class="m-1 p-2 border rounded bg-white">
+                <SfGrid @ref="DataGrid" DataSource="@DatosGrid" AllowSorting="true" AllowResizing="true" AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(PadronSector.Sector)" HeaderText="Sector" TextAlign="TextAlign.Center" Width="90" />
+                        <GridColumn Field="@nameof(PadronSector.Activo)" HeaderText="Activos" TextAlign="TextAlign.Center" Width="110" Format="n0"/>
+                        <GridColumn Field="@nameof(PadronSector.Espera)" HeaderText="Sala Espera" TextAlign="TextAlign.Center" Width="110" Format="n0" />
+                        <GridColumn Field="@nameof(PadronSector.BajaTemporal)" HeaderText="Baja Temporal" TextAlign="TextAlign.Center" Width="110" Format="n0" />
+                        <GridColumn Field="@nameof(PadronSector.BajaDefinitiva)" HeaderText="Baja Definitiva" TextAlign="TextAlign.Center" Width="110" Format="n0" />
+                        <GridColumn Field="@nameof(PadronSector.Congelado)" HeaderText="Congelados" TextAlign="TextAlign.Center" Width="110" Format="n0" />
+                        <GridColumn Field="@nameof(PadronSector.TotalUsuarios)" HeaderText="Total Usuarios" TextAlign="TextAlign.Center" Width="110" Format="n0" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+        </Content>
+    </VentanaSecundaria>
+
+}
+
+@code {
+
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    public string Titulo = "Padron por Sectores";
+    public IEnlace OficinaActual {get;set;}
+
+    private SfGrid<PadronSector> DataGrid {get;set;}
+    private List<PadronSector> DatosGrid {get;set;}
+
+
+    //"******** Funciones ********"
+    private async Task Cerrar_Modal() {
+        this.DatosGrid = new List<PadronSector>();
+        await CerrarModal.InvokeAsync("");
+    }
+    public void Inicializar(List<PadronSector> datos, IEnlace enlace) {
+        this.DatosGrid = datos.ToList();
+        this.OficinaActual = enlace;
+    }
+    private async Task GenerarExcel() {
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+}

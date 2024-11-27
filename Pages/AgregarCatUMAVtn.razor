@@ -1,0 +1,77 @@
+@inject ITarifasService tarifasService
+
+<VentanaSecundaria Titulo="@Titulo" Filas="@GridFilas" Columnas="@GridColumnas" CerrarVentana="@CerrarModal">
+    <Content>
+        <div class="item-cat">
+            <label class="my-auto h5">Año:</label>
+            <input type="number" @bind="@CatalogoNuevo.Af" disabled="@Editar" />
+        </div>
+
+        <div class="item-cat">
+            <label class="my-auto h5">UMA:</label>
+            <input type="number" @bind="@CatalogoNuevo.Uma"/>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-center mt-5">
+            <button class="button py-2 w-100 mx-2" @onclick="AgregarCatalogo">
+                <span>@(Editar?"Editar":"Agregar")</span>
+            </button>
+        </div>
+
+    </Content>
+</VentanaSecundaria>
+<style>
+    .item-cat{
+        display: grid;
+        grid-template-rows: 1fr;
+        grid-template-columns: 7rem 1fr;
+    }
+    .item-cat input{
+        padding-left: 1rem;
+    }
+
+
+</style>
+
+@code{
+    [Parameter] public EventCallback OnClosed {get; set;}
+    [Parameter] public CatUma UltimoCatalogo {get; set;}
+    [Parameter] public bool Editar {get;set;}
+    private double[] GridFilas = new double[]{30, 30, 70};
+    private double[] GridColumnas = new double[]{ 220 };
+    private CatUma CatalogoNuevo ;
+    private string Titulo = "Agregar Catalogo UMA";
+
+    protected override void OnParametersSet()
+    {   
+        Titulo = Editar?"Editar Catalogo UMA": "Agregar Catalogo UMA";
+
+        if(Editar){
+            CatalogoNuevo = UltimoCatalogo;
+        }else{
+            var _now = (new DateTime( (int) UltimoCatalogo.Af, 1, 1)).AddYears(1);
+            CatalogoNuevo = new CatUma(){
+                Af = _now.Year,
+                Uma = UltimoCatalogo.Uma,
+                PorcVaria = UltimoCatalogo.PorcVaria
+            };
+        }
+        
+    }
+
+    private async Task CerrarModal(){
+        await OnClosed.InvokeAsync(null);
+    }
+
+    private async Task AgregarCatalogo(){
+        if(!Editar){
+            var porDif = Math.Round(Math.Abs(UltimoCatalogo.Uma??0m - CatalogoNuevo.Uma??0m) * 100,4);
+            CatalogoNuevo.PorcVaria = porDif;
+            tarifasService.AgregarCatalogoUMA(CatalogoNuevo);
+        }else{
+            tarifasService.ActualizarCatalogoUMA(CatalogoNuevo);
+        }
+        await CerrarModal();
+    }
+
+}

@@ -1,0 +1,63 @@
+@inject SicemService sicemService
+
+<VentanaSecundaria Titulo="Publicar Tarifas" CerrarVentana="CerrarModal" Filas="@(new double[]{275})" Columnas="@(new double[]{400})">
+    <Content>
+
+        <div class="drop-list">
+            <div @onclick="@(e => listVisible = true)">
+                @if(OficinasSeleccionadas.Count <= 0){
+                    <span>Seleccione una oficina</span>
+                }else{
+                    foreach(var id in OficinasSeleccionadas ){
+                        <span>ID:@id</span>
+                    }
+                }
+            </div>
+            <div class="list @(!listVisible?"hidden":"")">
+                <ul>
+                    @if(CatalogoOficinas != null){
+                        foreach(var ofi in CatalogoOficinas ){
+                            <li><input type="checkbox" idOfi="@ofi.Id" @onchange="@(e => OficinaCheckbox_OnChanged(e, ofi) )" /><span>@ofi.Oficina</span></li>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
+
+    </Content>
+</VentanaSecundaria>
+
+<style>
+    .list{
+        z-index: 66;
+        positon: absolute;
+        background-color:#eee;
+        border: 1px solid #666;
+    }
+    .list.hidden{
+        display:none;
+    }
+</style>
+
+@code{
+    [Parameter] public EventCallback Cerrar {get;set;}
+
+    private List<Ruta> CatalogoOficinas {get;set;}
+    private List<int> OficinasSeleccionadas {get;set;} = new List<int>();
+
+    private bool listVisible = false;
+
+    protected override void OnInitialized(){
+        var enlaces = sicemService.ObtenerOficinasDelUsuario().Select(item => item.Id).ToList();
+        var oficinas = sicemService.ObtenerEnlaces().Where(item => enlaces.Contains(item.Id)).ToList();
+
+        this.CatalogoOficinas = oficinas;
+    }
+    private void OficinaCheckbox_OnChanged(ChangeEventArgs e, Ruta o){
+        Console.WriteLine($">>Oficina: {o.Id}  Value: {e.Value}");
+    }
+
+    private async Task CerrarModal(){
+        await Cerrar.InvokeAsync(null);
+    }
+}

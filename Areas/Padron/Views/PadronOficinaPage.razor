@@ -1,0 +1,485 @@
+@page "/PadronOficina/{IdOficinaParam}"
+@using System.Text
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Charts
+@using Sicem_Blazor.Padron.Models
+@inject IMatToaster Toaster
+@inject PadronService padronService
+@inject SicemService sicemService
+@inject NavigationManager NavManager
+
+
+<div class="title-page">PADRON DE USUARIOS</div>
+
+<SeleccionarFecha ProcesarParam="@Procesar" MostrarPeriodos="false" />
+
+@* **** Cards **** *@
+<div class="border rounded bg-white mt-2 mb-1 mr-2 p-3 d-flex w-100" style="user-select: text;">
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(() => Mostrar_Vtn_Detalle(1))">
+
+        <div class="c-label"> Activos </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val user-select-all">@if (padronResumen != null) {<span>@padronResumen.Activos_Usuarios.ToString("n0")</span> }
+        else {<span>0</span>}</div>
+            <div class="c-subt"> Usuarios</div>
+        </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val2 user-select-all">@if (padronResumen != null) {<span>@padronResumen.Activos_Adeudos.ToString("c2")</span>}
+        else {<span>$0.00</span>}</div>
+            <div class="c-subt">Adeudo</div>
+        </div>
+    </div>
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(() => Mostrar_Vtn_Detalle(2))">
+        <div class="c-label"> Sala de Espera </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val user-select-all">@if (padronResumen != null) {<span>@padronResumen.Espera_Usuarios.ToString("n0")</span>}
+        else {<span>0</span>}</div>
+            <div class="c-subt">Usuarios</div>
+        </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val2 user-select-all">@if (padronResumen != null) {<span>@padronResumen.Espera_Adeudos.ToString("c2")</span>}
+        else {<span>$0.00</span>}</div>
+            <div class="c-subt">Adeudo</div>
+        </div>
+    </div>
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(() => Mostrar_Vtn_Detalle(3))">
+        <div class="c-label"> Baja Temporal </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val user-select-all">@if (padronResumen != null) {<span>@padronResumen.BajaTemp_Usuarios.ToString("n0")</span>}
+        else {<span>0</span>}</div>
+            <div class="c-subt">Usuarios</div>
+        </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val2 user-select-all">@if (padronResumen != null) {<span>@padronResumen.BajaTemp_Adeudos.ToString("c2")</span>}
+        else {<span>$0.00</span>}</div>
+            <div class="c-subt">Adeudo</div>
+        </div>
+    </div>
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(() => Mostrar_Vtn_Detalle(4))">
+        <div class="c-label"> Baja Definitiva </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val user-select-all">@if (padronResumen != null) {<span>@padronResumen.BajaDef_Usuarios.ToString("n0")</span>}
+        else {<span>0</span>}</div>
+            <div class="c-subt">Usuarios</div>
+        </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val2 user-select-all">@if (padronResumen != null) {<span>@padronResumen.BajaDef_Adeudos.ToString("c2")</span>}
+        else {<span>$0.00</span>}</div>
+            <div class="c-subt">Adeudo</div>
+        </div>
+    </div>
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(() => Mostrar_Vtn_Detalle(5))">
+        <div class="c-label"> Congelados </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val user-select-all">@if (padronResumen != null) {<span>@padronResumen.Conge_Usuarios.ToString("n0")</span>}
+        else {<span>0</span>}</div>
+            <div class="c-subt">Usuarios</div>
+        </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val2 user-select-all">@if (padronResumen != null) {<span>@padronResumen.Conge_Adeudos.ToString("c2")</span>}
+        else {<span>$0.00</span>}</div>
+            <div class="c-subt">Adeudo</div>
+        </div>
+    </div>
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(() => Mostrar_Vtn_Detalle(0))">
+        <div class="c-label"> Total </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val user-select-all">@if (padronResumen != null) {<span>@padronResumen.Total_Usuarios.ToString("n0")</span>}
+        else {<span>0</span>}</div>
+            <div class="c-subt">Usuarios</div>
+        </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val2 user-select-all">@if (padronResumen != null) {<span>@padronResumen.Total_Adeudos.ToString("c2")</span>}
+        else {<span>$0.00</span>}</div>
+            <div class="c-subt">Adeudo</div>
+        </div>
+    </div>
+
+</div>
+
+@* ****** Botones ****** *@
+<div class="border rounded bg-white my-1 py-3 d-flex">
+    <div class="col-12 d-flex align-content-center justify-content-center">
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" @onclick="Mostrar_Vtn_Contratos">Contratos Realizados</MatButton>
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" @onclick="Mostrar_Vtn_ModifiTarifas">Modificaciones de Tarifa</MatButton>
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" @onclick="Mostrar_Vtn_ModificacionesABC">Bitacora ABC</MatButton>
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" Disabled="true">Ceresos </MatButton>
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" Disabled="true">Ayuntamientos </MatButton>
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" Disabled="true">Escuelas </MatButton>
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" Disabled="true">Sector Salud </MatButton>
+    </div>
+</div>
+
+@* **** Graficas **** *@
+<div class="d-flex w-100">
+
+    @* ****** Grafica Adeudos ****** *@
+    <div class="border rounded bg-white p-1 my-1 mr-2 " style="width:100%;">
+        <SfChart Title="Comparacion Adeudo" Width="100%" Height="320">
+            <ChartPrimaryXAxis Title="Estatus" ValueType="Syncfusion.Blazor.Charts.ValueType.Category" Minimum="0"> </ChartPrimaryXAxis>
+            <ChartPrimaryYAxis LabelFormat="n0"> </ChartPrimaryYAxis>
+            <ChartTooltipSettings Enable="true" Header="Usuarios" Shared="true" Format="${series.name} ${point.x} : ${point.y}"></ChartTooltipSettings>
+            <ChartSeriesCollection>
+                <ChartSeries DataSource="@DatosGrafica_Adeudos" XName="Descripcion" YName="Valor1" Width="0.8" ColumnWidth="0.8" Type="ChartSeriesType.Bar">
+                    <ChartMarker>
+                        <ChartDataLabel Visible="true"></ChartDataLabel>
+                    </ChartMarker>
+                </ChartSeries>
+            </ChartSeriesCollection>
+
+        </SfChart>
+    </div>
+
+    @* *** Graficas Donut ***
+        <div class="border rounded bg-white p-1 my-1 " style="width:550px;">
+            <SfAccumulationChart Title="Comparacion Usuarios" Height="280" Width="400">
+                <AccumulationChartSeriesCollection>
+                    <AccumulationChartSeries DataSource="@DatosGrafica_Dona" XName="Descripcion" YName="Valor" Name="Calculos" InnerRadius="40%" StartAngle="270" EndAngle="90">
+                        <AccumulationDataLabelSettings Visible="true" Name="Descripcion" Position="AccumulationLabelPosition.Outside">
+                            <AccumulationChartConnector Type="ConnectorType.Curve" Length="20px" />
+                        </AccumulationDataLabelSettings>
+                    </AccumulationChartSeries>
+                </AccumulationChartSeriesCollection>
+                <AccumulationChartLegendSettings Visible="false"></AccumulationChartLegendSettings>
+                <AccumulationChartTooltipSettings Enable="true" Format="${point.x} : <b>${point.y}%</b>"></AccumulationChartTooltipSettings>
+            </SfAccumulationChart>
+        </div> *@
+
+</div>
+
+
+<style type="text/css">
+    .card-s {
+        border-radius: .8rem;
+        margin-top: .6rem;
+        margin-bottom: .4rem;
+        height: 17rem;
+        width: 15rem;
+        background: white;
+        justify-content: space-around;
+        cursor: pointer;
+        transition: margin .2s, background .2s;
+    }
+
+        .card-s:hover {
+            border-radius: .8rem;
+            margin-top: .4rem;
+            background: #dfe5eb;
+        }
+
+        .card-s .c-label {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            margin-bottom: .5rem;
+            font-weight: bold;
+        }
+
+        .card-s .c-val {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .card-s .c-val2 {
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+
+        .card-s .c-subt {
+            font-size: .9rem;
+        }
+
+
+    .e-control.e-textbox {
+        font-size: 1.3rem !important;
+    }
+
+    .r .e-input {
+        text-align: right;
+    }
+</style>
+
+
+@* ****** Dialogos y ventanas secundarias ****** *@
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+<Padron_DetalleUsuariosVtn @ref="vtn_detalle" Visible="@vtn_detalle_visible" CerrarModal="@(() => vtn_detalle_visible = false)" />
+<Padron_ContratosVtn @ref="vtn_contratos" Visible="@vtn_contratos_visible" CerrarModal="@(() => vtn_contratos_visible = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+<Padron_ModifTarifasVtn @ref="vtn_modifTarifas" Visible="@vtn_modifTarifas_visible" CerrarModal="@(() => vtn_modifTarifas_visible = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+<Padron_ModifABCVtn @ref="vtnModifABC" Visible="@vtn_modifABC_visible" CerrarModal="@(() => vtn_modifABC_visible = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+
+@code{
+    [Parameter] public string IdOficinaParam { get; set; }
+    public Padron_Resumen padronResumen = null;
+    public DateTime f1, f2;
+    public int Subsistema, Sector;
+    public Ruta OficinaActual;
+
+    private bool busyDialog = false;
+    public List<ChartItem> DatosGrafica_Dona = new List<ChartItem>();
+    public List<ChartItem> DatosGrafica_Adeudos = new List<ChartItem>();
+    private bool vtn_detalle_visible = false, vtn_contratos_visible = false, vtn_modifTarifas_visible = false, vtn_modifABC_visible = false;
+    Padron_DetalleUsuariosVtn vtn_detalle;
+    Padron_ContratosVtn vtn_contratos;
+    Padron_ModifTarifasVtn vtn_modifTarifas;
+    Padron_ModifABCVtn vtnModifABC;
+
+    //********* Funciones  *********
+    protected override async Task OnInitializedAsync() {
+
+        //*** Validar oficina para este usuario
+        IEnlace ofi;
+        if (!sicemService.ComprobarOficinaUsuario(int.TryParse(IdOficinaParam, out int tmpId) ? tmpId : -1, out ofi)) {
+            Toaster.Add("Oficina no autorizada para este usuario.", MatToastType.Warning);
+            NavManager.NavigateTo("/");
+        }
+        OficinaActual = sicemService.ObtenerEnlaces().Where( item => item.Id == ofi.Id).FirstOrDefault();
+
+        var tmpE = new SeleccionarFechaEventArgs() {
+            Subsistema = 0,
+            Sector = 0,
+            Fecha1 = DateTime.Parse("01/" + DateTime.Now.ToString("MM") + "/" + DateTime.Now.ToString("yyyy")),
+            Fecha2 = DateTime.Parse(DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month).ToString() + "/" + DateTime.Now.ToString("MM") + "/" + DateTime.Now.ToString("yyyy"))
+        };
+        this.f1 = tmpE.Fecha1;
+        this.f2 = tmpE.Fecha2;
+        this.Subsistema = tmpE.Subsistema;
+        this.Sector = tmpE.Sector;
+        await Procesar(tmpE);
+    }
+    public async Task Procesar(SeleccionarFechaEventArgs e) {
+        await Task.Delay(100);
+        this.busyDialog = true;
+
+        this.f1 = e.Fecha1;
+        this.f2 = e.Fecha2;
+        this.Subsistema = e.Subsistema;
+        this.Sector = e.Sector;
+
+        padronResumen = padronService.ObtenerPadronResumen(OficinaActual.Id, f1.Year, f1.Month, Subsistema, Sector);
+
+        if (padronResumen != null) {
+            Procesar_Datos_Grafica();
+        }
+        else {
+            //*** Mostrar mensaje del httpclient
+            Toaster.Add("Error al llamar a la base de datos, intente m�s tarde.", MatToastType.Warning, "");
+        }
+
+        await Task.Delay(500);
+        this.busyDialog = false;
+    }
+    private void Procesar_Datos_Grafica() {
+
+        /**** Grafica Dona ******/
+        var tmpChar1 = new List<ChartItem>();
+        try {
+            tmpChar1.Add(new ChartItem {
+                Descripcion = "Activos",
+                Valor1 = Math.Round((padronResumen.Activos_Usuarios / (decimal)padronResumen.Total_Usuarios) * 100, 2)
+            });
+        }
+        catch (Exception) { tmpChar1.Add(new ChartItem { Descripcion = "Activos", Valor1 = 0 }); }
+        try {
+            tmpChar1.Add(new ChartItem {
+                Descripcion = "Sala de Espera",
+                Valor1 = Math.Round((padronResumen.Espera_Usuarios / (decimal)padronResumen.Total_Usuarios) * 100, 2)
+            });
+        }
+        catch (Exception) { tmpChar1.Add(new ChartItem { Descripcion = "Sala de Espera", Valor1 = 0 }); }
+        try {
+            tmpChar1.Add(new ChartItem {
+                Descripcion = "Baja Temporal",
+                Valor1 = Math.Round((padronResumen.BajaTemp_Usuarios / (decimal)padronResumen.Total_Usuarios) * 100, 2)
+            });
+        }
+        catch (Exception) { tmpChar1.Add(new ChartItem { Descripcion = "Baja Temporal", Valor1 = 0 }); }
+        try {
+            tmpChar1.Add(new ChartItem {
+                Descripcion = "Baja Definitiva",
+                Valor1 = Math.Round((padronResumen.BajaDef_Usuarios / (decimal)padronResumen.Total_Usuarios) * 100, 2)
+            });
+        }
+        catch (Exception) { tmpChar1.Add(new ChartItem { Descripcion = "Baja Definitiva", Valor1 = 0 }); }
+        DatosGrafica_Dona = tmpChar1;
+
+
+        /**** Grafica Barras ******/
+        var tmpChar2 = new List<ChartItem>();
+        tmpChar2.Add(new ChartItem {
+            Descripcion = "Activos",
+            Valor1 = padronResumen.Activos_Usuarios
+        });
+        tmpChar2.Add(new ChartItem {
+            Descripcion = "Sala de Espera",
+            Valor1 = padronResumen.Espera_Usuarios
+        });
+
+        tmpChar2.Add(new ChartItem {
+            Descripcion = "Baja Temporal",
+            Valor1 = padronResumen.BajaTemp_Usuarios
+        });
+        tmpChar2.Add(new ChartItem {
+            Descripcion = "Baja Definitiva",
+            Valor1 = padronResumen.BajaDef_Usuarios
+        });
+        DatosGrafica_Adeudos = tmpChar2;
+
+    }
+
+
+    //*** Funciones Ventanas Secundarias
+    private async Task Mostrar_Vtn_Detalle(int tipo) {
+        busyDialog = true;
+
+        var tmpTitulo = "Detalle Usuarios";
+
+        switch (tipo) {
+            case 0:
+                tmpTitulo = "Detalle Usuarios ";
+                break;
+            case 1:
+                tmpTitulo = "Usuarios Activos";
+                break;
+            case 2:
+                tmpTitulo = "Usuarios en Sala de Espera";
+                break;
+            case 3:
+                tmpTitulo = "Usuarios Con Baja Temporal";
+                break;
+            case 4:
+                tmpTitulo = "Usuarios Con Baja Definitiva";
+                break;
+            case 5:
+                tmpTitulo = "Usuarios Congelados";
+                break;
+        }
+
+
+        if (!vtn_detalle_visible) {
+
+            var tmpData = padronService.ObtenerDetallePadron(OficinaActual, f1.Year, f1.Month, Subsistema, Sector, tipo);
+
+            if (tmpData == null) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (tmpData.Count() <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            vtn_detalle_visible = true;
+            await vtn_detalle.Inicializar(tmpData.ToArray(), tmpTitulo);
+        }
+
+        busyDialog = false;
+    }
+    private void Cerrar_Vtn_Detalle() {
+        vtn_detalle_visible = false;
+    }
+
+    private async Task Mostrar_Vtn_Contratos() {
+        busyDialog = true;
+
+        if (!vtn_contratos_visible) {
+
+            var tmpData = padronService.ObtenerContratosRealizados(OficinaActual, f1.Year, f1.Month);
+
+            if (tmpData == null) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (tmpData.Length <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            //*** Calcular Catalogo Tarifas
+            Dictionary<int, string> Cat_Tarifas = new Dictionary<int, string>();
+            var i = 1;
+            foreach (Padron_Contratos item in tmpData) {
+                if (!Cat_Tarifas.ContainsValue(item.Tarifa_Contratada)) {
+                    Cat_Tarifas.Add(i, item.Tarifa_Contratada.ToUpper());
+                    i += 1;
+                }
+            }
+
+            vtn_contratos_visible = true;
+            await vtn_contratos.Inicializar(tmpData, Cat_Tarifas);
+        }
+
+        busyDialog = false;
+    }
+    private void Cerrar_Vtn_Contratos() {
+        vtn_contratos_visible = false;
+    }
+
+    private async Task Mostrar_Vtn_ModifiTarifas() {
+        busyDialog = true;
+
+        if (!vtn_modifTarifas_visible) {
+
+            var tmpData = padronService.ObtenerModifiTarifas(OficinaActual, f1.Year, f1.Month);
+
+            if (tmpData == null) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (tmpData.Count() <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            vtn_modifTarifas_visible = true;
+            await vtn_modifTarifas.Inicializar(tmpData.ToArray());
+            vtn_modifTarifas.Calcular_Catalogo();
+        }
+
+        busyDialog = false;
+    }
+    private void Cerrar_Vtn_ModifiTarifas() {
+        vtn_modifTarifas_visible = false;
+    }
+
+    private async Task Mostrar_Vtn_ModificacionesABC() {
+        busyDialog = true;
+
+        if (!vtn_modifABC_visible) {
+
+            Padron_ModifABC_Response tmpData = padronService.ObtenerModificacionesABC(OficinaActual, f1.Year, f1.Month);
+
+            if (tmpData == null) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (tmpData.Modificaciones.Length <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            vtn_modifABC_visible = true;
+            await vtnModifABC.Inicializar(tmpData);
+            vtnModifABC.Calcular_Catalogo();
+
+        }
+
+        busyDialog = false;
+    }
+    private void Cerrar_Vtn_ModificacionesABC() {
+        vtn_modifABC_visible = false;
+    }
+
+}

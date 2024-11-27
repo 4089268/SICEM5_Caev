@@ -1,0 +1,249 @@
+﻿@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using MatBlazor
+@inject SicemService sicemService
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+@if (Show) {
+    <div class="busy-control" id="busy-control2">
+
+        <div id="draggable2" class="SicemDialog-control" style="width:auto; height:auto;" >
+
+            @* *********** Cabecera *********** *@
+            <div class="SicemDialog-header">
+                <div>@Descripcion</div>
+                <MatIcon @onclick="@Cerrar_Modal" Class="close-icon" style="margin-left: auto;" Icon="clear"></MatIcon>
+            </div>
+
+            @* *********** Contenido *********** *@
+            <div class="SicemDialog-content" style="display: grid; grid-template-columns: 85vw; grid-template-rows: 80vh 40px">
+                
+                <div @ref="@contenedorImagen" class="m-1 p-1 d-flex align-items-center justify-content-center" style="grid-column:1/2; grid-row:1/2; border: 1px solid #dddddd; border-radius:4px; background-color:#d2d2d2; overflow:auto;">
+                    @if (hideImage) {
+                        <MatProgressCircle Indeterminate="true" Size="MatProgressCircleSize.Small" />
+                    }
+                    <img @ref="@myImage" id="imgenSicem" class="cursorMove" src="@string.Format("{2}/Documento/{0}/{1}", OficinaActual, Id_Imagen, apiUrl)" style="margin:auto; @(hideImage ? "display:none;" : "display:block;")" height="@xheight" width="@xwidth" @onload="@onImageLoaded" />
+                </div>
+
+                @******* Botones Imagen ****** *@
+                <div class="visorBotones m-1 d-flex align-items-center justify-content-center" style="grid-column:1/2; grid-row:2/3; ">
+
+                    <div class="link-btn" @onclick="@(e => BotonReset_Click() )">
+                        <i class="fas fa-redo" aria-hidden="true"></i>
+                    </div>
+
+                    <div style="width:10px"></div>
+
+                    <div class="link-btn" @onclick="@(e => BotonZoomOut_Click() )">
+                        <i class="fas fa-search-minus"></i>
+                    </div>
+
+                    <MatSlider @ref="@barZoom" Value="@valZoom" style="width: 300px;" Immediate="true" Discrete="true" TValue="int" Step="1" EnableStep="true" ValueMin="1" ValueMax="@maxZoom" ValueChanged="@onZoombarValueChanged"></MatSlider>
+                    
+                    <div class="link-btn" @onclick="@(e => BotonZoomIn_Click() )">
+                        <i class="fas fa-search-plus"></i>
+                    </div>
+
+                </div>
+
+                <div class="m-3 d-flex flex-column justify-content-end position-absolute" style="z-index:666; grid-area: 1/1/2/2;">
+                    <div>Descripcion: @documento.Descripcion</div>
+                    <div>Fecha Inserccion: @(documento.Fecha_Insert.ToString() )</div>
+                    <div>Personal Inserccion: @documento.Personal</div>
+                    <div>Archivo: @documento.Archivo</div>
+                    <div>Tama&ntilde;o: @(documento.Tamano.ToString("n0")) bytes</div>
+                </div>
+
+            </div>
+        </div>
+            
+    </div>
+
+    <style>
+        .visorBotones .link-btn {
+            color: #444444;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0px 10px 0px 10px;
+            font-size: 1.4rem;
+            text-decoration: none !important;
+        }
+
+    </style>
+}
+
+
+
+@code {
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public bool Show { get; set; }
+    [Parameter] public string Id_Imagen { get; set; }
+    [Parameter] public string Descripcion { get; set; }
+    public int OficinaActual { get; set; }
+    public ConsultaGral_Documentos documento { get; set; }
+
+    MatSlider<int> barZoom;
+    ElementReference myImage;
+    ElementReference contenedorImagen;
+
+    String xwidth = "auto";
+    String xheight = "auto";
+    double width_ori = 0;
+    double height_ori = 0;
+
+    private bool hideImage = true;
+    private int maxZoom = 10;
+    private int valZoom = 1;
+    private string apiUrl = "http://nerus.sytes.net:8739/api";
+
+    /*********** FUNCIONES***********/
+    protected override void OnInitialized(){
+        this.apiUrl = sicemService.ObtenerDireccionApi();
+    }
+    public async Task Inicializar(ConsultaGral_Documentos doc){
+        this.documento = doc;
+        this.hideImage = true;
+        this.xwidth = "auto";
+        this.xheight = "auto";
+        this.width_ori = 0;
+        this.height_ori = 0;
+
+        await JSRuntime.InvokeVoidAsync("ConfigurateDragg2", "#draggable2");
+
+    }
+    protected async Task Cerrar_Modal() {
+        this.valZoom = 1;
+        await CerrarModal.InvokeAsync("");
+    }
+
+    private async Task onImageLoaded() {
+
+        //****** Calcular dimensiones de la imgen
+        await calcularMedidasImagen();
+
+        //*** Ocultar decoracion imagen cargando 
+        this.hideImage = false;
+
+        //*** Agregar efecto dragg a la imagen
+        await JSRuntime.InvokeVoidAsync("ConfigurateDraggImagen", "#imgenSicem");
+
+    }
+
+    private void onZoombarValueChanged(int val) {
+        this.valZoom = val;
+        if (width_ori == 0 || height_ori == 0) {
+            this.xwidth = "auto";
+            this.xheight = "auto";
+        } else {
+            if (val == 1) {
+                this.xwidth = width_ori + "px";
+                this.xheight = height_ori + "px";
+            } else {
+                double tmpW = width_ori + (width_ori * (.25 * valZoom));
+                double tmpH = height_ori + (height_ori * (.25 * valZoom));
+                this.xwidth = tmpW + "px";
+                this.xheight = tmpH + "px";
+            }
+        }
+    }
+    private async Task calcularMedidasImagen() {
+
+        //****** Obtener tamaño contenedor
+        var res = await JSRuntime.InvokeAsync<string>("ObtenerTamanolEmento", contenedorImagen);
+        var resArr = res.Split(";");
+        var contenedorWidth = double.Parse(resArr[0]);
+        var contenedorHeight = double.Parse(resArr[1]);
+
+        //****** Obtener tamaño de la imagen
+        res = await JSRuntime.InvokeAsync<string>("ObtenerTamanolEmento", myImage);
+        resArr = res.Split(";");
+        var imagenWidth = double.Parse(resArr[0]);
+        var imagenHeight = double.Parse(resArr[1]);
+
+        this.width_ori = imagenWidth;
+        this.height_ori = imagenHeight;
+
+
+        //****** Comparar tamaño imagen con el contenedor y reducirlo proporcionalmente en caso de que la imagen sea mayor al contenedor
+        Console.WriteLine($"Contenedor W:{contenedorWidth} H:{contenedorHeight}");
+        Console.WriteLine($"Imagen W:{imagenWidth} H:{imagenHeight}");
+
+        if (imagenWidth >= contenedorWidth && imagenHeight >= contenedorHeight) {
+            var difWidth = imagenWidth - contenedorWidth;
+            var difHeight = imagenHeight - contenedorHeight;
+
+            if (difWidth > difHeight) {                
+                var tmpWidth = contenedorWidth - 20;
+                var rel = tmpWidth / imagenWidth;
+                var tmpHeight = imagenHeight * rel;
+
+                this.width_ori = tmpWidth;
+                this.height_ori = tmpHeight;
+            }
+            else {
+                var tmpHeight = contenedorHeight - 20;
+                var rel = tmpHeight / imagenHeight;
+                var tmpWidth = imagenWidth * rel;
+
+                this.height_ori = tmpHeight;
+                this.width_ori = tmpWidth;
+            }
+        }
+        else {
+            if (imagenWidth >= contenedorWidth) {
+                var tmpWidth = contenedorWidth - 20;
+                var rel = tmpWidth / imagenWidth;
+                var tmpHeight = imagenHeight * rel;
+
+                this.width_ori = tmpWidth;
+                this.height_ori = tmpHeight;
+                Console.WriteLine($"Ancho imagen mayor, relacion:{rel}");
+            }
+            if (imagenHeight >= contenedorHeight) {
+                var tmpHeight = contenedorHeight - 20;
+                var rel = tmpHeight / imagenHeight;
+                var tmpWidth = imagenWidth * rel;
+
+                this.height_ori = tmpHeight;
+                this.width_ori = tmpWidth;
+                Console.WriteLine($"Ancho alto mayor, relacion:{rel}");
+            }
+
+        }
+
+        Console.WriteLine($">> Medidas resultantes: W:{this.width_ori}  H:{this.height_ori}");
+
+        onZoombarValueChanged(1);
+
+    }
+
+
+    private async Task BotonReset_Click(){
+        var map = new Dictionary<string, string>();
+        map.Add("top", "0");
+        map.Add("left","0");
+        await JSRuntime.InvokeVoidAsync("SetCss", "#imgenSicem", map);
+        this.valZoom = 1;
+        onZoombarValueChanged(valZoom);
+    }
+    private void BotonZoomOut_Click() {
+        if (valZoom > 1 ){
+            this.valZoom--;
+            onZoombarValueChanged(valZoom);
+        }
+    }
+    private void BotonZoomIn_Click() {
+        if (valZoom < maxZoom){
+            this.valZoom++;
+            onZoombarValueChanged(valZoom);
+        }
+    }
+
+}

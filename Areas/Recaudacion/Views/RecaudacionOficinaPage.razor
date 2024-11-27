@@ -1,0 +1,446 @@
+@page "/RecaudacionOficina/{IdOficinaParam}"
+@*
+@using System.Text
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Charts
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Navigations
+@inject NavigationManager NavManager
+@inject IMatToaster Toaster
+@inject SicemService sicemService
+@inject RecaudacionService recaudacionService
+
+<div class="title-page">@titulo</div>
+<SeleccionarFecha ProcesarParam="@Procesar" />
+
+<!-- ****** Grid Inputs y Graficas Donut ****** -->
+<div class="rec-grid-top">
+    <!-- *** Ingresos Totales *** -->
+    <div class="border rounded bg-white mr-2 p-3 d-flex" style="grid-area:1/1/2/2;">
+        <div class="d-flex flex-column" style="width:50%;">
+            <div class="d-flex flex-column ml-1 mt-1 mr-1 mb-3">
+                <div class="ml-1 font-weight-bold" style="font-size:1.3rem; min-width: 100px;">Ingresos Propios: </div>
+                <div style="width:100%;"> <SfTextBox Readonly="true" Value="@ObtnerValor(0)" Placeholder='' CssClass="e-small" /> </div>
+            </div>
+            <div class="d-flex flex-column ml-1 mt-1 mr-1 mb-3">
+                <div class="ml-1 font-weight-bold" style="font-size: 1.3rem; min-width: 100px;">Ingresos Otros: </div>
+                <div style="width: 100%;"> <SfTextBox Readonly="true" Value="@ObtnerValor(1)" Placeholder='' CssClass="e-small" /> </div>
+            </div>
+            <div class="d-flex flex-column ml-1 mt-1 mr-1 mb-3">
+                <div class="ml-1 font-weight-bold" style="font-size: 1.3rem; min-width: 100px;">Ingresos Total: </div>
+                <div style="width: 100%;"> <SfTextBox Readonly="true" Value="@ObtnerValor(2)" Placeholder='' CssClass="e-small" /> </div>
+            </div>
+            <div class="d-flex flex-column ml-1 mt-1 mr-1 mb-3">
+                <div class="ml-1 font-weight-bold" style="font-size: 1.3rem; min-width: 100px;">Ingresos Cobrados: </div>
+                <div style="width: 100%;"> <SfTextBox Readonly="true" Value="@ObtnerValor(3)" Placeholder='' CssClass="e-small" /> </div>
+            </div>
+        </div>
+        <div class="d-flex flex-column ml-2" style="width:50%;">
+            <div class="d-flex flex-column ml-1 mt-1 mr-1 mb-3">
+                <div class="ml-1 font-weight-bold" style="font-size: 1.3rem; min-width: 100px;">Usuarios Propios: </div>
+                <div style="width: 100%;"> <SfTextBox Readonly="true" Value="@ObtnerValor(4)" Placeholder='' CssClass="e-small" /> </div>
+            </div>
+            <div class="d-flex flex-column ml-1 mt-1 mr-1 mb-3">
+                <div class="ml-1 font-weight-bold" style="font-size: 1.3rem; min-width: 100px;">Usuarios Otros: </div>
+                <div style="width:100%;"> <SfTextBox Readonly="true" Value="@ObtnerValor(5)" Placeholder='' CssClass="e-small" /> </div>
+            </div>
+            <div class="d-flex flex-column ml-1 mt-1 mr-1 mb-3">
+                <div class="ml-1 font-weight-bold" style="font-size: 1.3rem; min-width: 100px;">Usuarios Total: </div>
+                <div style="width:100%;"> <SfTextBox Readonly="true" Value="@ObtnerValor(6)" Placeholder='' CssClass="e-small" /> </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- *** Graficas Donut *** -->
+    <div class="d-flex border rounded bg-white p-1" style="grid-area: 1/2/2/3;">
+        <div style="width:50%;">
+            <SfAccumulationChart Height="100%" Width="380" EnableSmartLabels="true" Title="Ingresos" >
+                <AccumulationChartSeriesCollection>
+                    <AccumulationChartSeries DataSource="@DatosGrafica_Ingresos" XName="Descripcion" YName="Valor1" Name="Ingresos" InnerRadius="20%">
+                        <AccumulationDataLabelSettings Visible="true" Name="descripcion" Position="AccumulationLabelPosition.Outside">
+                            <AccumulationChartConnector Type="ConnectorType.Curve" Length="20px" />
+                        </AccumulationDataLabelSettings>
+                    </AccumulationChartSeries>
+                </AccumulationChartSeriesCollection>
+                <AccumulationChartLegendSettings Visible="true" Position="LegendPosition.Bottom"></AccumulationChartLegendSettings>
+                <AccumulationChartTooltipSettings Enable="true" Format="${point.x} : <b>${point.y}%</b>"></AccumulationChartTooltipSettings>
+            </SfAccumulationChart>
+        </div>
+
+        <div style="width:50%;">
+            <SfAccumulationChart Height="100%" Width="380" EnableSmartLabels="true" Title="Tarifas Recaudados" >
+                <AccumulationChartSeriesCollection>
+                    <AccumulationChartSeries DataSource="@DatosGrafica_Tarifas" XName="Descripcion" YName="Valor1" Name="Tarifas" InnerRadius="20%">
+                        <AccumulationDataLabelSettings Visible="true" Name="descripcion" Position="AccumulationLabelPosition.Outside">
+                            <AccumulationChartConnector Type="ConnectorType.Curve" Length="20px" />
+                        </AccumulationDataLabelSettings>
+                    </AccumulationChartSeries>
+                </AccumulationChartSeriesCollection>
+                <AccumulationChartLegendSettings Visible="true" Position="LegendPosition.Bottom"></AccumulationChartLegendSettings>
+                <AccumulationChartTooltipSettings Enable="true"></AccumulationChartTooltipSettings>
+            </SfAccumulationChart>
+        </div>
+    </div>
+</div>
+
+
+<!-- ****** Botones ****** -->
+<div class="border rounded bg-white my-2 py-3 d-flex">
+    <div class="col-12 d-flex align-content-center justify-content-center">
+        <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" OnClick="@MostrarVentana_IngresosxDias">Ingreso Por Dias</MatButton>
+        <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" OnClick="@MostrarVentana_Analitico">Analitico</MatButton>
+        <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" OnClick="@MostrarVentana_IngresosxCajas">Ingresos por Cajas</MatButton>
+        <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" OnClick="@MostrarVentana_IngresosPoblaciones">Ingresos por Poblaciones</MatButton>
+        <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" OnClick="@MostrarVentana_IngresosConceptos">Ingresos por Conceptos</MatButton>
+        <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" OnClick="@MostrarVentana_Rezago">Rezago</MatButton>
+        <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" OnClick="@MostrarVentana_TipoUsuario">Tipos de Usuario</MatButton>
+        <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" OnClick="@MostrarVentana_PagosMayores">Pagos Mayores</MatButton>
+    </div>
+</div>
+
+<!-- ****** Grafica Conceptos ****** -->
+<div class="border rounded bg-white my-2 p-1" style="height:300px; overflow-y:auto">
+    <SfChart Title="Conceptos Recaudados" Width="100%" Height="auto">
+        <ChartPrimaryXAxis Title="" ValueType="Syncfusion.Blazor.Charts.ValueType.Category" Minimum="0"  />
+        <ChartPrimaryYAxis LabelFormat="c2" />
+        <ChartTooltipSettings Enable="true" Format="${point.x} : ${point.y}" />
+        <ChartSeriesCollection>
+            <ChartSeries DataSource="@DatosGrafica_Conceptos" XName="Descripcion" YName="Valor1" Width="0.8" ColumnWidth="0.8" Type="ChartSeriesType.Bar">
+                <ChartMarker>
+                    <ChartDataLabel Visible="true" />
+                </ChartMarker>
+            </ChartSeries>  
+        </ChartSeriesCollection>
+    </SfChart>
+</div>
+
+<style type="text/css">
+    .rec-grid-top {
+        display: grid;
+        grid-template-columns: 1fr 770px;
+        grid-template-rows: 260px;
+        width: 100%;
+    }
+
+    .e-control.e-textbox {
+        font-size: 1.3rem !important;
+    }
+</style>
+
+
+
+
+<!-- ****** Dialogos y ventanas secundarias ******  -->
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+<Recaudacion_IngresosxDias @ref="vtn_ingresosDias" MostrarVentana="@MostrarIngresosxDias" CerrarModal="@(()=> MostrarIngresosxDias = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+<Recaudacion_IngresosxCajas @ref="vtn_ingresosCajas" MostrarVentana="@MostrarIngresosxCajas" CerrarModal="@( e => MostrarIngresosxCajas = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+<Recaudacion_IngresosPoblaciones @ref="vtn_ingresosPoblaciones" MostrarVentana="@MostrarIngresosxPoblaciones" CerrarModal="@(()=> MostrarIngresosxPoblaciones = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+<Recaudacion_IngresosAnalitico @ref="vtn_analitico" MostrarVentana="@MostrarVtnAnalitico" CerrarModal="@(()=> MostrarVtnAnalitico = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+<Recaudacion_IngresosConceptos @ref="vtn_conceptos" MostrarVentana="@MostrarVtnConceptos" CerrarModal="@(()=> MostrarVtnConceptos = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+<Recaudacion_IngresosRezago @ref="vtn_rezago" MostrarVentana="@MostrarVtnRezago" CerrarModal="@(()=> MostrarVtnRezago = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+<Recaudacion_IngresosTipoUsuario @ref="vtn_tipoUsuarios" MostrarVentana="@MostrarVtnTipoUsuarios" CerrarModal="@(()=> MostrarVtnTipoUsuarios = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+<Recaudacion_IngresosPagosMayoresVtn @ref="vtn_pagosMayores" MostrarVentana="@MostrarVtnPagosMayores" CerrarModal="@(()=> MostrarVtnPagosMayores = false)" Fecha1="@f1" Fecha2="@f2" Subsistema="@Subsistema" Sector="@Sector" />
+
+@code{
+    [Parameter] public string IdOficinaParam { get; set; }
+
+    public Ruta Oficina_Actual { get; set; }
+    private string titulo = "RESUMEN";
+    private bool busyDialog = false;
+    private Recaudacion_Resumen_Response recaudacionResumen;
+    private DateTime f1, f2;
+    private int Subsistema, Sector;
+
+    public List<ChartItem> DatosGrafica_Ingresos = new List<ChartItem>();
+    public List<ChartItem> DatosGrafica_Tarifas = new List<ChartItem>();
+    public List<ChartItem> DatosGrafica_Conceptos = new List<ChartItem>();
+
+    private bool MostrarIngresosxDias = false;
+    Recaudacion_IngresosxDias vtn_ingresosDias;
+    private bool MostrarIngresosxCajas = false;
+    Recaudacion_IngresosxCajas vtn_ingresosCajas;
+    private bool MostrarIngresosxPoblaciones = false;
+    Recaudacion_IngresosPoblaciones vtn_ingresosPoblaciones;
+    private bool MostrarVtnAnalitico = false;
+    Recaudacion_IngresosAnalitico vtn_analitico;
+    private bool MostrarVtnConceptos = false;
+    Recaudacion_IngresosConceptos vtn_conceptos;
+    private bool MostrarVtnRezago = false;
+    Recaudacion_IngresosRezago vtn_rezago;
+    private bool MostrarVtnTipoUsuarios = false;
+    Recaudacion_IngresosTipoUsuario vtn_tipoUsuarios;
+
+    Recaudacion_IngresosPagosMayoresVtn vtn_pagosMayores;
+    private bool MostrarVtnPagosMayores = false;
+
+
+    //********* Funciones  *********
+    protected override async Task OnInitializedAsync() {
+        var tmpE = new SeleccionarFechaEventArgs() {
+            Subsistema = 0,
+            Sector = 0,
+            Fecha1 = DateTime.Parse("01/" + DateTime.Now.ToString("MM") + "/" + DateTime.Now.ToString("yyyy")),
+            Fecha2 = DateTime.Parse(DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month).ToString() + "/" + DateTime.Now.ToString("MM") + "/" + DateTime.Now.ToString("yyyy"))
+        };
+        this.f1 = tmpE.Fecha1;
+        this.f2 = tmpE.Fecha2;
+        this.Subsistema = tmpE.Subsistema;
+        this.Sector = tmpE.Sector;
+
+        try {
+            //**** Obtener Oficina Actual
+            if (int.Parse(IdOficinaParam) <= 0) {
+                NavManager.NavigateTo("/Home");
+            }
+            this.Oficina_Actual = sicemService.ObtenerEnlaces(int.Parse(IdOficinaParam)).FirstOrDefault();
+        }
+        catch (Exception) {
+            NavManager.NavigateTo("/Home");
+        }
+
+        this.titulo = $"RECAUDACION {Oficina_Actual.Oficina}";
+        await Procesar(tmpE);
+    }
+
+    public async Task Procesar(SeleccionarFechaEventArgs e) {
+
+        this.busyDialog = true;
+        await Task.Delay(100);
+
+        this.f1 = e.Fecha1;
+        this.f2 = e.Fecha2;
+        this.Subsistema = e.Subsistema;
+        this.Sector = e.Sector;
+
+        recaudacionResumen = recaudacionService.ObtenerRecaudacionResumen(Oficina_Actual.Id, this.f1, this.f2, e.Subsistema, e.Sector);
+        if (recaudacionResumen != null) {
+            Procesar_Datos_Grafica();
+        }
+        else {
+            //*** Mostrar mensaje del httpclient
+            Toaster.Add("Error al llamar a la base de datos, intente m�s tarde.", MatToastType.Warning, "");
+        }
+        await Task.Delay(100);
+        this.busyDialog = false;
+    }
+    private void Procesar_Datos_Grafica() {
+        DatosGrafica_Ingresos = new List<ChartItem>();
+        DatosGrafica_Tarifas = new List<ChartItem>();
+        DatosGrafica_Conceptos = new List<ChartItem>();
+        if (recaudacionResumen.Ingresos_Total <= 0) { return; }
+
+        //Grafica 1
+        DatosGrafica_Ingresos = new List<ChartItem>();
+        DatosGrafica_Ingresos.Add(new ChartItem() { Descripcion = "Ingresos Propios", Valor1 = (decimal)System.Math.Round((recaudacionResumen.Ingresos_propios / recaudacionResumen.Ingresos_Total) * 100, 2) });
+        DatosGrafica_Ingresos.Add(new ChartItem() { Descripcion = "Ingresos Otros", Valor1 = (decimal)System.Math.Round((recaudacionResumen.Ingresos_otros / recaudacionResumen.Ingresos_Total) * 100, 2) });
+
+        //Grafica 2 Tarifas
+        var tmpList2 = new List<ChartItem>();
+        foreach (string xitem in recaudacionResumen.Tarifas) {
+            var xs = xitem.Split(";");
+            decimal tmpPer = (decimal)System.Math.Round((decimal.Parse(xs[1]) / recaudacionResumen.Ingresos_Total) * 100, 2);
+            tmpList2.Add(new ChartItem() { Descripcion = xs[0], Valor1 = tmpPer });
+        }
+        DatosGrafica_Tarifas = tmpList2;
+
+        //Grafica 3 Conceptos
+        DatosGrafica_Conceptos = new List<ChartItem>();
+        foreach (Recaudacion_Resumen_Item item in recaudacionResumen.Lista_Ingresos_Conceptos.OrderBy(item => item.Total).ToList() ) {
+            DatosGrafica_Conceptos.Add(new ChartItem() {
+                Descripcion = item.Concepto,
+                Valor1 = item.Total
+            });
+        }
+
+    }
+    private string ObtnerValor(int i) {
+        if (recaudacionResumen == null) {
+            return "";
+        }
+
+        var xCulture = new System.Globalization.CultureInfo("es-MX");
+        string x = "";
+        switch (i) {
+            case 0:
+                x = Decimal.Parse(recaudacionResumen.Ingresos_propios.ToString()).ToString("c2", xCulture);
+                break;
+            case 1:
+                x = Decimal.Parse(recaudacionResumen.Ingresos_otros.ToString()).ToString("c2", xCulture);
+                break;
+            case 2:
+                x = Decimal.Parse(recaudacionResumen.Ingresos_Total.ToString()).ToString("c2", xCulture);
+                break;
+            case 3:
+                x = Decimal.Parse(recaudacionResumen.Ingresos_Cobrados.ToString()).ToString("c2", xCulture);
+                break;
+
+
+            case 4:
+                x = Int32.Parse(recaudacionResumen.Usuarios_propios.ToString()).ToString("n0", xCulture);
+                break;
+
+            case 5:
+                x = Int32.Parse(recaudacionResumen.Usuario_otros.ToString()).ToString("n0", xCulture);
+                break;
+
+            case 6:
+                x = Int32.Parse(recaudacionResumen.Usuarios_Total.ToString()).ToString("n0", xCulture);
+                break;
+
+
+            default:
+                x = "";
+                break;
+        }
+        return x;
+    }
+
+
+    //********* Funciones Ventanas Secundarias  *********
+    private async Task MostrarVentana_IngresosxDias() {
+        if (!MostrarIngresosxDias) {
+
+            this.busyDialog = true;
+            await Task.Delay(100);
+
+            var tmpData = recaudacionService.ObtenerRecaudacionIngresosxDias(Oficina_Actual.Id, f1.Year, f2.Month, this.Subsistema, this.Sector);
+            if (tmpData.Length > 0) {
+                this.MostrarIngresosxDias = true;
+                await vtn_ingresosDias.Inicializar(Oficina_Actual, tmpData);
+            }
+            else {
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+            }
+
+            await Task.Delay(100);
+            this.busyDialog = false;
+        }
+    }
+    private async Task MostrarVentana_IngresosxCajas() {
+        if (!MostrarIngresosxCajas) {
+
+            this.busyDialog = true;
+            await Task.Delay(100);
+
+            var tmpData = recaudacionService.ObtenerIngresosxCajas(Oficina_Actual.Id, this.f1, this.f2, this.Subsistema, this.Sector);
+            if (tmpData.Length > 0) {
+                this.MostrarIngresosxCajas = true;
+                await vtn_ingresosCajas.Inicializar(Oficina_Actual, tmpData);
+            }
+            else {
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+            }
+            await Task.Delay(100);
+            this.busyDialog = false;
+        }
+    }
+    private async Task MostrarVentana_IngresosPoblaciones() {
+        if (!MostrarIngresosxPoblaciones) {
+
+            this.busyDialog = true;
+            await Task.Delay(100);
+
+            var tmpData = recaudacionService.ObtenerIngresosxPoblaciones(Oficina_Actual.Id, this.f1, this.f2, this.Subsistema, this.Sector);
+            this.busyDialog = false;
+
+            if (tmpData.Length > 0) {
+                this.MostrarIngresosxPoblaciones = true;
+                this.vtn_ingresosPoblaciones.OficinaActual = this.Oficina_Actual;
+                await vtn_ingresosPoblaciones.Inicializar(tmpData);
+            }
+            else {
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+            }
+
+            await Task.Delay(100);
+            this.busyDialog = false;
+
+        }
+    }
+    private async Task MostrarVentana_Analitico() {
+        if (!MostrarIngresosxPoblaciones){
+
+            this.busyDialog = true;
+            await Task.Delay(100);
+
+            var tmpData = recaudacionService.ObtenerAnaliticoIngresos(Oficina_Actual.Id, this.f1, this.f2, this.Subsistema, this.Sector);
+            if (tmpData.Analitico_Mensual.Length > 0 || tmpData.AnaliticoRez_Mensual.Length > 0) {
+                this.MostrarVtnAnalitico = true;
+                await vtn_analitico.Inicializar(Oficina_Actual, tmpData);
+            }
+            else {
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+            }
+
+            await Task.Delay(100);
+            this.busyDialog = false;
+
+        }
+    }
+    private async Task MostrarVentana_IngresosConceptos() {
+        if (!MostrarVtnConceptos) {
+
+            this.busyDialog = true;
+            await Task.Delay(100);
+
+            var tmpData = recaudacionService.ObtenerIngresosxConceptos(Oficina_Actual.Id, this.f1, this.f2, this.Subsistema, this.Sector);
+            if (tmpData.Length > 0) {
+                this.MostrarVtnConceptos = true;
+                await vtn_conceptos.Inicializar(Oficina_Actual, tmpData.ToList());
+            }
+            else {
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+            }
+            await Task.Delay(100);
+            this.busyDialog = false;
+        }
+    }
+    private async Task MostrarVentana_Rezago() {
+        if (!MostrarVtnRezago) {
+
+            this.busyDialog = true;
+            await Task.Delay(100);
+
+            var tmpData = recaudacionService.ObtenerIngresosRezago(Oficina_Actual.Id, this.f1, this.f2, this.Subsistema, this.Sector);
+            if (tmpData.Length > 0) {
+                this.MostrarVtnRezago = true;
+                await vtn_rezago.Inicializar(Oficina_Actual, tmpData);
+            }
+            else {
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+            }
+
+            await Task.Delay(100);
+            this.busyDialog = false;
+        }
+    }
+    private async Task MostrarVentana_TipoUsuario() {
+        if (!MostrarVtnTipoUsuarios) {
+
+            this.busyDialog = true;
+            await Task.Delay(100);
+
+            var tmpData = recaudacionService.ObtenerIngresosxTipoUsuario(Oficina_Actual.Id, this.f1, this.f2, this.Subsistema, this.Sector);
+            if (tmpData.Length > 0) {
+                this.MostrarVtnTipoUsuarios = true;
+                await vtn_tipoUsuarios.Inicializar(Oficina_Actual, tmpData);
+            }
+            else {
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+            }
+
+            await Task.Delay(100);
+            this.busyDialog = false;
+        }
+    }
+    private async Task MostrarVentana_PagosMayores() {
+        if (!MostrarVtnPagosMayores) {
+            this.MostrarVtnPagosMayores = true;
+            await vtn_pagosMayores.Inicializar(Oficina_Actual);
+        }
+    }
+
+}
+
+*@

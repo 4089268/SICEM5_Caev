@@ -1,0 +1,96 @@
+@using Sicem_Blazor.Conceptos.Models
+@using Sicem_Blazor.Conceptos.Data
+
+<VentanaSecundaria Titulo="@Titulo" Filas="@LayoutFilas" Columnas="@LayoutColumnas" CerrarVentana="CerrarModal" >
+    <Content>
+        
+        <div class="d-flex flex-column p-2" style="grid-area: 1/1/2/2">
+
+            <div class="d-flex flex-column mb-3">
+                <label class="mb-0">Descripcion</label>
+                <input style="padding: .5rem;" type="text" disabled @bind-value="@TmpConcepto.Descripcion" />
+            </div>
+
+            <div class="d-flex flex-column mb-3">
+                <label class="mb-0">Importe</label>
+                <input style="padding: .5rem;" type="numeric" @bind-value="@TmpConcepto.Importe" />
+            </div>
+
+            <div class="d-flex flex-column mb-3">
+                <label class="mb-0">Estatus</label>
+                <ComboBox Width="300" InitValue="@Concepto.Id_Estatus" Options="CatEstatus" OnSelected="OnCombobox_Changed" />
+            </div>
+
+            <div class="d-flex flex-column mb-3">
+                <label class="mb-0">Inactivo</label> 
+                <input type="checkbox" checked="@TmpConcepto.Inactivo"  @bind-value="@TmpConcepto.Inactivo" style="width: 2rem; height:1.5rem;" />
+            </div>
+
+            <div class="d-flex flex-column mb-3">
+                <label class="mb-0">Credito</label> 
+                <input type="checkbox" checked="@TmpConcepto.Credito"  @bind-value="@TmpConcepto.Credito" style="width: 2rem; height:1.5rem;" />
+            </div>
+
+            <div class="d-flex flex-column mb-3">
+                <label class="mb-0">Mostrar</label> 
+                <input type="checkbox" checked="@TmpConcepto.Mostrar" @bind-value="@TmpConcepto.Mostrar" style="width: 2rem; height:1.5rem;" />
+            </div>
+
+            <div class="d-flex flex-column mb-3">
+                <label class="mb-0">Costo Estatico</label> 
+                <input type="checkbox" checked="@TmpConcepto.Costo_Estatico"  @bind-value="@TmpConcepto.Costo_Estatico" style="width: 2rem; height:1.5rem;" />
+            </div>
+
+        </div>
+
+        <div class="d-flex align-items-center" style="grid-area: 2/1/3/2">            
+            <MatButton Class="mx-auto px-3 py-2" Raised="true" @onclick="GuardarCambios_Click">Guardar Cambios</MatButton>
+        </div>
+        
+    </Content>
+</VentanaSecundaria>
+
+
+@code {
+    [Parameter] public string Titulo { get; set; } = "Editar Concepto";
+    [Parameter] public Concepto Concepto {get;set;}
+    [Parameter] public EventCallback<Concepto> Cerrar {get;set;}
+    [Parameter] public Dictionary<int,string> CatEstatus {get;set;}
+    
+    private double[] LayoutFilas = new double[]{ 350, 60};
+    private double[] LayoutColumnas = new double[]{ 312 };
+
+    private Concepto TmpConcepto {get;set;}
+
+    protected override void OnParametersSet(){
+        TmpConcepto = new Concepto();
+        if(Concepto != null){
+            TmpConcepto.Id_Concepto = Concepto.Id_Concepto;
+            TmpConcepto.Descripcion = Concepto.Descripcion;
+            TmpConcepto.Importe = Concepto.Importe;
+            TmpConcepto.Estatus = Concepto.Estatus;
+            TmpConcepto.Id_Estatus = Concepto.Id_Estatus;
+            TmpConcepto.Credito = Concepto.Credito;
+            TmpConcepto.Mostrar = Concepto.Mostrar;
+            TmpConcepto.Inactivo = Concepto.Inactivo;
+            TmpConcepto.Costo_Estatico = Concepto.Costo_Estatico;
+        }
+    }
+
+    private async Task CerrarModal() {
+        await Cerrar.InvokeAsync(null);
+    }
+
+    private async Task GuardarCambios_Click(){
+        await Cerrar.InvokeAsync(TmpConcepto);
+    }
+
+    private void OnCombobox_Changed(int IdEstatus){
+        TmpConcepto.Id_Estatus = IdEstatus;
+        if(CatEstatus.ContainsKey(IdEstatus)){
+            TmpConcepto.Estatus = CatEstatus[IdEstatus].ToString();
+        }else{
+            TmpConcepto.Estatus = "";
+        }
+    }
+}

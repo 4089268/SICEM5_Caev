@@ -1,0 +1,130 @@
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Descuentos.Models
+@inject IJSRuntime JSRuntime
+
+@if(Visible){
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@CerrarModal" Filas="@(new double[]{50,360,240})" Columnas="@(new double[]{1020})">
+        <Content>
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" Disabled="true">Generar Reporte <i class="fa fa-file-pdf-o ml-2" aria-hidden="true"></i></MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="dataGrid" DataSource="@datosGrid" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(DescuentosConcepto.Descripcion)" HeaderText="Descripcion" TextAlign="TextAlign.Left" Width="260" />
+                        <GridColumn Field="@nameof(DescuentosConcepto.Conc_Con_Iva)" HeaderText="Concepto Con Iva" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn Field="@nameof(DescuentosConcepto.Iva)" HeaderText="Iva" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(DescuentosConcepto.Aplicado_Con_Iva)" HeaderText="Aplicado Con Iva" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(DescuentosConcepto.Conc_Sin_Iva)" HeaderText="Concepto Sin Iva" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(DescuentosConcepto.Total_Aplicado)" HeaderText="Total Aplicado" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(DescuentosConcepto.Usuarios)" HeaderText="Usuarios" TextAlign="TextAlign.Center" Width="140" Format="n0" />
+
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 3/4; grid-column: 1/2;">
+                <SfChart Title="" SubTitle="Ingresos por Dia" @ref="grafiaIngresos" Width="100%" Height="224">
+                    <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" Interval="1" Visible="true">
+                    </ChartPrimaryXAxis>
+                    <ChartPrimaryYAxis Title="" LabelFormat="c2" Visible="false" />
+                    <ChartTooltipSettings Enable="true" Header="" Shared="true" Format="${series.name} ${point.x} : $${point.y}"></ChartTooltipSettings>
+                    <ChartLegendSettings Visible="false" Position="LegendPosition.Right"></ChartLegendSettings>
+                    <ChartZoomSettings EnableMouseWheelZooming="false" EnablePinchZooming="false" EnableSelectionZooming="true"></ChartZoomSettings>
+                    <ChartArea>
+                        <ChartAreaBorder Width="0"></ChartAreaBorder>
+                    </ChartArea>
+                    <ChartSeriesCollection>
+                        <ChartSeries XName="Descripcion" DataSource="@itemsGrafica" YName="Valor1" Name="Descuentos" Type="ChartSeriesType.Column">
+                           <ChartMarker>
+                                <ChartDataLabel Visible="true" />
+                            </ChartMarker>
+                        </ChartSeries>
+                    </ChartSeriesCollection>
+                </SfChart>
+            </div>
+        </Content>
+    </VentanaSecundaria>
+
+}
+
+@code {
+
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 {get;set;}
+    [Parameter] public DateTime Fecha2 {get;set;}
+    [Parameter] public int Subsistema {get;set;}
+    [Parameter] public int Sector {get;set;}
+    public string Titulo = "DESCUENTOS POR CONCEPTOS";
+    private SfGrid<DescuentosConcepto> dataGrid;
+    private SfChart grafiaIngresos;
+    private List<DescuentosConcepto> datosGrid;
+    private List<ChartItem> itemsGrafica = new List<ChartItem>();
+    private IEnlace enlaceSeleccionado;
+
+    private async Task Cerrar_Modal() {
+        this.datosGrid = new List<DescuentosConcepto>();
+        await CerrarModal.InvokeAsync("");
+    }
+    public async Task Inicializar(IEnumerable<DescuentosConcepto> datos, IEnlace enlace ) {
+        this.enlaceSeleccionado = enlace;
+        this.datosGrid = datos.ToList();
+        if (datosGrid != null) {
+            if (datosGrid.Count() > 0) {
+                ProcesarDatosGrafica();
+            }
+        }
+        await Task.Delay(100);
+    }
+
+    private void ProcesarDatosGrafica(){
+        itemsGrafica = new List<ChartItem>();
+        foreach(DescuentosConcepto recaItem in this.datosGrid) {
+            if(recaItem.Id_Concepto > 0){
+                itemsGrafica.Add(new ChartItem(){
+                    Descripcion = recaItem.Descripcion,
+                    Valor1 = recaItem.Total_Aplicado
+                });
+            }
+        }
+    }
+    private async Task GenerarExcel(){
+        await this.dataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private async Task GenerarPdf(){
+        string titulo = string.Format("Ingresos por Conceptos del {0} al {1}", this.Fecha1.ToString("dd/MM/yyyy"), this.Fecha2.ToString("dd/MM/yyyy"));
+        List<PdfHeaderFooterContent> xconts = new List<PdfHeaderFooterContent>();
+        xconts.Add(
+            new PdfHeaderFooterContent() {
+                Type = ContentType.Text,
+                Value = titulo,
+                Position = new PdfPosition() { X = 10, Y = 10 },
+                Style = new PdfContentStyle() {
+                    TextBrushColor = "#000000",
+                    FontSize = 13
+                }
+            }
+        );
+
+        await this.dataGrid.PdfExport(new PdfExportProperties {
+            PageOrientation = PageOrientation.Landscape,
+            Header = new PdfHeader {
+                Contents = xconts
+            },
+            FileName = string.Format("sicem_IngresosxDias{0}.pdf", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+
+}

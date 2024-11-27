@@ -1,0 +1,38 @@
+<VentanaSecundaria Titulo="@Titulo" Filas="@gridRows" Columnas="@gridColumns" CerrarVentana="@OnCancelClick">
+    <Content>
+        <div class="d-flex align-items-center justify-content-center h5 text-center">
+            @StringContent
+        </div>
+
+        <div class="d-flex justify-content-around align-items-center">
+            <button class="button bg-danger px-4 py-2" @onclick="@OnCancelClick">
+                <i class="fa fa-ban mr-3"/>
+                <span>Cancelar</span>
+            </button>
+
+            <button class="button bg-success px-4 py-2" @onclick="@OnAcceptClick">
+                <i class="fa fa-check mr-3"/>
+                <span>Continuar</span>
+            </button>
+        </div>
+
+    </Content>
+</VentanaSecundaria>
+@code {
+    [Parameter] public string Titulo {get;set;} = "Validando";
+    [Parameter] public string StringContent {get;set;} = "¿Deseas Continuar?";
+    [Parameter] public EventCallback OnAccept { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private double[] gridRows = new double[]{40, 35};
+    private double[] gridColumns = new double[]{320};
+
+
+    public async Task OnAcceptClick(){
+        await OnAccept.InvokeAsync();
+    }
+    public async Task OnCancelClick(){
+        await OnCancel.InvokeAsync();
+    }
+
+}

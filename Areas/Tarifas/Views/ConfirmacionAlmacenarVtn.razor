@@ -1,0 +1,40 @@
+@inject IMatToaster Toaster
+
+<VentanaSecundaria Titulo="Almacener catalogo tarifas" Filas="@gridFilas" Columnas="@gridColumnas" CerrarVentana="@(e => CerrarModal(false))">
+    <Content>
+        <div class="d-flex flex-column">
+            <label class="pb-0" for="tbDesc">Descripcion:</label>
+            <input class="p-2" type="text" id="tbDesc" maxlength="200" @bind-value="@DescripcionCatalogo" />
+        </div>
+
+        <div class="d-flex align-items-center justify-content-around">
+            <button class="px-5 py-2 button bg-success" @onclick="@( e => CerrarModal(true) )"><i class="fas fa-save pr-2"></i><span>Aceptar</span> </button>
+            <button class="px-5 py-2 button bg-danger" @onclick="@( e => CerrarModal(false) )"><i class="fas fa-ban pr-2"></i><span>Cancelar</span></button>
+        </div>
+
+    </Content>
+</VentanaSecundaria>
+
+@code {
+
+    [Parameter] public EventCallback<bool> OnClosed {get;set;}
+    [Parameter] public string DescripcionCatalogo {get;set;}
+    [Parameter] public EventCallback<string> DescripcionCatalogoChanged { get; set; }
+
+    private double[] gridFilas = new double[]{80, 40};
+    private double[] gridColumnas = new double[]{300};
+
+    private async Task CerrarModal(bool e){
+        if(e){
+            if(DescripcionCatalogo.Trim().Length > 1){
+                await DescripcionCatalogoChanged.InvokeAsync(DescripcionCatalogo);
+                await OnClosed.InvokeAsync(true);
+            }else{
+                Toaster.Add("Es necesario una descripcion para almacenar el catalogo", MatToastType.Warning);
+            }
+        }else{
+            await OnClosed.InvokeAsync(false);
+        }
+    }
+
+}

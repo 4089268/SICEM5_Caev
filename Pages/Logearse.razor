@@ -1,0 +1,117 @@
+﻿@page "/Logearse"
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using System.Text
+@using System.Text.Json
+@using Sicem_Blazor.Models
+@using Sicem_Blazor.Services
+
+@inject IMatToaster Toaster
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavManager
+@inject SicemService sicemService
+@inject SessionService sessionService
+
+
+<div class="d-flex align-items-center justify-content-center" style="width: 100vw; height: 100vh; position:fixed; top:0; left:0; z-index:10;">
+
+    <div class="login-form">
+
+        <div>
+            <img src="./img/caev-logo.png" style="width:280px;" />
+        </div>
+
+        <div class="hiddenOnMovil" style="width:2px; height:180px; display:block; background:#33333320; margin:20px;" />
+
+        <div>
+            <div class="container" style="width:250px;">
+                <div class="row my-4 justify-content-center">
+                    <input id="input-user" type="text" placeholder='Usuario' @bind="@usuario"/>
+                </div>
+                <div class="row my-4 justify-content-center">
+                    <input id="input-pass" type="password" placeholder='Contraseña' @bind="@contra" @onkeyup="@Tb_Contrasena_keyDown" />
+                </div>
+                <div class="row my-4 justify-content-center">
+                    @if (!cargando) {
+                    <div class="button p-2 w-100" style="height:3.25rem;" @onclick="@Logearse_Click"> INICIAR SESION </div>
+                    }
+                    else {
+                        <div class="d-flex justify-content-center align-items-center" style="height:3.25rem;">
+                            <div class="spinner-border" style="color: #444;" role="status" />
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="desarrollador mx-auto d-flex flex-column align-items-center"><a href="http://www.nerus.com.mx/Soluciones/Nerus.html" target="_black">Soluciones Nerus</a><div id="nerus_line" /></div>
+
+
+<!-- Animacion Waves -->
+<div class="line line-1">
+    <div class="wave wave1" style="background-image:url('img/wave/1.png');" />
+</div>
+<div class="line line-2">
+    <div class="wave wave2" style="background-image:url('img/wave/2.png');" />
+</div>
+<div class="line line-3">
+    <div class="wave wave3" style="background-image:url('img/wave/3.png');" />
+</div>
+
+
+@code {
+    [CascadingParameter] private ConnectionInfo connectionInfo { get; set; }
+
+    private string usuario = "";
+    private string contra = "";
+    private bool cargando = false;
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender){
+        if (firstRender) {
+            await JSRuntime.InvokeVoidAsync("animacionLineaNerus");
+        }
+    }
+    public async Task Tb_Contrasena_keyDown(KeyboardEventArgs e) {
+        if (e.Key == "Enter") {
+            await Logearse_Click();
+        }
+    }
+    public async Task Logearse_Click() {
+
+        if (cargando) {
+            return;
+        }
+        if(this.usuario.Length <= 0) {
+            await JSRuntime.InvokeVoidAsync("shake", "#input-user");
+            return;
+        }
+        if(this.contra.Length <= 0) {
+            await JSRuntime.InvokeVoidAsync("shake", "#input-pass");
+            return;
+        }
+
+        cargando = true;
+        await Task.Delay(100);
+
+        var res = sicemService.Logearse(this.usuario, this.contra, connectionInfo.IpAddress);
+        if (res == null) {
+
+            //*** Almacenar token
+            var idSession = sicemService.IdSession;
+            await JSRuntime.InvokeVoidAsync("setStorage", "sicem", idSession);
+
+            //*** Redireccionar a la pagina principal
+            NavManager.NavigateTo("/");
+        }
+        else {
+            //*** Mostrar error
+            Toaster.Add(res, MatToastType.Warning, "");
+        }
+        await Task.Delay(100);
+        cargando = false;
+    }
+}

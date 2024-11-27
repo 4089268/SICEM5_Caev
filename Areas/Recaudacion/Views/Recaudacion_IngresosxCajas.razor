@@ -1,0 +1,109 @@
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Recaudacion.Data
+@using Sicem_Blazor.Recaudacion.Models
+@inject IJSRuntime JSRuntime
+@inject SicemService sicemService
+@inject IRecaudacionService recaudacionService
+
+@if (MostrarVentana){
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@Cerrar_Modal" Filas="@(new double[] { 50, 645})" Columnas="@(new double[]{1020})">
+        <Content>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <div class="mx-2 font-weight-bold" style="font-size: 1.1rem;"> Sucursal: </div>
+                    <select class="form-select form-select-lg" @onchange="FiltrarDatos" style="height:28px; margin-left:10px; width:210px">
+                        <option style="font-size: 1.2rem;" value="-1" selected>No Implementado</option>
+                    </select>
+                    <MatButton Class="ml-5 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="DataGrid" DataSource="@IngresosCajas_filtrados" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(Recaudacion_IngresosCajas.Caja)" HeaderText="Caja" TextAlign="TextAlign.Left" Width="260" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosCajas.Facturado)" HeaderText="Ingresos Facturados" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosCajas.Cobrado)" HeaderText="Ingresos Cobrados" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosCajas.Recibos)" HeaderText="Recibos" TextAlign="TextAlign.Center" Width="140" Format="n0" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+}
+
+@code {
+
+    [Parameter] public bool MostrarVentana { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    public IEnlace Enlace { get; set; }
+    public string Titulo = "RECAUDACION INGRESOS POR CAJAS";
+    private SfGrid<Recaudacion_IngresosCajas> DataGrid {get;set;}
+    public List<Recaudacion_IngresosCajas> IngresosCajas {get;set;}
+    public List<Recaudacion_IngresosCajas> IngresosCajas_filtrados {get;set;}
+    private List<Sicem_Sucursal> CatalogoSucursales = new List<Sicem_Sucursal>();
+    public List<ChartItem> itemsGrafica = new List<ChartItem>();
+
+
+    public void Inicializar(IEnlace enlace,IEnumerable<Recaudacion_IngresosCajas> datos) {
+        this.Enlace = enlace;
+        this.IngresosCajas = datos.ToList();
+        ProcesarDatos();
+    }
+    private async Task Cerrar_Modal() {
+        if(IngresosCajas != null){
+            IngresosCajas.Clear();
+        }
+        if(IngresosCajas_filtrados != null){
+            IngresosCajas_filtrados.Clear();
+        }
+        await CerrarModal.InvokeAsync();
+    }
+
+    private void ProcesarDatos() {
+        this.IngresosCajas_filtrados = this.IngresosCajas.ToList();
+
+        //*** Catalogo Sucursales
+        this.CatalogoSucursales = sicemService.ObtenerCatalogoSucursales(Enlace.Id).ToList();
+    }
+
+    private async Task GenerarExcel() {
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_ingresosxDias_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private void FiltrarDatos(ChangeEventArgs e) {
+        /*
+
+        int valueSelected = int.Parse(e.Value.ToString());
+
+         if (valueSelected == -1) {
+            this.IngresosCajas_filtrados = this.IngresosCajas.ToList();
+        }
+        else {
+            var tmpList = new List<Recaudacion_IngresosCajas>();
+
+            foreach (var Item in this.IngresosCajas) {
+                if (Item.Id_Sucursal == valueSelected) {
+                    tmpList.Add(new Recaudacion_IngresosCajas() {
+                        Id_Sucursal = Item.Id_Sucursal,
+                        Caja = Item.Caja,
+                        Facturado = Item.Facturado,
+                        Cobrado = Item.Cobrado,
+                        Recibos = Item.Recibos
+                    });
+                }
+            }
+            this.IngresosCajas_filtrados = tmpList;
+        }
+        */
+
+    }
+
+}

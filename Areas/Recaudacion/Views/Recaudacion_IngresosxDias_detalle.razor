@@ -1,0 +1,90 @@
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Recaudacion.Data
+@using Sicem_Blazor.Recaudacion.Models
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavManager
+
+@if (MostrarVentana) {
+    <VentanaSecundaria Titulo="@fechaDetalle" CerrarVentana="@Cerrar_Modal" Filas="@filasTemplate" Columnas="@columnasTemplate" Level="2">
+        <Content>
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                    
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="DataGrid" DataSource="@Datos" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" 
+                        Height="100%" Width="100%" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="55" Visible="false">
+                            <Template>
+                                @{
+                                    var data = (context as Recaudacion_IngresosDetalle);
+                                    <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Mostrar Datos General" @onclick="@( e => MostrarEnConsultaGeneral(data))" disabled="@(data.Cuenta.Length <= 0 || data.Cuenta == "0")">
+                                        <i class="fa fa-address-book-o" aria-hidden="true"></i>
+                                    </button>
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDetalle.Cuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="120" Format="n0" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDetalle.Usuario)" HeaderText="Usuario" TextAlign="TextAlign.Left" Width="210" Format="n0" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDetalle.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Center" Width="160" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDetalle.Folio)" HeaderText="Folio" TextAlign="TextAlign.Center" Width="140" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDetalle.Cobrado)" HeaderText="Cobrado" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDetalle.Caja)" HeaderText="Caja" TextAlign="TextAlign.Left" Width="210" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDetalle.Fecha_aplicacion)" HeaderText="Fecha Aplicacion" TextAlign="TextAlign.Center" Width="160" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDetalle.Hrs_dif)" HeaderText="Horas Dif" TextAlign="TextAlign.Center" Width="120" Format="90" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+        </Content>
+    </VentanaSecundaria>
+
+    @if(DatosGenerales_visible){
+        <DatosGenerales_Dialog IdOficina="@Enlace.Id" Cuenta="@CuentaActual" CerrarVentana="@(e => DatosGenerales_visible = false)"/>
+    }
+
+}
+
+@code {
+
+    [Parameter] public bool MostrarVentana { get; set;}
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    private double[] filasTemplate = new double[]{47, .75 };
+    private double[] columnasTemplate = new double[] { .85 };
+    public IEnlace Enlace {get;set;}
+
+    private SfGrid<Recaudacion_IngresosDetalle> DataGrid {get;set;}
+    private List<Recaudacion_IngresosDetalle> Datos {get; set;}
+    public string fechaDetalle = "";
+
+    private bool DatosGenerales_visible = false;
+    private string CuentaActual = "";
+
+    public void Inicializar(IEnlace enlace, IEnumerable<Recaudacion_IngresosDetalle> datos, DateTime fecha){
+        this.Enlace = enlace;
+        this.Datos = datos.ToList();
+        this.fechaDetalle = $"DETALLE INFRESOS DEL DIA {fecha.ToString("dd")} DE {fecha.ToString("MMMM").ToUpper()} DEL {fecha.ToString("yyyy")}";
+    }
+
+    private async Task Cerrar_Modal() {
+        if(Datos != null){
+            Datos.Clear();
+        }
+        this.fechaDetalle = "DETALLE INFRESOS DEL DIA";
+        await CerrarModal.InvokeAsync("");
+
+    }
+    private void MostrarEnConsultaGeneral(Recaudacion_IngresosDetalle e){
+        this.CuentaActual = e.Cuenta;
+        DatosGenerales_visible = true;
+    }
+    private async Task GenerarExcel(){
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_ingresosDetalle_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+
+}

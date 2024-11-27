@@ -1,0 +1,155 @@
+﻿@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.DropDowns
+@inject IJSRuntime JSRuntime
+@inject ConsultaGralService consultaGralService
+
+@if (Show) {
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@Cerrar_Modal" Filas="@( new double[]{45, 700})" Columnas="@(new double[]{.88})">
+        <Content>
+            <div class="border rounded bg-white d-flex p-2 mx-2 align-items-center" style="grid-row: 1/2; grid-column: 1/2; align-items: center;">
+
+                <div class="font-weight-bold"> Tipo Movimiento: </div>
+                <select class="form-select form-select-lg" @onchange="FiltrarDatos_TipoMovto" style="height:28px; margin-left:10px; width:210px">
+                    <option value="t0" selected>Todos</option>
+                    <option value="t1">Facturaciones</option>
+                    <option value="t2">Re Facturaciones</option>
+                    <option value="t3">Descuentos</option>
+                    <option value="t4">Descuentos por Sistema</option>
+                    <option value="t5">Anticipos</option>
+                    <option value="t6">Cobros Servicios Propios</option>
+                    <option value="t7">Cobros Otros Servicios</option>
+                </select>
+
+                <div style="margin-left:30px;" />
+
+                <MatButton Unelevated="true" TrailingIcon="attachment" @onclick="@ExcelExport" Class="mr-1">Exportar Excel</MatButton>
+                <MatButton Unelevated="true" TrailingIcon="poll" @onclick="PdfExport">Exportar Pdf</MatButton>
+
+            </div>
+
+            <div class="p-2" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="@MyDataGrid" DataSource="@datosVisibles" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" EnableHover="true" RowHeight="22">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Folio_movto)" HeaderText="Folio Movimiento" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Center" Width="200" />
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Operacion)" HeaderText="Operacion" TextAlign="TextAlign.Left" Width="220" />
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Cargo)" HeaderText="Cargo" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Abono)" HeaderText="Abono" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Saldo)" HeaderText="Saldo" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Quien)" HeaderText="Realizo" TextAlign="TextAlign.Left" Width="220" />
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Sucursal)" HeaderText="Sucursal" TextAlign="TextAlign.Left" Width="220" />
+                        <GridColumn Field="@nameof(ConsultaGreal_MovimientosResponse.Observacion)" HeaderText="Observacion" TextAlign="TextAlign.Left" Width="220" ClipMode="ClipMode.EllipsisWithTooltip" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+}
+
+@code {
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public bool Show { get; set; }
+    [Parameter] public int Id_padron { get; set; }
+    [Parameter] public string RazonSocial { get; set; }
+    public string Titulo = "CONSULTA MOVIMIENTOS";
+
+    SfGrid<ConsultaGreal_MovimientosResponse> MyDataGrid { get; set; }
+    MatSelect<string> mySelct { get; set; }
+    public List<ConsultaGreal_MovimientosResponse> movimientosItems { get; set; }
+    public List<ConsultaGreal_MovimientosResponse> datosVisibles { get; set; }
+    private string valueSelected = "t0";
+    private DateTime? fecha1 { get; set; } = new DateTime(2019, 01, 01);
+    private DateTime? fecha2 { get; set; } = DateTime.Now;
+    private string[] itemComboBox = new string[] { "Todos", "Facturaciones", "Re Facturaciones", "Descuentos", "Descuentos por Sistema", "Cobros Servicios Propios", "Cobros Otros Servicios" };
+    public int Id_Oficina = 0;
+
+
+    /******** FUNCIONES ********/
+    public async Task Inicializar(Ruta r, ConsultaGreal_MovimientosResponse[] datos) {
+        //this.movimientosItems = consultaGralService.ConsultaGral_Movimientos(Id_Oficina, this.Id_padron);
+        this.movimientosItems = datos.ToList();
+        this.datosVisibles = this.movimientosItems;
+        this.Id_Oficina = r.Id;
+        await Task.Delay(100);
+    }
+    protected async Task Cerrar_Modal() {
+        await CerrarModal.InvokeAsync("");
+    }
+
+    private void FiltrarDatos_TipoMovto(ChangeEventArgs e) {
+        this.valueSelected = e.Value.ToString();
+
+        if (this.valueSelected == "t0") {
+            this.datosVisibles = this.movimientosItems;
+        }
+        else {
+
+            var tmpList = new List<ConsultaGreal_MovimientosResponse> ();
+            int[] opciones = new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 9, 8, 9 };
+
+            switch (this.valueSelected) {
+                case "t1": opciones = new int[] { 1 };
+                    break;
+
+                case "t2": opciones = new int[] { 2, 3 };
+                    break;
+
+                case "t3": opciones = new int[] { 5 };
+                    break;
+
+                case "t4": opciones = new int[] { 4 };
+                    break;
+
+                case "t5": opciones = new int[] { 7 };
+                    break;
+
+                case "t6": opciones = new int[] { 6 };
+                    break;
+
+                case "t7": opciones = new int[] { 8, 9 };
+                    break;
+            }
+
+            foreach (var item in this.movimientosItems) {
+                if (opciones.Contains<int> (item.Id_tipomovto)) {
+                    tmpList.Add(item);
+                }
+            }
+
+            this.datosVisibles = tmpList;
+
+        }
+
+    }
+    public async Task ExcelExport() {
+        await this.MyDataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    public async Task PdfExport(){
+        List<PdfHeaderFooterContent> xconts = new List<PdfHeaderFooterContent> ();
+        xconts.Add( new PdfHeaderFooterContent() {
+            Type = ContentType.Text,
+            Value = string.Format("MOVIMIENTOS {0}", this.RazonSocial),
+            Position = new PdfPosition() { X = 10, Y = 10 },
+            Style = new PdfContentStyle() {
+                TextBrushColor = "#000000",
+                FontSize = 13
+            }
+        });
+
+        await this.MyDataGrid.PdfExport(new PdfExportProperties {
+            PageOrientation = PageOrientation.Landscape,
+            Header = new PdfHeader {
+                Contents = xconts
+            },
+            FileName = string.Format("sicem_{0}.pdf", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+}

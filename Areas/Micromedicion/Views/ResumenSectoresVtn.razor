@@ -1,0 +1,61 @@
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Micromedicion.Models
+@inject IJSRuntime JSRuntime
+@if(Visible){
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@CerrarModalClick" Filas="@(new double[] { 50, 610 })" Columnas="@(new double[]{1100})">
+        <Content>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="DataGrid" DataSource="@DatosGrid" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(Resumen_Sectores.Sectores)" HeaderText="Sectores" TextAlign="TextAlign.Center" Width="140" />
+                        <GridColumn Field="@nameof(Resumen_Sectores.UsuMedidorFun)" HeaderText="Medidores Funcionando" TextAlign="TextAlign.Center" Width="150" Format="n0" />
+                        <GridColumn Field="@nameof(Resumen_Sectores.UsuMedidorNoFun)" HeaderText="Medidores No Funcionando" TextAlign="TextAlign.Center" Width="150" Format="n0" />
+                        <GridColumn Field="@nameof(Resumen_Sectores.UsuConMedidor)" HeaderText="Usu Con Medidor" TextAlign="TextAlign.Center" Width="150" Format="n0" />
+                        <GridColumn Field="@nameof(Resumen_Sectores.UsuSinMedidor)" HeaderText="Usu Sin Medidor" TextAlign="TextAlign.Center" Width="150" Format="n0" />
+                        <GridColumn Field="@nameof(Resumen_Sectores.UsuDren)" HeaderText="Tomas Con Drenaje" TextAlign="TextAlign.Center" Width="150" Format="n0" />
+                        <GridColumn Field="@nameof(Resumen_Sectores.UsuTomas)" HeaderText="Total Tomas" TextAlign="TextAlign.Center" Width="150" Format="n0" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+}
+
+@code {
+    [Parameter] public bool Visible {get;set;} = false;
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    public IEnlace Enlace { get; set; }
+    public string Titulo = "RESUMEN TOMAS POR SECTORES";
+
+    private SfGrid<Resumen_Sectores> DataGrid {get;set;}
+    public List<Resumen_Sectores> DatosGrid {get;set;}
+
+
+    //"******** Funciones ********"
+    public void Inicializar(IEnlace e, IEnumerable<Resumen_Sectores> datos) {
+        this.Enlace = e;
+        Titulo = $"{Enlace.Nombre.ToUpper()} - RESUMEN TOMAS POR SECTORES";
+        this.DatosGrid = datos.ToList();
+    }
+    private async Task GenerarExcel() {
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private async Task CerrarModalClick(){
+        await CerrarModal.InvokeAsync(null);
+    }
+
+}

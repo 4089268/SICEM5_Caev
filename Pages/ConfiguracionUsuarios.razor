@@ -1,0 +1,134 @@
+@page "/Configuracion/CatUsuarios"
+@inject SicemService sicemService
+
+<div class="tarifasLayout">
+    <div style="grid-area:1/1/2/2;">
+        <div class="title-page" style="grid-area:1/1/2/2;">CATALOGO USUARIOS</div>
+    </div>
+
+    <nav aria-label="breadcrumb" style="grid-area:2/1/3/2;">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="./">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="/Configuracion">Configuracion</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Catalogo Tarifas</li>
+        </ol>
+    </nav>
+
+    <!-- ****** Acciones ****** -->
+    <div class="grid border rounded bg-white px-2 d-flex align-items-center" style="grid-area:3/1/4/2;">
+        
+        <div class="button px-3 py-2 bg-success mr-3" @onclick="@( e => AgregarUsuario_Click())">
+            <i class="fa fa-user mr-2"></i>
+            <span>Agergar Usuario</span>
+        </div>
+
+        <div class="button px-3 py-2 bg-success mr-3" >
+            <i class="fa fa-file-excel mr-2"></i>
+            <span>Exportar Catalogo</span>
+        </div>
+    </div>
+
+    <!-- ****** Datagrid ****** -->
+    <div class="d-flex align-items-center" style="grid-area:4/1/5/2;">
+        @if (Busy) {
+            <div class="spinner-border" role="status"> </div>
+        }
+        else {
+            <SfGrid @ref="dataGrid" DataSource="@catUsuarios" AllowResizing="true" Height="100%" AllowSorting="true" RowHeight="28">
+                <GridColumns>
+                    <GridColumn Field=@nameof(Usuario.Nombre) HeaderText="Nombre" TextAlign="TextAlign.Left" Width="140"></GridColumn>
+                    <GridColumn Field=@nameof(Usuario.Usuario1) HeaderText="Usuario" TextAlign="TextAlign.Left" Width="80"></GridColumn>
+                    <GridColumn Field=@nameof(Usuario.Administrador) HeaderText="Admin" TextAlign="TextAlign.Center" Width="68">
+                        <Template>
+                            @{
+                                var config = (context as Usuario);
+                                <input type="checkbox" checked=@config.Administrador disabled />
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field=@nameof(Usuario.Inactivo) HeaderText="Inactivo" TextAlign="TextAlign.Center" Width="68">
+                        <Template>
+                            @{
+                                var config = (context as Usuario);
+                                <input type="checkbox" checked=@config.Inactivo @onchange="@((e)=> CheckBoxModificarUsuario_Click(config.Id, "Inactivo", e.Value) )" />
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn HeaderText="" TextAlign="TextAlign.Left" Width="120">
+                        <Template>
+                            @{
+                                var config = (context as Usuario);
+                                <div class="d-flex px-2" style="height:20px;">
+                                    <input class="btnAccion user-select-none" type="button" value="Modificar" @onclick=@(e => BotonModificarUsuario_Click(config)) />
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </SfGrid>
+        }
+    </div>
+</div>
+
+<ModificarUsuario @ref="ModificarUsuarioVtn" Visible="@ModificarUsuarioVtn_Visible" CerrarModal="@ModificarUsuario_Closed" />
+
+@code{
+
+    private SfGrid<Usuario> dataGrid { get; set; }
+    private List<Usuario> catUsuarios { get; set; }
+    private bool Busy = false;
+    private string stringSearch = "";
+    private ModificarUsuario ModificarUsuarioVtn { get; set; }
+    private bool ModificarUsuarioVtn_Visible { get; set; } = false;
+
+    protected override void OnInitialized()
+    {
+        this.catUsuarios = sicemService.ObtenerListadoUsuarios().ToList();
+    }
+
+
+    private async Task AgregarUsuario_Click(){
+        if (ModificarUsuarioVtn_Visible){
+            return;
+        }
+        ModificarUsuarioVtn_Visible = true;
+        ModificarUsuarioVtn.Titulo = "CREAR NUEVO USUARIO";
+        await ModificarUsuarioVtn.Inicializar();
+        await Task.Delay(100);
+    }
+    private async Task BotonModificarUsuario_Click(Usuario u){
+        if (ModificarUsuarioVtn_Visible) {
+            return;
+        }
+        ModificarUsuarioVtn_Visible = true;
+        ModificarUsuarioVtn.Titulo = $"MODIFICAR USUARIO {u.Nombre.ToUpper()}";
+        var _idsOpciones = sicemService.ObtenerListaOpcionesDelUsuario(idUsuario:u.Id).Select(item => (int) item.IdOpcion).ToList<int>();
+        var _idsOficinas = sicemService.ObtenerOficinasDelUsuario(idUsuario: u.Id).Select(item => (int) item.Id).ToList<int>();
+        ModificarUsuarioVtn.OpcionesSeleccionadas = _idsOpciones;
+        ModificarUsuarioVtn.OficinasSeleccionadas = _idsOficinas;
+        ModificarUsuarioVtn.NuevoUsuario = u;
+        await ModificarUsuarioVtn.Inicializar(modif:true);
+        await Task.Delay(100);
+    }
+    private async Task CheckBoxModificarUsuario_Click(int idUsuario, string opcion, object val){
+        await Task.Delay(100);
+    }
+
+    private async Task ModificarUsuario_Closed(){
+        ModificarUsuarioVtn_Visible = false;
+        this.Busy = true;
+        await Task.Delay(100);
+
+        this.catUsuarios = sicemService.ObtenerListadoUsuarios().ToList();
+
+        await Task.Delay(100);
+        this.Busy = false;
+    }
+
+    private async Task InputSearch_KeyUp(KeyboardEventArgs e){
+        if(e.Key == "Enter"){
+            await dataGrid.SearchAsync(stringSearch);
+        }
+    }
+
+}

@@ -1,0 +1,231 @@
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Recaudacion.Data
+@using Sicem_Blazor.Recaudacion.Models
+@inject IJSRuntime JSRuntime
+@inject IRecaudacionService recaudacionService
+@inject IMatToaster Toaster
+
+@if (MostrarVentana) {
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@Cerrar_Modal" Filas="@(new double[]{47,640})" Columnas="@(new double[]{1200})" Level="1">
+        <Content>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" OnClick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="DataGrid" DataSource="@DatosIngresos" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="60" >
+                            <Template>
+                                @{
+                                    var data = (context as Recaudacion_IngresosDias);
+                                    <div class="d-flex justify-content-between">
+                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Ver detalle" @onclick="@( e => VerDetalleDias(data.Fecha))">
+                                            <i class="fa fa-th" aria-hidden="true"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Ingresos Por Cajas" @onclick="@(e => IngresosPorCajas(data) )" >
+                                            <i class="fa fa-store" aria-hidden="true"></i>
+                                        </button>
+                                        @*
+                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Detalle por Conceptos Y Tipos Usuarios" @onclick="@(e => IngresosPorConceptosTiposUsuarios(data) )" >
+                                            <i class="fa fa-poll-h" aria-hidden="true"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Ingresos Por Formas de Pago" @onclick="@(e => IngresosPorFormasDePago(data) )" >
+                                            <i class="fa fa-money-bill" aria-hidden="true"></i>
+                                        </button>
+                                        *@
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDias.Fecha_Letras)" HeaderText="Fecha" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDias.Usuarios_Propios)" HeaderText="Usuarios Prop." TextAlign="TextAlign.Center" Width="115" Format="n0" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDias.Ingresos_Propios)" HeaderText="Ingresos Prop." TextAlign="TextAlign.Right" Width="135" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDias.Usuarios_Otros)" HeaderText="Usuarios Prop." TextAlign="TextAlign.Center" Width="115" Format="n0" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDias.Ingresos_Otros)" HeaderText="Ingresos Prop." TextAlign="TextAlign.Right" Width="135" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDias.Importe_Total)" HeaderText="Importe Total" TextAlign="TextAlign.Center" Width="135" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDias.Cobrado)" HeaderText="Cobrado" TextAlign="TextAlign.Center" Width="135" Format="c2" />
+                        <GridColumn Field="@nameof(Recaudacion_IngresosDias.Usuarios_Total)" HeaderText="Usaurios Total" TextAlign="TextAlign.Center" Width="115" Format="n0" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+
+    <BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+    <Recaudacion_IngresosxDias_detalle @ref="vtn_diasDetalle" MostrarVentana=@ventanDetalle_visible CerrarModal="@(e => ventanDetalle_visible = false)" />
+    <Recaudacion_ConceptosyTiposUsuariosVtn @ref="VtnConceptosUsuarios" Fecha1="@Fecha1" Fecha2="@Fecha2" Subsistema="@Subsistema" Sector="@Sector" Visible="@VtnConceptosUsuarios_Visible" CerrarModal="@(e => VtnConceptosUsuarios_Visible = false)" />
+    <Recaudacion_FormasPago_View @ref="VtnFormasPago" Fecha1="@Fecha1" Fecha2="@Fecha2" Subsistema="@Subsistema" Sector="@Sector" MostrarVentana="VtnFormasPago_Visible" CerrarModal="@( e => VtnFormasPago_Visible = false)" />
+    <Recaudacion_IngresosxCajas @ref="VtnCajas" Fecha1="@Fecha1" Fecha2="@Fecha2" Subsistema="@Subsistema" Sector="@Sector" MostrarVentana="VtnCajas_visible" CerrarModal="(e => VtnCajas_visible = false)" />
+}
+
+
+@code {
+    [Parameter] public bool MostrarVentana { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha1 { get; set; }
+    [Parameter] public DateTime Fecha2 { get; set; }
+    [Parameter] public int Subsistema { get; set; }
+    [Parameter] public int Sector { get; set; }
+    public IEnlace Enlace { get; set; }
+    public string Titulo = "INGRESOS DIAS";
+    SfGrid<Recaudacion_IngresosDias> DataGrid;
+    public List<Recaudacion_IngresosDias> DatosIngresos { get; set; }
+
+    bool busyDialog = false, ventanDetalle_visible = false, VtnConceptosUsuarios_Visible = false, VtnFormasPago_Visible = false, VtnCajas_visible = false;
+    private Recaudacion_IngresosxDias_detalle vtn_diasDetalle;
+    private Recaudacion_ConceptosyTiposUsuariosVtn VtnConceptosUsuarios;
+    private Recaudacion_FormasPago_View VtnFormasPago;
+    private Recaudacion_IngresosxCajas VtnCajas;
+
+
+    //****** Funciones Generales *******
+    public void Inicializar(IEnlace enlace, IEnumerable<Recaudacion_IngresosDias> datos) {
+        this.Enlace = enlace;
+        this.DatosIngresos = datos.ToList();
+    }
+    private async Task Cerrar_Modal() {
+        if(DatosIngresos != null){
+            DatosIngresos.Clear();
+        }
+        await CerrarModal.InvokeAsync("");
+    }
+    private async Task GenerarExcel() {
+        await this.DataGrid.ExcelExport(new ExcelExportProperties {
+            FileName = string.Format("sicem_ingresosxDias_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+        });
+    }
+    private async Task VerDetalleDias(DateTime? fecha) {
+
+        if (ventanDetalle_visible) {
+            return;
+        }
+        if(fecha == null) {
+            return;
+        }
+        this.busyDialog = true;
+        await Task.Delay(200);
+
+        var dateRange = new DateRange(fecha.Value, fecha.Value, Subsistema, Sector);
+
+        var tmpData = recaudacionService.ObtenerDetalleIngresos(Enlace, dateRange);
+        
+        if (tmpData.Count() > 0) {
+            this.ventanDetalle_visible = true;
+            vtn_diasDetalle.Inicializar(Enlace, tmpData, fecha ?? DateTime.Now);
+        }
+        
+        await Task.Delay(200);
+        busyDialog = false;
+    }
+    private async Task IngresosPorConceptosTiposUsuarios(Recaudacion_IngresosDias data){
+        Toaster.Add("NO IMPLEMENTADO", MatToastType.Danger);
+        await Task.Delay(100);
+        return;
+
+        /*
+        this.busyDialog = true;
+        await Task.Delay(100);
+
+        if(data.Fecha ==  null){
+            throw new Exception("La fecha es nulo");
+        }
+
+        Fecha1 = data.Fecha??DateTime.Now;
+        Fecha2 = data.Fecha??DateTime.Now;
+        this.StateHasChanged();
+
+        var _datos = recaudacionService.ObtenerRecaudacionPorConceptosYTipoUsuario(Enlace, Fecha1, Fecha2, this.Subsistema, this.Sector).ToList();
+        if( _datos == null){
+            Toaster.Add("Error al tratar de obtener los ingresos por conceptos", MatToastType.Danger);
+        }else{
+            if(_datos.Count() <= 0){
+                Toaster.Add("No hay datos disponibles para este periodo", MatToastType.Info);
+            }else{
+                VtnConceptosUsuarios_Visible = true;
+                await Task.Delay(100);
+                VtnConceptosUsuarios.Inicializar(Enlace, _datos);
+            }
+        }
+
+        await Task.Delay(100);
+        this.busyDialog = false;
+        */
+    }
+    private async Task IngresosPorCajas(Recaudacion_IngresosDias data){
+
+        this.busyDialog = true;
+        await Task.Delay(100);
+
+        if(data.Fecha ==  null){
+            throw new Exception("La fecha es nulo");
+        }
+
+        Fecha1 = data.Fecha??DateTime.Now;
+        Fecha2 = data.Fecha??DateTime.Now;
+        this.StateHasChanged();
+        var dateRange = new DateRange(Fecha1, Fecha2, Subsistema, Sector);
+
+        var tmpData = recaudacionService.ObtenerIngresosPorCajas(Enlace, dateRange);
+        if (tmpData == null) {
+            Toaster.Add("Hubo un error al procesar la petición, inténtelo mas tarde.", MatToastType.Warning);
+        }
+        else {
+            if (tmpData.Count() > 0) {
+                VtnCajas_visible = true;
+                VtnCajas.Titulo = $"{Enlace.Nombre.ToUpper()} - INGRESOS POR CAJAS DEL {Fecha1.Day} DE {Fecha1.ToString("MMMM").ToUpper()} DEL {Fecha1.Year}";
+                VtnCajas.Inicializar(Enlace, tmpData);
+            }
+            else {
+                Toaster.Add("No hay datos disponibles para mostrar.", MatToastType.Info);
+            }
+        }
+
+        await Task.Delay(100);
+        this.busyDialog = false;
+    
+    }
+    private async Task IngresosPorFormasDePago(Recaudacion_IngresosDias data){
+        Toaster.Add("NO IMPLEMENTADO", MatToastType.Danger);
+        await Task.Delay(100);
+        return;
+        /*
+        this.busyDialog = true;
+        await Task.Delay(100);
+
+         if(data.Fecha ==  null){
+            throw new Exception("La fecha es nulo");
+        }
+
+        Fecha1 = data.Fecha??DateTime.Now;
+        Fecha2 = data.Fecha??DateTime.Now;
+        this.StateHasChanged();
+
+        var _result = recaudacionService.ObtenerIngresosPorFormasPago(Enlace, Fecha1, Fecha2, this.Subsistema, this.Sector);
+        if (_result == null) {
+            //**** Mostrar mensaje error
+            Toaster.Add("Erro al procesar la consulta, intente mas tarde.", type: MatToastType.Danger);
+        }
+        else {
+            if (_result.Count() <= 0) {
+                //**** Mostrar mensaje no hay datos
+                Toaster.Add("No hay datos disponibles.", type: MatToastType.Info);
+            }
+            else {
+                //**** Mostrar ventana secundaria
+                this.VtnFormasPago_Visible = true;
+                VtnFormasPago.Titulo = $"{Enlace.Nombre} - INGRESOS POR FORMAS DE PAGO DEL {Fecha1.Day} DE {Fecha1.ToString("MMMM").ToUpper()} DEL {Fecha1.Year}";
+                this.VtnFormasPago.Inicializar(Enlace, _result);
+            }
+        }
+
+        await Task.Delay(100);
+        this.busyDialog = false;
+        */
+    }
+
+}

@@ -1,0 +1,657 @@
+@page "/AtencionOficina"
+@using System.Text
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Charts
+@using Sicem_Blazor.Models
+@inject IMatToaster Toaster
+@inject AtencionService atencionService   
+
+
+<div class="title-page">ATENCION DE USUARIOS</div>
+
+@*
+<SeleccionarFecha ProcesarParam="@Procesar"  />
+
+<!-- **** Cards **** -->
+<div class="border rounded bg-white mt-2 mb-1 mr-2 p-3 d-flex w-100" style="user-select: text;" >
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(()=> Mostrar_Vtn_Detalle(0))">
+        <div class="c-label"> Total </div>        
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val user-select-all" >@if(datosResumen != null){<span>@datosResumen.Total.ToString("n0")</span>}else{<span>0</span>}</div>
+            <div class="c-subt">Ordenes</div>
+        </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val2 user-select-all">@if(datosResumen != null){<span>100%</span>}else{<span>0%</span>}</div>
+        </div>
+    </div>
+    
+    <div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(()=> Mostrar_Vtn_Detalle(1))" >
+
+        <div class="c-label"> Pendientes </div>        
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val user-select-all">@if(datosResumen != null){ <span>@datosResumen.Pendiente.ToString("n0")</span> }else{<span>0</span>}</div>
+            <div class="c-subt"> Ordenes</div>
+        </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val2 user-select-all">@if(datosResumen != null){ <span> @CalcularPorcentaje(datosResumen.Total, datosResumen.Pendiente)</span>}else{<span>0%</span>}</div>
+            <!-- <div class="c-subt">Adeudo</div> -->
+        </div>
+    </div>
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(()=> Mostrar_Vtn_Detalle(2))">
+        <div class="c-label"> Atendidos</div>        
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val user-select-all">@if(datosResumen != null){ <span>@datosResumen.Atendido.ToString("n0")</span>}else{<span>0</span>}</div>
+            <div class="c-subt">Ordenes</div>
+        </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val2 user-select-all">@if(datosResumen != null){ <span> @CalcularPorcentaje(datosResumen.Total, datosResumen.Atendido)</span>}else{<span>0%</span>}</div>
+            <!-- <div class="c-subt">Adeudo</div> -->
+        </div>
+    </div>
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(()=> Mostrar_Vtn_Detalle(3))">
+        <div class="c-label"> Resueltos</div>        
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val user-select-all" >@if(datosResumen != null){ <span>@datosResumen.Resuelto.ToString("n0")</span>}else{<span>0</span>}</div>
+            <div class="c-subt">Ordenes</div>
+        </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val2 user-select-all">@if(datosResumen != null){ <span>@CalcularPorcentaje(datosResumen.Total, datosResumen.Resuelto) </span>}else{<span>0%</span>}</div>
+            <!-- <div class="c-subt">Adeudo</div> -->
+        </div>
+    </div>
+    
+    <div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="@(()=> Mostrar_Vtn_Detalle(4))">
+        <div class="c-label"> Sin Resolver</div>        
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val user-select-all" >@if(datosResumen != null){<span>@datosResumen.Sin_resolver.ToString("n0")</span>}else{<span>0</span>}</div>
+            <div class="c-subt">Ordenes</div>
+        </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val2 user-select-all">@if(datosResumen != null){ <span>@CalcularPorcentaje(datosResumen.Total, datosResumen.Sin_resolver) </span>}else{<span>0%</span>}</div>
+            <!-- <div class="c-subt">Adeudo</div> -->
+        </div>
+    </div>
+
+    <div style="width:60px"></div>
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="Mostrar_Vtn_Descuentos">
+        <div class="c-label"> Descuentos </div>        
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val user-select-all" >@if(datosResumen != null){<span>@datosResumen.Descuentos.ToString("n0")</span>}else{<span>0</span>}</div>
+            <div class="c-subt">Ordenes</div>
+        </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val2 user-select-all">@if(datosResumen != null){ <span>@datosResumen.Imp_Descuentos.ToString("c2")</span>}else{<span>$0.00</span>}</div>
+            <div class="c-subt">Importe Ajustado</div>
+        </div>
+    </div>
+
+    <div class="card-s border p-3 d-flex flex-column align-items-center mx-2 shadow" @onclick="Mostrar_Vtn_Convenios">
+        <div class="c-label"> Convenios </div>        
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val user-select-all" >@if(datosResumen != null){<span>@datosResumen.Convenios.ToString("n0")</span>}else{<span>0</span>}</div>
+            <div class="c-subt">Ordenes</div>
+        </div>
+        <div class="d-flex flex-column mx-1 my-2 align-items-center">
+            <div class="c-val2 user-select-all">@if(datosResumen != null){ <span>@datosResumen.Imp_Convenios.ToString("c2")</span>}else{<span>$0.00</span>}</div>
+            <div class="c-subt">Importe</div>
+        </div>
+    </div>
+   
+</div>
+
+<!-- ****** Botones ****** -->
+<div class="border rounded bg-white my-1 py-3 d-flex">
+    <div class="col-12 d-flex align-content-center justify-content-center">
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" Disabled="true">Por Colonias </MatButton>
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" Disabled="true">Por Asuntos </MatButton>
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" Disabled="true">Por Realizacion</MatButton>
+        <MatButton Class="mx-3" style="min-width: 130px;" Raised="true" Disabled="true" >Por Captura</MatButton>
+    </div>
+</div>
+
+<!--  **** Grid **** -->
+<div class="border rounded bg-white my-1 p-2 d-flex flex-column">
+
+    <div class="mx-auto py-2" style="font-size: 15px; font-weight: 500;">  Turnos de Atencion Anual </div>
+    
+    <div style="height:360px;">
+        <SfGrid @ref="dataGrid" DataSource="@datosGrid" AllowSorting="true" AllowResizing="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+            <GridColumns>
+
+                <GridColumn Field="@nameof(Atencion_Anual.Asunto)" HeaderText="Asunto" TextAlign="TextAlign.Left" Width="160" ClipMode="ClipMode.EllipsisWithTooltip" />
+                <GridColumn HeaderText="Enero" TextAlign="TextAlign.Center" Width="90">
+                    <Template>
+                        @{
+                            var data = (context as Atencion_Anual);                            
+                            <div class="customLink" @onclick="@(e => MostrarDetalle_Anual(data,1) )"> @data.Ene </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Febrero" TextAlign="TextAlign.Center" Width="90">
+                    <Template>
+                        @{
+                            var data = (context as Atencion_Anual);                            
+                            <div class="customLink" @onclick="@(e => MostrarDetalle_Anual(data,2) )"> @data.Feb </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Marzo" TextAlign="TextAlign.Center" Width="90">
+                    <Template>
+                        @{
+                            var data = (context as Atencion_Anual);                            
+                            <div class="customLink" @onclick="@(e => MostrarDetalle_Anual(data,3) )"> @data.Mar </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Abril" TextAlign="TextAlign.Center" Width="90">
+                    <Template>
+                        @{
+                            var data = (context as Atencion_Anual);                            
+                            <div class="customLink" @onclick="@(e => MostrarDetalle_Anual(data,4) )"> @data.Abr </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Mayo" TextAlign="TextAlign.Center" Width="90">
+                    <Template>
+                        @{
+                            var data = (context as Atencion_Anual);                            
+                            <div class="customLink" @onclick="@(e => MostrarDetalle_Anual(data,5) )"> @data.May </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Junio" TextAlign="TextAlign.Center" Width="90">
+                    <Template>
+                        @{
+                            var data = (context as Atencion_Anual);                            
+                            <div class="customLink" @onclick="@(e => MostrarDetalle_Anual(data,6) )"> @data.Jun </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Julio" TextAlign="TextAlign.Center" Width="90">
+                    <Template>
+                        @{
+                            var data = (context as Atencion_Anual);                            
+                            <div class="customLink" @onclick="@(e => MostrarDetalle_Anual(data,7) )"> @data.Jul </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Agosto" TextAlign="TextAlign.Center" Width="90">
+                    <Template>
+                        @{
+                            var data = (context as Atencion_Anual);                            
+                            <div class="customLink" @onclick="@(e => MostrarDetalle_Anual(data,8) )"> @data.Ago </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Septiembre" TextAlign="TextAlign.Center" Width="90">
+                    <Template>
+                        @{
+                            var data = (context as Atencion_Anual);                            
+                            <div class="customLink" @onclick="@(e => MostrarDetalle_Anual(data,9) )"> @data.Sep </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Octubre" TextAlign="TextAlign.Center" Width="90">
+                    <Template>
+                        @{
+                            var data = (context as Atencion_Anual);                            
+                            <div class="customLink" @onclick="@(e => MostrarDetalle_Anual(data,10) )"> @data.Oct </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Noviembre" TextAlign="TextAlign.Center" Width="90">
+                    <Template>
+                        @{
+                            var data = (context as Atencion_Anual);                            
+                            <div class="customLink" @onclick="@(e => MostrarDetalle_Anual(data,11) )"> @data.Nov </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Diciembre" TextAlign="TextAlign.Center" Width="90">
+                    <Template>
+                        @{
+                            var data = (context as Atencion_Anual);                            
+                            <div class="customLink" @onclick="@(e => MostrarDetalle_Anual(data,12) )"> @data.Dic </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Total" TextAlign="TextAlign.Center" Width="90">
+                    <Template>
+                        @{
+                            var data = (context as Atencion_Anual);                            
+                            <div class="customLink" @onclick="@(e => MostrarDetalle_Anual(data,666) )"> @data.Total </div>
+                        }
+                    </Template>
+                </GridColumn>
+
+            </GridColumns>
+        </SfGrid>
+    </div>
+</div>
+
+
+<!-- **** Graficas **** -->
+<div class="border rounded bg-white p-1 my-1 " style="width:100%;">
+    <SfChart Title="Comparacion Anual " Width="100%" Height="200">
+        <ChartPrimaryXAxis Title="" ValueType="Syncfusion.Blazor.Charts.ValueType.Category" Minimum="0"> </ChartPrimaryXAxis>
+        <ChartPrimaryYAxis LabelFormat="n0"> </ChartPrimaryYAxis>
+        <ChartTooltipSettings Enable="true" Header="${series.name}" Shared="true" Format="${point.x} : ${point.y}"></ChartTooltipSettings>
+        <ChartLegendSettings Visible="false" Position="LegendPosition.Right"/>
+        <ChartSeriesCollection>
+            <ChartSeries DataSource="@DatosGrafica" Name="Turnos de Atencion" XName="Descripcion" YName="Valor"  Type="ChartSeriesType.Line">
+                <ChartMarker>
+                    <ChartMarker Visible="true" Width="10" Height="10"></ChartMarker>
+                    <ChartDataLabel Visible="true" Position="LabelPosition.Outer"></ChartDataLabel>
+                </ChartMarker>
+            </ChartSeries>
+        </ChartSeriesCollection>
+    </SfChart>      
+</div>
+
+
+<style type="text/css">
+    .card-s{
+        border-radius:.8rem;
+        margin-top:.6rem;
+        margin-bottom:.4rem;        
+        height: 17rem;
+        width: 15rem;
+        background: white;
+        justify-content: space-around;
+        cursor: pointer;
+        transition: margin .2s, background .2s;
+    }
+    .card-s:hover{
+        border-radius:.8rem;
+        margin-top:.4rem;
+        background:#dfe5eb;
+    }
+    .card-s .c-label{
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        margin-bottom:.5rem;
+        font-weight: bold;
+    }
+    .card-s .c-val{
+        font-size: 2.5rem;
+        font-weight:bold;
+    }
+    .card-s .c-val2{
+        font-size: 1.4rem;
+        font-weight:bold;
+    }
+    .card-s .c-subt{
+        font-size: .9rem;
+    }
+
+
+    .e-control.e-textbox {
+        font-size: 1.3rem !important;
+    }
+    .r .e-input {
+        text-align: right;
+    }
+
+    .customLink:hover{
+        cursor:hand !important;
+        text-decoration: underline;
+        font-weight:bold;
+    }
+</style>
+
+
+<!-- ****** Dialogos y ventanas secundarias ****** -->
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+
+<Atencion_DetalleVtn @ref="vtn_detalle" Visible="@vtn_detalle_visible" CerrarModal="@Cerrar_Vtn_Detalle" Fecha1="@Fecha1" Fecha2="@Fecha2" Subsistema="@Subsistema" Sector="@Sector" Filtro_Estatus="@filtrar_estatus" Filtro_Asuntos="filtrar_asunto" />
+<Atencion_DescuentosVtn @ref="vtn_descuentos" Visible="@vtn_descuentos_visible" CerrarModal="@Cerrar_Vtn_Descuentos" Fecha1="@Fecha1" Fecha2="@Fecha2" Subsistema="@Subsistema" Sector="@Sector" />
+<Atencion_ConveniosVtn @ref="vtn_convenios" Visible="@vtn_convenios_visible" CerrarModal="@Cerrar_Vtn_Convenios" Fecha1="@Fecha1" Fecha2="@Fecha2" Subsistema="@Subsistema" Sector="@Sector" />
+<Atencion_ColoniasVtn @ref="vtn_colonias" Visible="@vtn_colonias_visible" CerrarModal="@Cerrar_Vtn_Colonias" Fecha1="@Fecha1" Fecha2="@Fecha2" Subsistema="@Subsistema" Sector="@Sector" />
+<Atencion_AsuntosVtn @ref="vtn_asuntos" Visible="@vtn_asuntos_visible" CerrarModal="@Cerrar_Vtn_Asuntos" Fecha1="@Fecha1" Fecha2="@Fecha2" Subsistema="@Subsistema" Sector="@Sector" />
+
+@code{
+
+    SfGrid<Atencion_Anual> dataGrid;
+    Atencion_Anual[] datosGrid { get; set; }
+    bool filtrar_asunto = false, filtrar_estatus = false;
+
+    bool busyDialog = false;
+    public Atencion_Resumen datosResumen = null;
+    DateTime Fecha1, Fecha2;
+    int Subsistema, Sector;
+    CharItem[] DatosGrafica = new CharItem[]{};
+
+    private bool vtn_detalle_visible = false, vtn_descuentos_visible = false, vtn_convenios_visible = false, vtn_colonias_visible = false, vtn_asuntos_visible = false;
+
+  
+    Atencion_DetalleVtn vtn_detalle;
+    Atencion_DescuentosVtn vtn_descuentos;
+    Atencion_ConveniosVtn vtn_convenios;
+    Atencion_ColoniasVtn vtn_colonias;
+    Atencion_AsuntosVtn vtn_asuntos;
+    
+
+
+    //********* Funciones  *********
+    protected override void OnInitialized() {
+        var _now = DateTime.Now;
+
+        var tmpE = new SeleccionarFechaEventArgs() {
+            Subsistema = 0,
+            Sector = 0,
+            Fecha1 = new DateTime(_now.Year, _now.Month, 1),
+            Fecha2 = new DateTime(_now.Year, _now.Month, DateTime.DaysInMonth(_now.Year, _now.Month))
+        };
+        this.Fecha1 = tmpE.Fecha1;
+        this.Fecha2 = tmpE.Fecha2;
+        this.Subsistema = tmpE.Subsistema;
+        this.Sector = tmpE.Sector;
+
+        //await Procesar(tmpE);
+    }
+    public async Task Procesar(SeleccionarFechaEventArgs e) {
+        Toaster.Add("No Implementado", MatToastType.Info);
+        await Task.Delay(100);
+        //this.busyDialog = true;
+
+        //this.Fecha1 = e.Fecha1;
+        //this.Fecha2 = e.Fecha2;
+        //this.Subsistema = e.Subsistema;
+        //this.Sector = e.Sector;
+
+        //datosResumen = atencionService.ObtenerAtencionResumen(1, Fecha1, Fecha2, Subsistema, Sector);
+        //datosGrid = atencionService.ObtenerAtencionAnual(1, Fecha1, Subsistema, Sector, "");
+
+        //if(datosGrid != null){
+        //    Procesar_Datos_Grafica();
+        //}
+        //else{
+        //    var errMsg = "Error Mensaje";
+        //    Toaster.Add(errMsg, MatToastType.Warning, "");
+        //}
+
+        //this.busyDialog = false;
+    }
+    private void Procesar_Datos_Grafica(){
+
+        var totales = new int[]{0,0,0,0,0,0,0,0,0,0,0,0};
+
+        foreach(var item in datosGrid){
+            totales[0] += item.Ene;
+            totales[1] += item.Feb;
+            totales[2] += item.Mar;
+            totales[3] += item.Abr;
+            totales[4] += item.May;
+            totales[5] += item.Jun;
+            totales[6] += item.Jul;
+            totales[7] += item.Ago;
+            totales[8] += item.Sep;
+            totales[9] += item.Oct;
+            totales[10] += item.Nov;
+            totales[11] += item.Dic;
+        }
+
+        var tmpChar2 = new List<CharItem>();
+        tmpChar2.Add(new CharItem{ Descripcion = "Enero", Valor = (decimal) totales[0]});
+        tmpChar2.Add(new CharItem{ Descripcion = "Febrero", Valor = (decimal) totales[1]});
+        tmpChar2.Add(new CharItem{ Descripcion = "Marzo", Valor = (decimal) totales[2]});
+        tmpChar2.Add(new CharItem{ Descripcion = "Abril", Valor = (decimal) totales[3]});
+        tmpChar2.Add(new CharItem{ Descripcion = "Mayo", Valor = (decimal) totales[4]});
+        tmpChar2.Add(new CharItem{ Descripcion = "Junio", Valor = (decimal) totales[5]});
+        tmpChar2.Add(new CharItem{ Descripcion = "Julio", Valor = (decimal) totales[6]});
+        tmpChar2.Add(new CharItem{ Descripcion = "Agosto", Valor = (decimal) totales[7]});
+        tmpChar2.Add(new CharItem{ Descripcion = "Septiembre", Valor = (decimal) totales[8] });
+        tmpChar2.Add(new CharItem{ Descripcion = "Octubre", Valor = (decimal) totales[9]});
+        tmpChar2.Add(new CharItem{ Descripcion = "Noviembre", Valor = (decimal) totales[10]});
+        tmpChar2.Add(new CharItem{ Descripcion = "Diciembre", Valor = (decimal) totales[11]});
+
+        DatosGrafica = tmpChar2.ToArray();
+    }
+    private string CalcularPorcentaje(int total, int subtotal){
+        decimal xp = 0m;
+        try{
+            xp = System.Math.Round( ((decimal)subtotal/(decimal) total) * 100,2);
+        }catch(Exception){}
+
+        return $"{xp}%";
+    }
+
+    //*** Funciones Ventanas Secundarias
+    private void Mostrar_Vtn_Detalle(int opcion){
+        /*
+        if(!vtn_detalle_visible){
+            this.busyDialog = true;
+
+            filtrar_estatus = false;
+            filtrar_asunto = true;
+
+            Atencion_Detalle[] datos = new Atencion_Detalle[]{};
+            var titulo = "Turnos de Atencion";
+            switch(opcion){
+                case 0:
+                    datos = atencionService.ObtenerDetalleAtencion(1, Fecha1, Fecha2, Subsistema, Sector, "");
+                    titulo = $"Turnos de Atencion Generadas del {Fecha1.ToString("dd/MM/yyyy")} al {Fecha2.ToString("dd/MM/yyyy")}";
+                    break;
+                case 1:
+                    datos = atencionService.ObtenerDetalleAtencion(1, Fecha1, Fecha2, Subsistema, Sector, "id_estatus:45");
+                    titulo = $"Turnos de Atencion Pendientes del {Fecha1.ToString("dd/MM/yyyy")} al {Fecha2.ToString("dd/MM/yyyy")}";
+                    break;
+                case 2:
+                    datos = atencionService.ObtenerDetalleAtencion(1, Fecha1, Fecha2, Subsistema, Sector, "id_estatus:46");
+                    titulo = $"Turnos de Atencion Atendidos del {Fecha1.ToString("dd/MM/yyyy")} al {Fecha2.ToString("dd/MM/yyyy")}";
+                    break;
+                case 3:
+                    datos = atencionService.ObtenerDetalleAtencion(1, Fecha1, Fecha2, Subsistema, Sector, "id_estatus:47");
+                    titulo = $"Turnos de Atencion Resueltos del {Fecha1.ToString("dd/MM/yyyy")} al {Fecha2.ToString("dd/MM/yyyy")}";
+                    break;
+                case 4:
+                    datos = atencionService.ObtenerDetalleAtencion(1,Fecha1, Fecha2, Subsistema, Sector, "id_estatus:58");
+                    titulo = $"Turnos de Atencion Sin Resolver del {Fecha1.ToString("dd/MM/yyyy")} al {Fecha2.ToString("dd/MM/yyyy")}";
+                    break;
+            }
+
+            if(datos == null){
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (datos.Length <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            vtn_detalle_visible = true;
+            await vtn_detalle.Inicializar(datos, titulo);
+
+            this.busyDialog = false;
+        }
+        */
+
+    }
+    private void Cerrar_Vtn_Detalle(){
+        vtn_detalle_visible = false;
+    }
+
+    private void Mostrar_Vtn_Descuentos(){
+        /*
+        if(!vtn_descuentos_visible){
+            this.busyDialog = true;
+
+            var datos = new Atencion_Descuento[]{};
+            datos = atencionService.ObtenerDescuentos(null,Fecha1, Fecha2, Subsistema, Sector);
+            var titulo =  $"Descuentos Generados del {Fecha1.ToString("dd/MM/yyyy")} al {Fecha2.ToString("dd/MM/yyyy")}";
+
+            if(datos == null){
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (datos.Length <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            vtn_descuentos_visible = true;
+            await vtn_descuentos.Inicializar(datos, titulo);
+
+            this.busyDialog = false;
+        }
+        */
+
+    }
+    private void Cerrar_Vtn_Descuentos(){
+        vtn_descuentos_visible = false;
+    }
+
+    private void Mostrar_Vtn_Convenios(){
+        /*
+        if(!vtn_convenios_visible){
+            this.busyDialog = true;
+
+            var datos = new Atencion_Convenios[]{};
+            datos = atencionService.ObtenerConvenios(1, Fecha1, Fecha2, Subsistema, Sector,"");
+            var titulo =  $"Convenios Generados del {Fecha1.ToString("dd/MM/yyyy")} al {Fecha2.ToString("dd/MM/yyyy")}";
+
+            if(datos == null){
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (datos.Length <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            vtn_convenios_visible = true;
+            await vtn_convenios.Inicializar(datos, titulo);
+
+            this.busyDialog = false;
+        }
+        */
+    }
+    private void Cerrar_Vtn_Convenios(){
+        vtn_convenios_visible = false;
+    }
+
+    private void MostrarDetalle_Anual(Atencion_Anual data, int mes){
+        /*
+        if(!vtn_detalle_visible){
+            this.busyDialog = true;
+
+            filtrar_estatus  = true;
+            filtrar_asunto = false;
+
+            DateTime cFecha1, cFecha2;
+            if(mes == 666){
+                cFecha1 = new DateTime(Fecha1.Year, 01,01);
+                cFecha2 = new DateTime(Fecha1.Year, 12,31);
+            }else{
+                cFecha1 = new DateTime(Fecha1.Year, mes, 01);
+                cFecha2 = new DateTime(Fecha1.Year, mes, DateTime.DaysInMonth(Fecha1.Year, mes));
+            }
+
+
+            Atencion_Detalle[] datos = new Atencion_Detalle[]{};
+            datos = atencionService.ObtenerDetalleAtencion(1, cFecha1, cFecha2, Subsistema, Sector, "id_asunto:data.Id_asunto");
+            var titulo = $"Turnos de {data.Asunto} del {cFecha1.ToString("dd/MM/yyyy")} al {cFecha2.ToString("dd/MM/yyyy")}";
+
+            if(datos == null){
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (datos.Length <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            vtn_detalle_visible = true;
+            await vtn_detalle.Inicializar(datos, titulo);
+
+            this.busyDialog = false;
+        }
+        */
+
+    }
+
+    private void Mostrar_Vtn_Colonias(){
+        /*
+        if(!vtn_colonias_visible){
+            this.busyDialog = true;
+
+            var datos = new Atencion_Group[]{};
+            datos = atencionService.ObtenerAtencionPorColonias(1, Fecha1, Fecha2, Subsistema, Sector);
+            var titulo =  $"Turnos de Atencion por Colonias del {Fecha1.ToString("dd/MM/yyyy")} al {Fecha2.ToString("dd/MM/yyyy")}";
+
+            if(datos == null){
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (datos.Length <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            vtn_colonias_visible = true;
+            await vtn_colonias.Inicializar(datos, titulo);
+
+            this.busyDialog = false;
+        }
+        /
+    }
+    private void Cerrar_Vtn_Colonias(){
+        vtn_colonias_visible = false;
+    }
+    private async Task Mostrar_Vtn_Asuntos(){
+        /*
+        if(!vtn_asuntos_visible){
+            this.busyDialog = true;
+
+            var datos = new Atencion_Group[]{};
+            datos = atencionService.ObtenerAtencionPorAsuntos(1, Fecha1, Fecha2, Subsistema, Sector);
+            var titulo =  $"Turnos de Atencion por Asuntos del {Fecha1.ToString("dd/MM/yyyy")} al {Fecha2.ToString("dd/MM/yyyy")}";
+
+            if(datos == null){
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+            if (datos.Length <= 0) {
+                busyDialog = false;
+                Toaster.Add("No hay datos disponibles", MatToastType.Info, "Sin Datos", null);
+                return;
+            }
+
+            vtn_asuntos_visible = true;
+            await vtn_asuntos.Inicializar(datos, titulo);
+
+            this.busyDialog = false;
+        }
+        */
+    }
+    private void Cerrar_Vtn_Asuntos(){
+        vtn_asuntos_visible = false;
+    }
+
+    public class CharItem {
+        public string Descripcion { get; set; }
+        public decimal Valor { get; set; }
+        public decimal Valor2 { get; set; }
+        public decimal Valor3 { get; set; }
+        public decimal Valor4 { get; set; }
+    }
+
+}
+
+
+*@

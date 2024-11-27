@@ -1,0 +1,42 @@
+@inject SicemService sicemService
+
+<VentanaSecundaria Titulo="Seleccionar Oficinas" Filas="@GridRows" Columnas="GridColumns" CerrarVentana="@(e => OnClose(false))">
+    <Content>
+        <SfGrid TValue="IEnlace">
+            <GridColumns>
+                <GridColumn Field="@nameof(IEnlace.Nombre)" HeaderText="Oficina"/>
+            </GridColumns>
+        </SfGrid>
+    </Content>
+</VentanaSecundaria>
+
+<div class="d-flex flex-row align-items-center jusitfy-content-spawaround">
+    <button class="button px-3 py-2 mx-2">
+        <i class="fa fa-close"></i>
+        <span>Cancelar</span>
+    </button>
+
+    <button class="button px-3 py-2 mx-2">
+        <i class="fa fa-succses"></i>
+        <span>Seleccionar</span>
+    </button>
+</div>
+
+@code {
+
+    [Parameter] public EventCallback<IEnlace> OnClosed {get;set;}
+    private double[] GridRows = new double[]{200, 40};
+    private double[] GridColumns = new double[]{200};
+
+    private List<IEnlace> Enlaces {get;set;}
+    private IEnlace EnlaceSeleccionado {get;set;}
+
+    private async Task OnClose(bool ok){
+        if(ok){
+            await OnClosed.InvokeAsync(this.EnlaceSeleccionado);
+        }else{
+            await OnClosed.InvokeAsync(null);            
+        }
+    }
+
+}

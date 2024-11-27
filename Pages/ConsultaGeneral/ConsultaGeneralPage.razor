@@ -1,0 +1,462 @@
+﻿@page "/ConsultaGeneral"
+@page "/ConsultaGeneral/{id_oficinaParam:int}/{id_cuenta}"
+
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.DropDowns
+
+@inject IMatToaster Toaster
+@inject IJSRuntime JSRuntime
+@inject ConsultaGralService consultaGralService
+@inject SicemService sicemService
+
+<div class="title-page">Consulta General</div>
+
+@********** Filtro Cuenta **********@
+<div class="panelBusqueda border rounded bg-white p-2">
+
+    @if (catOficinas.Length > 0) {
+        <div class="sInput cbOficinas">
+            <label class="ml-2 px-2 my-auto" for="cb_oficinas">OFICINA:</label>
+            <SfComboBox ID="cb_oficinas" TValue="int" TItem="Ruta" AllowCustom=true Placeholder="Seleccionar Oficina" DataSource="@catOficinas" @bind-Value="@id_oficina" Readonly="@(catOficinas.Length <= 1?true:false)" Width="100%">
+                <ComboBoxFieldSettings Value="Id" Text="Oficina"></ComboBoxFieldSettings>
+            </SfComboBox>
+        </div>
+    }
+
+    <div class="sInput tbCuenta">
+        <label class="ml-2 px-2 my-auto" for="tb_ncuenta">CUENTA:</label>
+        <SfNumericTextBox ID="tb_ncuenta" @ref="tb_search" @bind-Value="@nCuenta" @onkeyup="@Tb_Cuenta_KeyUp"  TValue="long?" ShowSpinButton="false" Placeholder="Numero de Cuenta" Format="000000000" Width="100%" />
+    </div>
+    
+    <MatButton Class="sInput btnBusqueda ml-2 px-2 disableOnMobil" Raised="true" @onclick="@MostrarBusquedaAvz" TrailingIcon="search">Buscar Contratos</MatButton>
+</div>
+
+@********** Area Botones **********@
+<div class="d-flex border rounded bg-white flex-row align-content-center p-2 mt-2 disableOnMobil">
+    <MatButton Disabled="@DesBotones" Class="mr-2 e-outline" Style="min-width:140px;" Unelevated="true" @onclick="@BotonMovimienos_click">Movimientos</MatButton>
+    <MatButton Disabled="@DesBotones" Class="mr-2 e-outline" Style="min-width:140px;" Unelevated="true" @onclick="@BotonModifABC_click"> Modif ABC </MatButton>
+    <MatButton Disabled="@DesBotones" Class="mr-2 e-outline" Style="min-width:140px;" Unelevated="true" @onclick="@BotonOrdenes_click"> Ordenes </MatButton>
+    <MatButton Disabled="@DesBotones" Class="mr-2 e-outline" Style="min-width:140px;" Unelevated="true" @onclick="@BotonAnticipos_click"> Anticipos </MatButton>
+    <MatButton Disabled="@DesBotones" Class="mr-2 e-outline" Style="min-width:140px;" Unelevated="true" @onclick="@BotonImagenes_click"> Imagenes @datosConsultaGral.TotalImagenes </MatButton>
+</div>
+
+
+<div class="grid-root mt-2">
+
+    @********** DATOS GENERALES **********@
+    <div class="d-flex flex-column border rounded bg-white p-2" style="grid-area:1/1/2/2;">
+        <div class="mb-2 label-header">DATOS GENERALES</div>
+        <DatosGenerales DatosConsultaGral="@datosConsultaGral" OnUbicacionClick="@(e => MostrarUbicacion_Click() )" />
+    </div>
+
+    @********** Datos Facturacion **********@
+    <div class="d-flex flex-column border rounded bg-white p-2" style="grid-area:2/1/3/2;">
+        <div class="mb-2 label-header">DATOS FACTURACION</div>
+        <DatosFacturacion DatosConsultaGral="@datosConsultaGral" />
+    </div>
+
+    @********** Saldo Actual **********@
+    <div class="border rounded bg-white p-2 panelConceptos">
+        <div class="mb-2 label-header">CONCEPTOS FACTURADOS</div>
+        <div class="p-1">
+            <SfGrid @ref="@dataGrid" DataSource="@SaldoActualArray" AllowSorting="true" AllowFiltering="false" Height="100%" Width="100%" EnableHover="true" EnableAltRow="true">
+                <GridColumns>
+                    <GridColumn Field="@nameof(ConsultaGralResponse_saldoItem.Concepto)" HeaderText="CONCEPTO" TextAlign="TextAlign.Left" Width="110" Format="c2" />
+                    <GridColumn Field="@nameof(ConsultaGralResponse_saldoItem.Subtotal)" HeaderText="IMPORTE" TextAlign="TextAlign.Right" Width="50" Format="c2" />
+                    <GridColumn Field="@nameof(ConsultaGralResponse_saldoItem.Iva)" HeaderText="IVA" TextAlign="TextAlign.Right" Width="50" Format="c2" />
+                    <GridColumn Field="@nameof(ConsultaGralResponse_saldoItem.Total)" HeaderText="TOTAL" TextAlign="TextAlign.Right" Width="50" Format="c2" />
+                </GridColumns>
+            </SfGrid>
+        </div>
+        <div class="p-1">
+            <table class="table table-striped">
+                <tbody>
+                    <tr style="totalRow">
+                        <td style="font-weight:bold;">TOTALES</td>
+                        <td class="text-right"> @datosConsultaGral.SaldoAct_subtotal.ToString("c2")</td>
+                        <td class="text-right"> @datosConsultaGral.SaldoAct_iva.ToString("c2")</td>
+                        <td class="text-right"> @datosConsultaGral.SaldoAct_total.ToString("c2")</td>
+                    </tr>
+                    <tr style="totalRow">
+                        <td style="font-weight:bold;">ANTICIPADOS</td>
+                        <td class="text-right"> @datosConsultaGral.SaldoFavor_importe.ToString("c2")</td>
+                        <td class="text-right"> @datosConsultaGral.SaldoFavor_m3_x_aplicar.ToString("c2")</td>
+                        <td class="text-right"> @datosConsultaGral.SaldoFavor_meses_x_aplicar.ToString("c2")</td>
+                    </tr>
+                    <tr style="totalRow">
+                        <td style="font-weight:bold;">DOCUMENTOS</td>
+                        <td class="text-right"> @datosConsultaGral.Documentos_imp_atiempo.ToString("c2")</td>
+                        <td class="text-right"> @datosConsultaGral.Documentos_imp_vencido.ToString("c2")</td>
+                        <td class="text-right"> @datosConsultaGral.Documentos_imp_total.ToString("c2")</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @********** Datos Clasificacion Usuario **********@
+    <div class="d-flex flex-column border rounded bg-white p-2" style="grid-area:3/1/4/2;">
+        <div class="mb-2 label-header">CLASIFICACION DEL USUARIO</div>
+        <DatosClasificacionUsuario DatosConsultaGral="@datosConsultaGral" />
+    </div>
+
+    @********** Grafica Consumos **********@
+    <div class="d-flex flex-column border rounded bg-white p-2" style="grid-area:3/2/4/3;">
+        <div class="mb-2 label-header">HISTORIAL DE CONSUMOS</div>
+        <SfChart @ref="@grafConsumos" Height="100%" Width="100%">
+            <ChartPrimaryXAxis Title="Meses" Visible="true" ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+            <ChartPrimaryYAxis Title="Metros Cubicos" Format="n0" Visible="false"></ChartPrimaryYAxis>
+            <ChartLegendSettings Visible="false" />
+            <ChartTooltipSettings Enable="true" Format="<b>${point.x} : ${point.y} m3 </b>" />
+            <ChartSeriesCollection>
+                <ChartSeries DataSource="@ItemsHistorialConsum" Name="Mes Facturado" XName="MesFacturado" YName="Consumo_Act" Type="ChartSeriesType.Column">
+                    <ChartMarker>
+                        <ChartDataLabel Visible="true"></ChartDataLabel>
+                    </ChartMarker>
+                </ChartSeries>
+            </ChartSeriesCollection>
+        </SfChart>
+    </div>
+
+</div>
+
+
+@********** Ventanas Secundarias **********@
+<BusquedaCuenta @ref="modal_BusquedaCuenta" Show="@MostrarModal_BuscarCuentas" CerrarModal="@CerrarVentana_BusquedaCuenta" />
+<ConsultaGeral_Movimientos @ref="vtn_Movimientos" RazonSocial="@datosConsultaGral.Razon_social" Show="@MostrarModalMovimientos" Id_padron="@datosConsultaGral.Id_Padron" CerrarModal="@(()=> MostrarModalMovimientos = false )" />
+<ConsultaGeral_ModificacionesABS @ref="vtn_ModificacionesABS" DatosGenerales="@datosConsultaGral" Show="@MostrarModalModifABC" CerrarModal="@(()=> MostrarModalModifABC = false)" />
+<ConsultaGral_Ordenes @ref="vnt_Ordenes" Id_Padron="@datosConsultaGral.Id_Padron" Show="@MostrarModal_Ordenes" CerrarModal="@(()=> MostrarModal_Ordenes = false)" />
+<ConsultaGral_Anticipos @ref="vnt_Anticipos" DatosGenerales="@datosConsultaGral" Show="@MostrarModal_Anticipos" CerrarModal="@(()=> MostrarModal_Anticipos = false)" />
+<ConsultaGral_ImagenesVtn @ref="vnt_Imagenes" Id_Padron="@datosConsultaGral.Id_Padron" Show="@MostrarModal_Imagenes" CerrarModal="@(()=> MostrarModal_Imagenes = false)" />
+@if(mostrarMapa){
+    <MapaComponent Titulo="@($"{catOficinas[id_oficina].Oficina} - Cuenta: {nCuenta} - {datosConsultaGral.Direccion} ")" MarkerDataSource="@MarkerDataSource"  OnClosed="@( e => mostrarMapa = false )" />
+}
+<BusyIndicator Busy="@Busy" ContentText="Cargando datos...." />
+
+
+@code{
+    [Parameter] public string id_cuenta { get; set; }
+    [Parameter] public int id_oficinaParam { get; set; }
+    [Parameter] public int id_oficina { get; set; }
+
+    SfGrid<ConsultaGralResponse_saldoItem> dataGrid;
+    SfChart grafConsumos;
+    SfNumericTextBox<long?> tb_search;
+    
+    BusquedaCuenta modal_BusquedaCuenta;
+    ConsultaGeral_Movimientos vtn_Movimientos;
+    ConsultaGeral_ModificacionesABS vtn_ModificacionesABS;
+    ConsultaGral_Ordenes vnt_Ordenes;
+    ConsultaGral_Anticipos vnt_Anticipos;
+    ConsultaGral_ImagenesVtn vnt_Imagenes;
+
+    public ConsultaGralResponse datosConsultaGral = new ConsultaGralResponse();
+    public ConsultaGralResponse_saldoItem[] SaldoActualArray { get; set; }
+    public ConsumoItem[] ItemsHistorialConsum { get; set; }
+    long? nCuenta = null;
+    bool Busy = true;
+    private bool tabMapDisable = true;
+
+
+    //*** Componente Mapa
+    private bool mostrarMapa = false;
+    private List<MapMark> MarkerDataSource { get; set; } = new List<MapMark>();
+
+    private Ruta[] catOficinas = new Ruta[] { };
+
+    private bool DesBotones = true;
+    private bool MostrarModal_BuscarCuentas { get; set; } = false;
+    private bool MostrarModalMovimientos { get; set; } = false;
+    private bool MostrarModalModifABC { get; set; } = false;
+    private bool MostrarModal_Ordenes { get; set; } = false;
+    private bool MostrarModal_Anticipos { get; set; } = false;
+    private bool MostrarModal_Imagenes { get; set; } = false;
+
+    /*********** Eventos Override ***********/
+    protected override async Task OnInitializedAsync() {
+        await Task.Delay(100);
+
+        var enlaces = sicemService.ObtenerOficinasDelUsuario();
+        var tmpOfis = sicemService.ObtenerEnlaces().Where(item => enlaces.Select(i => i.Id).Contains(item.Id)).ToArray();
+
+        if (tmpOfis.Length > 0) {
+            this.catOficinas = tmpOfis;
+            this.id_oficina = catOficinas.First().Id;
+            this.Busy = false;
+        }
+    }
+    protected override async Task OnParametersSetAsync() {
+        if (id_cuenta != null) {
+            if (id_cuenta.Length > 1) {
+                this.nCuenta = long.Parse(id_cuenta);
+                this.id_oficina = id_oficinaParam;
+                await Tb_Cuenta_KeyUp(new KeyboardEventArgs { Key = "Enter" });
+            }
+        }
+    }
+
+
+    /*********** Eventos UI ***********/
+    public async Task Tb_Cuenta_KeyUp(KeyboardEventArgs e) {
+        if (e.Key == "Enter") {
+            this.datosConsultaGral = new ConsultaGralResponse();
+            this.SaldoActualArray = null;
+            this.ItemsHistorialConsum = null;
+            this.DesBotones = true;
+
+            //*** Comprobar cuenta capturada
+            if (this.nCuenta == null || this.id_oficina <= 0) {
+                if (this.nCuenta == null) {
+                    await JSRuntime.InvokeVoidAsync("shake", "#tb_ncuenta");
+                    Toaster.Add("El Numero de Contrato esta vacio.", MatToastType.Info, "");
+                }
+                else {
+                    await JSRuntime.InvokeVoidAsync("shake", "#cb_oficinas");
+                    Toaster.Add("Seleccione una oficina.", MatToastType.Info, "");
+                }
+                return;
+            }
+
+            this.Busy = true;
+            await Task.Delay(200);
+
+
+            //*** Realizar contusulta general
+            try {
+                this.datosConsultaGral = consultaGralService.ConsultaGeneral(id_oficina, this.nCuenta.ToString());
+                if (datosConsultaGral == null) {
+                    datosConsultaGral = new ConsultaGralResponse();
+                    Toaster.Add("El numero de cuenta no existe.", MatToastType.Warning, "");
+                    await Task.Delay(200);
+                    this.Busy = false;
+                    return;
+                }
+            }
+            catch (Exception err) {
+                Toaster.Add(err.Message, MatToastType.Warning, "");
+                await Task.Delay(200);
+                this.Busy = false;
+                return;
+            }
+
+
+            //*** Mostrar saldo actual (Grid)
+            var tmpSaldoItems = this.datosConsultaGral.SaldoActual.ToArray<ConsultaGralResponse_saldoItem>();
+            if (tmpSaldoItems.Length > 0) {
+                this.SaldoActualArray = tmpSaldoItems;
+            }
+            else {
+                this.SaldoActualArray = null; ;
+            }
+
+            //*** Cargar el Historial de consumos
+            var tmpHistItems = this.datosConsultaGral.HistorialConsumos.OrderBy(item => item.Fecha).ToArray<ConsumoItem>();
+            if (tmpHistItems.Length > 0) {
+                ItemsHistorialConsum = tmpHistItems;
+            }
+            else {
+                ItemsHistorialConsum = null;
+            }
+            await grafConsumos.RefreshAsync();
+
+
+            //*** Activar botones de las ventanas secundarias
+            this.DesBotones = false;
+
+            await Task.Delay(200);
+            this.Busy = false;
+        }
+    }
+    private async Task ComboBoxOficinas_SelectionChanged(int val) {
+        this.id_oficina = val;
+        await Task.Delay(100);
+    }
+
+
+    /******* Funciones Modales *******/
+    private async Task MostrarBusquedaAvz() {
+        if (!this.MostrarModal_BuscarCuentas) {
+            this.MostrarModal_BuscarCuentas = true;
+            Ruta tmpOfi = sicemService.ObtenerEnlaces(this.id_oficina).FirstOrDefault();
+            await modal_BusquedaCuenta.Inicializar(tmpOfi);
+        }
+    }
+    private async Task CerrarVentana_BusquedaCuenta(long? id_cuenta) {
+        this.MostrarModal_BuscarCuentas = false;
+
+        if (id_cuenta != null) {
+            nCuenta = id_cuenta;
+            await Tb_Cuenta_KeyUp(new KeyboardEventArgs { Key = "Enter" });
+        }
+    }
+
+    private async Task BotonMovimienos_click(Microsoft.AspNetCore.Components.Web.MouseEventArgs e) {
+        if (datosConsultaGral.Id_Padron <= 0) { return; }
+        if (MostrarModalMovimientos) { return; }
+
+        this.Busy = true;
+        await Task.Delay(100);
+        var tmpData = consultaGralService.ConsultaGral_Movimientos(id_oficina, datosConsultaGral.Id_Padron);
+        if (tmpData == null) {
+            Toaster.Add("Error al obtener el historial de movimientos, intente más tarde.", MatToastType.Danger, "");
+            await Task.Delay(100);
+            this.Busy = false;
+            return;
+        }
+        if (tmpData.Count <= 0) {
+            Toaster.Add("No hay movimientos registrados para esta cuenta.", MatToastType.Info, "");
+            await Task.Delay(100);
+            this.Busy = false;
+            return;
+        }
+
+        var ofi = sicemService.ObtenerEnlaces(this.id_oficina).FirstOrDefault();
+        this.MostrarModalMovimientos = true;
+        vtn_Movimientos.Titulo = $"{ofi.Oficina} - CONSULTA MOVIMIENTOS - {datosConsultaGral.Id_Cuenta}";
+        await vtn_Movimientos.Inicializar(ofi, tmpData.ToArray());
+
+        await Task.Delay(100);
+        this.Busy = false;
+
+    }
+    private async Task BotonModifABC_click(Microsoft.AspNetCore.Components.Web.MouseEventArgs e) {
+        if (datosConsultaGral.Id_Padron <= 0) { return; }
+        if (MostrarModalModifABC) { return; }
+
+        this.Busy = true;
+        await Task.Delay(100);
+
+        var ofi = sicemService.ObtenerEnlaces(this.id_oficina).FirstOrDefault();
+        var tmpData = consultaGralService.ConsultaGral_ModificacionesABC(id_oficina, datosConsultaGral.Id_Padron.ToString());
+
+        if (tmpData == null) {
+            Toaster.Add("Error al obtener el historial de modificaciones, intente más tarde.", MatToastType.Danger, "");
+            await Task.Delay(100);
+            this.Busy = false;
+            return;
+        }
+
+        if (tmpData.Count <= 0) {
+            Toaster.Add("No hay modificaciones registradas para esta cuenta.", MatToastType.Info, "");
+            await Task.Delay(100);
+            this.Busy = false;
+            return;
+        }
+
+        this.MostrarModalModifABC = true;
+        vtn_ModificacionesABS.Titulo = $"{ofi.Oficina} - MODIFICACIONES ABC - {datosConsultaGral.Id_Cuenta}";
+        await vtn_ModificacionesABS.Inicializar(tmpData);
+
+        await Task.Delay(100);
+        this.Busy = false;
+
+    }
+    private async Task BotonOrdenes_click(Microsoft.AspNetCore.Components.Web.MouseEventArgs e) {
+        if (datosConsultaGral.Id_Padron <= 0) { return; }
+        if (MostrarModal_Ordenes) { return; }
+
+        this.Busy = true;
+        await Task.Delay(100);
+
+        var tmpData = consultaGralService.ConsultaGral_Ordenes(id_oficina, datosConsultaGral.Id_Padron.ToString());
+
+        if (tmpData == null) {
+            Toaster.Add("Error al obtener el historial de ordenes de trabajado, intente más tarde.", MatToastType.Danger, "");
+            await Task.Delay(100);
+            this.Busy = false;
+            return;
+        }
+
+        if (tmpData.Count <= 0) {
+            Toaster.Add("No hay ordenes de trabajado para esta cuenta.", MatToastType.Info, "");
+            await Task.Delay(100);
+            this.Busy = false;
+            return;
+        }
+
+        var ofi = sicemService.ObtenerEnlaces(this.id_oficina).FirstOrDefault();
+        this.MostrarModal_Ordenes = true;
+        vnt_Ordenes.Titulo = $"{ofi.Oficina} - ORDENES DE TRABAJO - {datosConsultaGral.Id_Cuenta}";
+        await vnt_Ordenes.Inicializar(tmpData);
+
+        await Task.Delay(100);
+        this.Busy = false;
+
+    }
+    private async Task BotonAnticipos_click(Microsoft.AspNetCore.Components.Web.MouseEventArgs e) {
+        if (datosConsultaGral.Id_Padron <= 0) { return; }
+        if (MostrarModal_Anticipos) { return; }
+
+        this.Busy = true;
+        await Task.Delay(100);
+
+        var tmpData = consultaGralService.ConsultaGral_Anticipos(id_oficina, datosConsultaGral.Id_Padron.ToString());
+
+        if (tmpData == null) {
+            Toaster.Add("No hay anticipos registrados a esta cuenta.", MatToastType.Info, "");
+            await Task.Delay(100);
+            this.Busy = false;
+            return;
+        }
+        if (tmpData.Anticipos.Count <= 0) {
+            Toaster.Add("No hay anticipos registrados a esta cuenta.", MatToastType.Info, "");
+            await Task.Delay(100);
+            this.Busy = false;
+            return;
+        }
+
+        var ofi = sicemService.ObtenerEnlaces(this.id_oficina).FirstOrDefault();
+        this.MostrarModal_Anticipos = true;
+        vnt_Ordenes.Titulo = $"{ofi.Oficina} - ANTICIPOS - {datosConsultaGral.Id_Cuenta}";
+        await vnt_Anticipos.Inicializar(tmpData);
+
+        await Task.Delay(100);
+        this.Busy = false;
+
+    }
+    private async Task BotonImagenes_click(Microsoft.AspNetCore.Components.Web.MouseEventArgs e) {
+        if (datosConsultaGral.Id_Padron >= 1) {
+
+            if (!MostrarModal_Imagenes) {
+                this.Busy = true;
+                await Task.Delay(200);
+
+                var tmpData = consultaGralService.ConsultaGral_Imagenes(id_oficina, datosConsultaGral.Id_Padron.ToString());
+
+                if (tmpData == null) {
+                    Toaster.Add("Error al tratar de realizar la consulta, intente mas tarde", type: MatToastType.Danger);
+                }
+                else {
+                    if (tmpData.ToArray().Length > 0) {
+                        this.MostrarModal_Imagenes = true;
+                        vnt_Imagenes.OficinaActual = id_oficina;
+                        await vnt_Imagenes.Inicializar(tmpData);
+                    }
+                    else {
+                        Toaster.Add("No hay documentos para este usuario", MatToastType.Info, "Sin Datos", null);
+                    }
+                }
+                this.Busy = false;
+            }
+        }
+    }
+    private void MostrarUbicacion_Click(){
+        if(!datosConsultaGral.TieneUbicacion){
+            return;
+        }
+
+        //*** Mostrar datos en el mapa
+        double latitud = Double.Parse(this.datosConsultaGral.Latitud);
+        double longitud = Double.Parse(this.datosConsultaGral.Longitud);
+        MarkerDataSource.Clear();
+        MarkerDataSource.Add(new MapMark(){
+            Latitude = latitud,
+            Longitude = longitud,
+            Descripcion = $"{this.datosConsultaGral.Id_Cuenta} {this.datosConsultaGral.Razon_social} {latitud}, {longitud}",
+            Zoom = 17
+        });
+        mostrarMapa = true;
+    }
+
+}

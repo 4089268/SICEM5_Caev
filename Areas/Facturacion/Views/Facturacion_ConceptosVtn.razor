@@ -1,0 +1,273 @@
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Facturacion.Models
+@inject FacturacionService facturacionService
+@inject IJSRuntime JSRuntime
+
+@if(Visible){
+    <VentanaSecundaria Titulo="@Titulo2" CerrarVentana="@CerrarVentana" Filas="@Filas" Columnas="@Columnas">
+        <Content>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="mr-2" Raised="true" Style="height:2.5rem;" @onclick="@GenerarExcel">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                    <div class="d-flex align-items-center jusitfy-content-center ml-auto pr-2">
+                        <label class="px-3" style="font-size:1.2rem;">LOCALIDAD:</label>
+                        <ComboBox Width="220" InitValue="0" Options="@CatLocalidades" OnSelected="@ComboLocalidad_Selected" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="dataGrid" DataSource="@datosGrid" TValue="Facturacion_Conceptos" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Id_Concepto)" HeaderText="Id Concepto" TextAlign="TextAlign.Center" Width="60" Visible="false" />
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Concepto)" HeaderText="Concepto" TextAlign="TextAlign.Left" Width="180" />
+
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Domestico_Sub)" Visible="false" HeaderText="Domestico Sub." TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Domestico_Iva)" Visible="false" HeaderText="Domestico IVA" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Domestico_Total)" Visible="false" HeaderText="Domestico Total" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                        
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Hotelero_Sub)" Visible="false" HeaderText="Hotelero Sub." TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Hotelero_Iva)" Visible="false" HeaderText="Hotelerol IVA" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Hotelero_Total)" Visible="false" HeaderText="Hotelero Total" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Comercial_Sub)" Visible="false" HeaderText="Comercial Sub." TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Comercial_Iva)" Visible="false" HeaderText="Comercial IVA" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Comercial_Total)" Visible="false" HeaderText="Comercial Total" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                                                
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Industrial_Sub)" Visible="false" HeaderText="Industrial Sub." TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Industrial_Iva)" Visible="false" HeaderText="Industrial IVA" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Industrial_Total)" Visible="false" HeaderText="Industrial Total" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                        
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.ServGen_Sub)" Visible="false" HeaderText="Publico Sub." TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.ServGen_Iva)" Visible="false" HeaderText="Publico IVA" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.ServGen_Total)" Visible="false" HeaderText="Publico Total" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                        
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Subtotal)" Visible="false" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Iva)"    Visible="false" HeaderText="IVA" TextAlign="TextAlign.Right" Width="90" Format="c2" />
+                        <GridColumn Field="@nameof(Facturacion_Conceptos.Total)" Visible="false" HeaderText="Total" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+
+                        <GridColumn HeaderText="Total" TextAlign="TextAlign.Center" Width="210">
+                            <HeaderTemplate>
+                                <div class="colorT6" style="grid-area: 1/1/2/4;">Total</div>
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var data = (context as Facturacion_Conceptos);
+                                    var _classInfo = "";
+                                    switch(data.Id_Concepto){
+                                        case 997:
+                                            _classInfo="infoRow1";
+                                        break;
+                                        case 998:
+                                            _classInfo="infoRow2";
+                                        break;
+                                        case 999:
+                                            _classInfo="infoRow3";
+                                        break;
+
+                                    }
+                                    <div class="customCol @_classInfo ">
+                                        <div class="item colorT6">@(data.Id_Concepto > 996?data.Subtotal.ToString("n0"):data.Subtotal.ToString("c2"))</div>
+                                        <div class="item colorT6">@(data.Id_Concepto > 996?data.Iva.ToString("n0"):data.Iva.ToString("c2"))</div>
+                                        <div class="item colorT6">@(data.Id_Concepto > 996?data.Total.ToString("n0"):data.Total.ToString("c2"))</div>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+
+                        <GridColumn HeaderText="Domesticos" TextAlign="TextAlign.Center" Width="210">
+                            <HeaderTemplate>
+                                <div class="colorT1" style="grid-area: 1/1/2/4;">Domesticos</div>
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var data = (context as Facturacion_Conceptos);
+                                    <div class="customCol">
+                                        <div class="item colorT1">@(data.Id_Concepto > 996?data.Domestico_Sub.ToString("n0"):data.Domestico_Sub.ToString("c2"))</div>
+                                        <div class="item colorT1">@(data.Id_Concepto > 996?data.Domestico_Iva.ToString("n0"):data.Domestico_Iva.ToString("c2"))</div>
+                                        <div class="item colorT1">@(data.Id_Concepto > 996?data.Domestico_Total.ToString("n0"):data.Domestico_Total.ToString("c2"))</div>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+
+                        <GridColumn HeaderText="Hotelero" TextAlign="TextAlign.Center" Width="210">
+                            <HeaderTemplate>
+                                <div class="colorT2" style="grid-area: 1/1/2/4;">Hotelero</div>
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var data = (context as Facturacion_Conceptos);
+                                    <div class="customCol">
+                                        <div class="item colorT2">@(data.Id_Concepto > 996?data.Hotelero_Sub.ToString("n0"):data.Hotelero_Sub.ToString("c2"))</div>
+                                        <div class="item colorT2">@(data.Id_Concepto > 996?data.Hotelero_Iva.ToString("n0"):data.Hotelero_Iva.ToString("c2"))</div>
+                                        <div class="item colorT2">@(data.Id_Concepto > 996?data.Hotelero_Total.ToString("n0"):data.Hotelero_Total.ToString("c2"))</div>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+
+                        <GridColumn HeaderText="Comercial" TextAlign="TextAlign.Center" Width="210">
+                            <HeaderTemplate>
+                                <div class="colorT3" style="grid-area: 1/1/2/4;">Comercial</div>
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var data = (context as Facturacion_Conceptos);
+                                    <div class="customCol">
+                                        <div class="item colorT3">@(data.Id_Concepto > 996?data.Comercial_Sub.ToString("n0"):data.Comercial_Sub.ToString("c2"))</div>
+                                        <div class="item colorT3">@(data.Id_Concepto > 996?data.Comercial_Iva.ToString("n0"):data.Comercial_Iva.ToString("c2"))</div>
+                                        <div class="item colorT3">@(data.Id_Concepto > 996?data.Comercial_Total.ToString("n0"):data.Comercial_Total.ToString("c2"))</div>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+
+                        <GridColumn HeaderText="Industrial" TextAlign="TextAlign.Center" Width="210"> 
+                            <HeaderTemplate>
+                                <div class="colorT4" style="grid-area: 1/1/2/4;">Industrial</div>
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var data = (context as Facturacion_Conceptos);
+                                    <div class="customCol">
+                                        <div class="item colorT4">@(data.Id_Concepto > 996?data.Industrial_Sub.ToString("n0"):data.Industrial_Sub.ToString("c2"))</div>
+                                        <div class="item colorT4">@(data.Id_Concepto > 996?data.Industrial_Iva.ToString("n0"):data.Industrial_Iva.ToString("c2"))</div>
+                                        <div class="item colorT4">@(data.Id_Concepto > 996?data.Industrial_Total.ToString("n0"):data.Industrial_Total.ToString("c2"))</div>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+
+                        <GridColumn HeaderText="Publico" TextAlign="TextAlign.Center" Width="210">
+                            <HeaderTemplate>
+                                <div class="colorT5" style="grid-area: 1/1/2/4;">Publico</div>
+                            </HeaderTemplate>
+                            <Template>
+                                @{
+                                    var data = (context as Facturacion_Conceptos);
+                                    <div class="customCol">
+                                        <div class="item colorT5">@(data.Id_Concepto > 996?data.ServGen_Sub.ToString("n0"): data.ServGen_Sub.ToString("c2"))</div>
+                                        <div class="item colorT5">@(data.Id_Concepto > 996?data.ServGen_Iva.ToString("n0"):data.ServGen_Iva.ToString("c2"))</div>
+                                        <div class="item colorT5">@(data.Id_Concepto > 996?data.ServGen_Total.ToString("n0"):data.ServGen_Total.ToString("c2"))</div>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+}
+
+<style>
+    .customCol{
+        display:flex;
+        align-items:center;
+        justify-content:space-around;
+    }
+        .customCol .item{
+            font-size:.9rem;
+            font-weight:600;
+            text-align:right;
+            width:33%;
+        }
+
+        .colorT1{
+            color:#1976d2;
+        }
+        .colorT2{
+            color:#00796b;
+        }
+        .colorT3{
+            color:#b75005;
+        }
+        .colorT4{
+            color:#00838f;
+        }
+        .colorT5{
+            color:#c2185b;
+        }
+        .colorT6{
+            color:#607d8b;
+        }
+    
+    
+
+</style>
+
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+
+@code {
+
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback CerrarModal { get; set; }
+    [Parameter] public DateTime Fecha {get;set;}
+    [Parameter] public int Subsistema {get;set;}
+    [Parameter] public int Sector {get;set;}
+    public string Titulo {get;set;} = "CONCEPTOS FACTURADOS";
+    private string Titulo2 {
+        get {
+            if(idLocalidadSeleccionado > 0){
+                return $"{Titulo} - {CatLocalidades[idLocalidadSeleccionado]}";
+            }else{
+                return Titulo;
+            }
+        }
+    }
+
+    private SfGrid<Facturacion_Conceptos> dataGrid {get;set;}
+    private IEnlace oficinaActual;
+    private List<Facturacion_Conceptos> datosGrid;
+    private double[] Filas = new double[]{48,700};
+    private double[] Columnas = new double[] {0.85};
+    private bool busyDialog = false;
+    private Dictionary<int, string> CatLocalidades = new Dictionary<int, string>();
+    private int idLocalidadSeleccionado = 0;
+    
+
+    //"******** Funciones Generales ********"
+    public void Inicializar(IEnlace oficina, IEnumerable<Facturacion_Conceptos> datos, Dictionary<int,string> catLocal,  bool agregarTotal = true){
+        this.CatLocalidades = catLocal;
+
+        this.oficinaActual = oficina;
+        this.datosGrid = datos.ToList();
+    }
+    private async Task GenerarExcel(){
+        var _name = $"{Titulo2.Replace(" ","_")}-{Guid.NewGuid().ToString().Replace("-","")}.xlsx";
+
+        var p = new ExcelExportProperties();
+        p.IncludeHiddenColumn = true;
+        p.FileName = _name;
+        await this.dataGrid.ExcelExport(p);
+    }
+    private async Task CerrarVentana(){
+        await CerrarModal.InvokeAsync("");
+    }
+
+    private async Task ComboLocalidad_Selected(int idLocalidad){
+        busyDialog = true;
+        await Task.Delay(100);
+
+        idLocalidadSeleccionado = idLocalidad;
+        datosGrid = new List<Facturacion_Conceptos>();
+        StateHasChanged();
+        datosGrid = facturacionService.ObtenerFacturacionConceptos(oficinaActual, this.Fecha.Year, this.Fecha.Month, this.Subsistema, this.Sector, idLocalidad).ToList();
+        StateHasChanged();
+
+        await Task.Delay(200);
+        busyDialog = false;
+
+        await JSRuntime.InvokeVoidAsync("iniciarVentanaConceptos");
+
+    }
+
+}

@@ -1,0 +1,121 @@
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.ModsUbitoma.Models
+@using Sicem_Blazor.ModsUbitoma.Data
+@inject NavigationManager NavManager
+@inject IMatToaster Toaster
+@inject IUbitomaService ubitomaService
+@inject SicemService sicemService
+
+<VentanaSecundaria Titulo="@Titulo" Columnas="@ColumnasGrid" Filas="@FilasGrid" CerrarVentana="@CerrarVentana">
+    <Content>
+        
+        @* ****** Acciones ****** *@
+        <div class="border rounded bg-white d-flex align-items-center" style="grid-area:1/1/2/3;">
+            <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" @onclick="ExportarDatos">Exportar Excel</MatButton>
+            <MatButton Class="mx-2" style="min-width: 130px;" Raised="true" Disabled="true">Generar Reporte</MatButton>
+        </div>
+
+        @* ****** DataGrid ****** *@
+        <div class="border rounded bg-white p-2 d-flex" style="grid-area:@(SelectedItem == null?"2/1/3/3":"2/1/3/2");">
+            <SfGrid @ref="dataGrid" DataSource="@datosHistorial" TValue="HistActualizacion" AllowResizing="true" AllowSorting="true" AllowFiltering="false"
+                    AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="100%" EnableHover="true" >
+                    <GridEvents TValue="HistActualizacion" RowSelected="DataGrid_RowSelected" ></GridEvents>
+                <GridColumns>
+                    <GridColumn Field="@nameof(HistActualizacion.Oficina)"  HeaderText="Oficina" TextAlign="TextAlign.Left" Width="140" />
+                    <GridColumn Field="@nameof(HistActualizacion.IdCuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="120" />
+                    <GridColumn Field="@nameof(HistActualizacion.Geolocalizado)" HeaderText="Geolocalizado" TextAlign="TextAlign.Center" Width="100" DisplayAsCheckBox="true"/>
+                    <GridColumn Field="@nameof(HistActualizacion.ModAnomaliaToma)" HeaderText="Mod Anomalia Toma" TextAlign="TextAlign.Center" DisplayAsCheckBox="true" Width="100" />
+                    <GridColumn Field="@nameof(HistActualizacion.ModTarifa)" HeaderText="Mod Tarifa" TextAlign="TextAlign.Center" Width="100" DisplayAsCheckBox="true"/>
+                    <GridColumn Field="@nameof(HistActualizacion.ModGiro)" HeaderText="Mod Giro" TextAlign="TextAlign.Center" Width="100" DisplayAsCheckBox="true"/>
+                    <GridColumn Field="@nameof(HistActualizacion.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Center" Width="160" />
+
+                    <GridColumn Field="@nameof(HistActualizacion.LocalizacionAnt)" HeaderText="Localizacion Ant" TextAlign="TextAlign.Left"     Width="auto" Visible="false" />
+                    <GridColumn Field="@nameof(HistActualizacion.LocalizacionAct)" HeaderText="Localizacion Act" TextAlign="TextAlign.Left"     Width="auto" Visible="false" />
+                    <GridColumn Field="@nameof(HistActualizacion.AnomaliaAnt)" HeaderText="Anomalia Ant" TextAlign="TextAlign.Left"             Width="auto" Visible="false" />
+                    <GridColumn Field="@nameof(HistActualizacion.AnomaliaAct)" HeaderText="Anomalia Act" TextAlign="TextAlign.Left"             Width="auto" Visible="false" />
+                    <GridColumn Field="@nameof(HistActualizacion.TarifaAnt)" HeaderText="Tarifa Ant" TextAlign="TextAlign.Left"                 Width="auto" Visible="false" />
+                    <GridColumn Field="@nameof(HistActualizacion.TarifaAct)" HeaderText="Tarifa Act" TextAlign="TextAlign.Left"                 Width="auto" Visible="false" />
+                    <GridColumn Field="@nameof(HistActualizacion.GiroAnt)" HeaderText="Giro Ant" TextAlign="TextAlign.Left"                     Width="auto" Visible="false" />
+                    <GridColumn Field="@nameof(HistActualizacion.GiroAct)" HeaderText="Giro Act" TextAlign="TextAlign.Left"                     Width="auto" Visible="false" />
+                    <GridColumn Field="@nameof(HistActualizacion.Observaciones)" HeaderText="Observaciones" TextAlign="TextAlign.Left"          Width="auto" Visible="false" />
+                
+                    <GridColumn HeaderText="" TextAlign="TextAlign.Left" Width="auto" />
+                    
+                </GridColumns>
+            </SfGrid>
+        </div>
+
+        @* ****** DataGrid ****** *@
+        @if(SelectedItem != null){
+            <div class="border rounded bg-white p-2 d-flex flex-column overflow-scroll" style="grid-area:2/2/3/3;">
+                <div class="h4 w-100 text-center text-uppercase pt-3 pb-1 font-bold"> Cambios</div>
+                <DatosActualizacionItem DatosAnteriores="@SelectedItem.ValorAnterior" DatosNuevos="@SelectedItem.ValorNuevo"/>
+            </div>
+        }
+        
+    </Content>
+</VentanaSecundaria>
+
+@* ****** Dialogos y ventanas secundarias ****** *@
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+
+@code{
+
+    [Parameter] public IEnlace Enlace {get;set;}
+    [Parameter] public DateTime FechaDesde {get;set;}
+    [Parameter] public DateTime FechaHasta {get;set;}
+    [Parameter] public EventCallback OnClose {get;set;}
+    
+
+    private SfGrid<HistActualizacion> dataGrid { get; set; }
+    private bool busyDialog = false;
+    private List<HistActualizacion> datosHistorial { get; set; }
+    private HistActualizacion SelectedItem {get;set;}
+    public string Titulo {
+        get => $"Historial Modificaciones {Enlace.Nombre} Del {FechaDesde.ToString("dd-MMM-yyyy")} al {FechaHasta.ToString("dd-MMM-yyyy")}".ToUpper();
+    }
+    private double[] FilasGrid = new double[]{ 45, .75 };
+    private double[] ColumnasGrid = new double[]{ .7 , .20 };
+    
+
+
+    //********* Funciones  *********
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender){
+            await Procesar();
+        }
+    }
+    private async Task Procesar(){
+        this.busyDialog = true;
+        await Task.Delay(100);
+        StateHasChanged();
+
+        this.SelectedItem = null;
+
+        var _request = new ConsultaRequest(){
+            FechaDesde = FechaDesde,
+            FechaHasta = FechaHasta
+        };
+    
+        datosHistorial = (await ubitomaService.ObtenerHistorialModificacionesOficina(Enlace, _request)).ToList();
+
+        await Task.Delay(100);
+        this.busyDialog = false;
+        StateHasChanged();
+    }
+    private void DataGrid_RowSelected(RowSelectEventArgs<HistActualizacion> args){
+        if(args.Data != null){
+            this.SelectedItem = args.Data;
+        }
+    }
+    private async Task CerrarVentana(){
+        await OnClose.InvokeAsync(null);
+    }
+    private async Task ExportarDatos(){
+        var _options = new ExcelExportProperties(){
+            IncludeHiddenColumn = true
+        };
+        await dataGrid.ExportToExcelAsync(_options);
+    }
+}

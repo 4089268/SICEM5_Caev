@@ -1,0 +1,123 @@
+﻿@inject ConsultaGralService consultaGralService
+@inject SicemService sicemService
+@inject NavigationManager NavManager
+
+<VentanaSecundaria Titulo="@Titulo" CerrarVentana="@( e => CerrarModal())" Filas="@filasTemplate" Columnas="@columnasTemplate">
+    <Content>
+        @if (estatusView == Estatus.cargando) {
+
+            <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="grid-area:1/1/3/2">
+                <div class="d-flex flex-column align-items-center justify-content-center">
+                    <div class="m-2">Cargando datos...</div>
+                    <div class="spinner-border" role="status">
+                    </div>
+                </div>
+            </div>
+
+        }
+
+        @if (estatusView == Estatus.completado) {
+            <div class="d-flex flex-column flex-row flex-wrap align-content-start justify-content-around datosGeneralesItems" style="grid-area:1/1/2/2">
+                <div class="item"> <div class="lbl"> Contrato</div>     <input type="text" disabled value="@datosGenerales.Id_Cuenta" /> </div>
+                <div class="item"> <div class="lbl"> Razon Social</div> <input type="text" disabled value="@datosGenerales.Razon_social" /> </div>
+                <div class="item"> <div class="lbl"> R.F.C.</div>       <input type="text" disabled value="@datosGenerales.RFC" /> </div>
+                <div class="item"> <div class="lbl"> Estatus</div>      <input type="text" disabled value="@datosGenerales.Estatus" /> </div>
+                <div class="item"> <div class="lbl"> Direccion</div>    <input type="text" disabled value="@datosGenerales.Direccion" /> </div>
+                <div class="item"> <div class="lbl"> Colonia</div>      <input type="text" disabled value="@datosGenerales.Colonia" /> </div>
+                <div class="item"> <div class="lbl"> Giro</div>         <input type="text" disabled value="@datosGenerales.Giro" /> </div>
+                <div class="item"> <div class="lbl"> Facturacion</div>  <input type="text" disabled value="@($"{datosGenerales.Mf} - {datosGenerales.Af}")" /> </div>
+                <div class="item"> <div class="lbl"> Servicio</div>     <input type="text" disabled value="@datosGenerales.Servicio" /> </div>
+                <div class="item"> <div class="lbl"> Meses Adeudo</div> <input type="text" disabled value="@datosGenerales.MesesAdeudo" /> </div>
+                <div class="item"> <div class="lbl"> Tarifa</div>       <input type="text" disabled value="@datosGenerales.TarifaFija" /> </div>
+                <div class="item"> <div class="lbl"> Situacion</div>    <input type="text" disabled value="@datosGenerales.Situacion_Toma" /> </div>
+                <div class="item"> <div class="lbl"> Lectura Act</div>  <input type="text" disabled value="@datosGenerales.Lectura_Act" /> </div>
+                <div class="item"> <div class="lbl"> Medidor </div>     <input type="text" disabled value="@datosGenerales.Medidor" /> </div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-center" style="grid-area: 2/1/3/2">
+                <input class="py-2 px-4" type="button" value="Mostrar en Consulta General" @onclick="@(e => MostrarConsultaGeneral())" />
+            </div>
+        }
+
+        @if (estatusView == Estatus.error) {
+            <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="grid-area:1/1/3/2">
+                <div class="d-flex flex-column align-items-center justify-content-center">
+                    <div class="m-2">Error al realizar la consulta</div>
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            </div>
+        }
+
+
+    </Content>
+</VentanaSecundaria>
+
+<style>
+    .datosGeneralesItems .item {
+        display: flex;
+        flex-flow: column;
+        margin: 2px 4px 8px 4px;
+        height: 45px;
+        justify-content: space-around;
+        width: 48%;
+    }
+
+        .datosGeneralesItems .item .lbl {
+            font-size: 1.2rem;
+            padding-left: .4rem;
+        }
+
+        .datosGeneralesItems .item input[type=text] {
+            padding: 4px 6px;
+        }
+</style>
+
+@code {
+    [Parameter] public string Titulo { get; set; }
+    [Parameter] public EventCallback CerrarVentana { get; set; }
+    [Parameter] public string Cuenta { get; set; }
+    [Parameter] public int IdOficina { get; set; }
+
+    private double[] filasTemplate = new double[] { 410, 40 };
+    private double[] columnasTemplate = new double[] { 500 };
+    private ConsultaGralResponse datosGenerales { get; set; }
+    private Estatus estatusView = Estatus.cargando;
+
+    protected override void OnInitialized() {
+        this.Titulo = $"Datos generales cuenta {Cuenta} ";
+        base.OnInitialized();
+        MostrarDatosGenerales();
+    }
+    protected override void OnAfterRender(bool firstRender) {
+        if (firstRender) {
+            MostrarDatosGenerales();
+        }
+        base.OnAfterRender(firstRender);
+    }
+
+    private void CerrarModal() {
+        this.estatusView = Estatus.cargando;
+        CerrarVentana.InvokeAsync(null);
+    }
+
+    private void MostrarDatosGenerales() {
+        this.estatusView = Estatus.cargando;
+        var _datosGenerales = consultaGralService.ConsultaGeneral(IdOficina, Cuenta);
+        if (_datosGenerales == null) {
+            this.estatusView = Estatus.error;
+        }
+        else {
+            this.datosGenerales = _datosGenerales;
+            this.estatusView = Estatus.completado;
+        }
+    }
+    private void MostrarConsultaGeneral(){
+        NavManager.NavigateTo($"/ConsultaGeneral/{IdOficina}/{Cuenta}");
+    }
+    public enum Estatus : int {
+        cargando = 0,
+        completado = 1,
+        error = 2
+    }
+
+}

@@ -1,0 +1,90 @@
+@using Sicem_Blazor.Facturacion.Models
+@if(Visible){
+    <VentanaSecundaria Titulo="@Titulo" Filas="@FilasTemplate" Columnas="@ColumnasTemplate" CerrarVentana="@CerrarClick">
+        <Content>
+            <div class="d-flex align-items-center p-2 mb-2 border bg-white runded">
+                <div class="button bg-success px-3 py-2" @onclick="OnExportExcel_Click" >
+                    <i class="fa fa-file-excel mr-2"></i>
+                    <span>Exportar Datos</span>
+                </div>
+            </div>
+
+            <div class="p-2 border bg-white runded">
+                <SfGrid @ref="DataGrid" DataSource="@DatosGrid" AllowExcelExport="true" AllowResizing="true" AllowPaging="true" Width="100%" Height="100%" >
+                    <GridPageSettings PageSize="1000"></GridPageSettings>
+                    <GridColumns>
+                        @* <GridColumn Field="@nameof(Factura.IdFactura)" HeaderText="Id Factura" TextAlign="TextAlign.Left" Width="170"/> *@
+                        <GridColumn Field="@nameof(Factura.IdCuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(Factura.AguaSb)" HeaderText="Agua" TextAlign="TextAlign.Right" Width="80" Format="c2"/>
+                        <GridColumn Field="@nameof(Factura.DrenajeSb)" HeaderText="Drenaje" TextAlign="TextAlign.Right" Width="80" Format="c2"/>
+                        <GridColumn Field="@nameof(Factura.SaneamientoSb)" HeaderText="Saneamiento" TextAlign="TextAlign.Right" Width="80" Format="c2"/>
+                        <GridColumn Field="@nameof(Factura.ActualizacionSb)" HeaderText="Actualizacion" TextAlign="TextAlign.Right" Width="80" Format="c2"/>
+                        <GridColumn Field="@nameof(Factura.OtrosSb)" HeaderText="Otros" TextAlign="TextAlign.Right" Width="80" Format="c2"/>
+                        <GridColumn Field="@nameof(Factura.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="80" Format="c2" />
+                        <GridColumn Field="@nameof(Factura.Iva)" HeaderText="Iva" TextAlign="TextAlign.Right" Width="60" Format="c2" />
+                        <GridColumn Field="@nameof(Factura.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="100" Format="c2" />
+                        <GridColumn Field="@nameof(Factura.Sucursal)" HeaderText="Sucursal" TextAlign="TextAlign.Center" Width="140" />
+                        <GridColumn Field="@nameof(Factura.Localidad)" HeaderText="Localidad" TextAlign="TextAlign.Center" Width="140" />
+                        <GridColumn Field="@nameof(Factura.Subsistema)" HeaderText="Subsistema" TextAlign="TextAlign.Center" Width="60" />
+                        <GridColumn Field="@nameof(Factura.Sector)" HeaderText="Sector" TextAlign="TextAlign.Center" Width="60" />
+                        <GridColumn Field="@nameof(Factura.Estatus)" HeaderText="Estatus" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(Factura.Mf)" HeaderText="Mf" TextAlign="TextAlign.Center" Width="60" />
+                        <GridColumn Field="@nameof(Factura.Af)" HeaderText="Af" TextAlign="TextAlign.Center" Width="80" />
+                        <GridColumn Field="@nameof(Factura.Servicio)" HeaderText="Servicio" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Factura.Tarifa)" HeaderText="Tarifa" TextAlign="TextAlign.Left" Width="140" />
+                        <GridColumn Field="@nameof(Factura.Consumo)" HeaderText="M3 Consumidos" TextAlign="TextAlign.Center" Width="100" Format="n0" />
+                        <GridColumn Field="@nameof(Factura.ConsumoFacturado)" HeaderText="M3 Facturados" TextAlign="TextAlign.Center" Width="100" Format="n0" />
+                        <GridColumn Field="@nameof(Factura.TipoCalculado)" HeaderText="Tipo Calculo" TextAlign="TextAlign.Center" Width="100" />
+                        
+                        @* <GridColumn Field="@nameof(Factura.Genero)" HeaderText="Genero" TextAlign="TextAlign.Left" Width="auto" />
+                        <GridColumn Field="@nameof(Factura.Lecturista)" HeaderText="Lecturista" TextAlign="TextAlign.Left" Width="auto" />
+                        <GridColumn Field="@nameof(Factura.Capturo)" HeaderText="Capturo" TextAlign="TextAlign.Left" Width="auto" />
+                        <GridColumn Field="@nameof(Factura.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Center" Width="auto" /> *@
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+    <BusyIndicator Busy="@IsBusy" ContentText="Preparando documento..." />
+}
+
+@code{
+    [Parameter] public bool Visible {get;set;} = false;
+    [Parameter] public string Titulo {get;set;} = "Lista Facturas";
+    [Parameter] public EventCallback OnClose {get;set;}
+    private SfGrid<Factura> DataGrid {get;set;}
+    private List<Factura> DatosGrid {get;set;}
+    private Ruta Oficina {get;set;}
+    private bool IsBusy = false;
+
+    private double[] ColumnasTemplate = new double[]{.85};
+    private double[] FilasTemplate = new double[]{50, .75};
+
+    public void Inicializar(List<Factura> datos, Ruta oficina){
+        DatosGrid = datos;
+        this.Oficina = oficina;
+    }
+    private async Task CerrarClick(){
+        await this.OnClose.InvokeAsync(null);
+    }
+    private async Task OnExportExcel_Click(){
+        IsBusy = true;
+        await Task.Delay(100);
+
+        if(DataGrid == null){
+            return;
+        }
+        var _guid = Guid.NewGuid().ToString().Replace("-","").Substring(0,10);
+        var _titulo = Titulo.Replace(" - ",".").Replace(" ","_").ToString();
+        var _p = new ExcelExportProperties(){
+            FileName = $"{_titulo}-{_guid}.xlsx",
+            IncludeHiddenColumn = true
+        };
+        await DataGrid.ExportToExcelAsync(_p);
+
+        await Task.Delay(100);
+        IsBusy = false;
+    }
+
+}

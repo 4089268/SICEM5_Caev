@@ -1,0 +1,80 @@
+<div class="NsRangeNumeric">
+    <select @bind="OpcionSeleccionado">
+        <option value="0">Cualquiera</option>
+        <option value="1">Mayor que</option>
+        <option value="2">Menor que</option>
+        <option value="3">Entre</option>
+        <option value="4">Igual</option>
+    </select>
+
+    <div class="d-flex">
+        @if(OpcionSeleccionado != 0){
+            <input type="text" style="width:@(OpcionSeleccionado!=3?"50":"100")%;" value="@(Valor1.ToString(@Format))" @onchange="@(e => OnTextField_Changed(e, 1))" />
+
+            @if(OpcionSeleccionado == 3){
+                <input type="text" style="width:50%;" value="@(Valor2.ToString(@Format))" @onchange="@(e => OnTextField_Changed(e, 2))" />
+            }
+        }
+    </div>
+
+</div>
+
+
+@code {
+    [Parameter] public int Width {get;set;} = 200;
+    [Parameter] public int Height {get;set;} = 30;
+    [Parameter] public string Format {get;set;} = "n2";
+    
+    private int _opcionSeleccionado;
+    private decimal _valor1;
+    private decimal _valor2;
+    [Parameter] public int OpcionSeleccionado {
+        get => _opcionSeleccionado;
+        set {
+            if( _opcionSeleccionado == value) return;
+            _opcionSeleccionado = value;
+            OpcionSeleccionadoChanged.InvokeAsync(value);
+        }
+    }
+    [Parameter] public decimal Valor1 {
+        get => _opcionSeleccionado;
+        set {
+            if( _valor1 == value) return;
+            _valor1 = value;
+            Valor1Changed.InvokeAsync(value);
+        }
+    }
+    [Parameter] public decimal Valor2 {
+        get => _opcionSeleccionado;
+        set {
+            if( _valor2 == value) return;
+            _valor2 = value;
+            Valor2Changed.InvokeAsync(value);
+        }
+    }
+
+    [Parameter] public EventCallback<int> OpcionSeleccionadoChanged {get;set;}
+    [Parameter] public EventCallback<decimal> Valor1Changed {get; set;}
+    [Parameter] public EventCallback<decimal> Valor2Changed {get; set;}
+
+
+    private bool open {get;set;} = false;
+    private string labelText {get;set;} = "";
+
+    private void OnTextField_Changed(ChangeEventArgs e, int key){
+        switch(key){
+            case 1:
+                this.Valor1 = decimal.TryParse(e.Value.ToString(), out decimal tmpD1)?tmpD1:0m;
+                break;
+            case 2:
+                this.Valor2 = decimal.TryParse(e.Value.ToString(), out decimal tmpD2)?tmpD2:0m;
+                break;
+        }
+    }
+
+    private void OnInputChaged(ChangeEventArgs e){
+        Console.WriteLine($">> {e.Value}");
+        this.OpcionSeleccionado = int.TryParse(e.Value.ToString(), out int tmpint)?tmpint:0;
+    }
+
+}

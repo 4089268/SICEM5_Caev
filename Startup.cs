@@ -104,7 +104,7 @@ namespace Sicem_Blazor {
                 SupportedUICultures = new List<CultureInfo>(){_ci}
             });
 
-            Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("");
+            Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(Configuration["SyncfusionSettings:Key"]);
 
             if(env.IsDevelopment()) {
                 app.UseDeveloperExceptionPage();

@@ -3,14 +3,18 @@
 @inject SicemService sicemService
 
 <div class="sidebar-menu h-100">
-    <div class="itemMenu" Key="1" @onclick="@(()=>MenuClick(1))"><a href="./ConsultaGeneral"><span class="fa fa-address-book-o"></span>Consulta General</a></div>
+    <div class="itemMenu" Key="1" @onclick="@(()=>MenuClick(1))">
+        <a href="./ConsultaGeneral"><span class="fa fa-address-book-o"></span>Consulta General</a>
+    </div>
     @if(sicemService.Usuario.Enlaces.Count() > 1){
-        <div class="itemMenu" Key="665" @onclick="@(()=>MenuClick(665))"><a href="./AnalisisInfo"><span class="fa fa-search"></span>Búsqueda Avanzada</a></div>
+        <div class="itemMenu" Key="665" @onclick="@(()=>MenuClick(665))">
+            <a href="./AnalisisInfo"><span class="fa fa-search"></span>Búsqueda Avanzada</a>
+        </div>
     }
 
     <div class="separador" />
-
-    <div class="itemMenu" Key="2" @onclick="@(()=>MenuClick(2))"> <a href="./Recaudacion"><span class="fa fa-money"></span>Recaudación</a></div>
+    <div class="itemMenu" Key="2" @onclick="@(()=>MenuClick(2))"><a href="./Recaudacion"><span class="fa fa-money"></span>Recaudación</a></div>
+    <div class="itemMenu" Key="15" @onclick="@(()=>MenuClick(15))"><a href="./Pago-Linea"><span class="fa fa-money-check"></span><span>Pago En Linea</span></a></div>
     <div class="itemMenu" Key="3" @onclick="@(()=>MenuClick(3))"><a href="./Descuentos"><span class="fa fa-book"></span>Descuentos</a></div>
     <div class="itemMenu" Key="4" @onclick="@(()=>MenuClick(4))"><a href="./Facturacion"><span class="fa fa-fax"></span>Facturación</a></div>
     <div class="itemMenu" Key="11" @onclick="@(()=>MenuClick(11))"><a href="./Eficiencia"><span class="fa fa-chart-area"></span>Eficiencia</a></div>
@@ -20,7 +24,6 @@
     <div class="itemMenu" Key="6" @onclick="@(()=>MenuClick(6))"><a href="./ControlRezago"><span class="fa fa-bar-chart"></span>Antiguedad de Saldos</a></div>
     <div class="itemMenu" Key="10" @onclick="@(()=>MenuClick(10))"><a href="./Atencion"><span class="fa fa-users"></span>Atención de Usuarios</a></div>
     <div class="separador" />
-    @* <div class="itemMenu" Key="11" @onclick="@(()=>MenuClick(11))"><a href="./CatalogoTarifas"><span class="fa fa-hand-holding-usd"></span>Catalogo Tarifas</a></div> *@
     <div class="itemMenu" Key="12" @onclick="@(()=>MenuClick(12))"><a href="./SimuladorTarifario"><span class="fa fa-hand-holding-usd"></span>Simulador Tarifario</a></div>
     <div class="itemMenu" Key="13" @onclick="@(()=>MenuClick(13))"><a href="./Consulta-Ubitoma"><span class="fa fa-mobile"></span>Consulta Ubitoma</a></div>
     

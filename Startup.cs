@@ -23,6 +23,7 @@ using Sicem_Blazor.Recaudacion.Data;
 using Sicem_Blazor.Eficiencia.Data;
 using Sicem_Blazor.ModsUbitoma.Data;
 using Sicem_Blazor.Descuentos.Data;
+using Sicem_Blazor.PagoLinea.Data;
 using Sicem_Blazor.Helpers;
 
 
@@ -67,6 +68,7 @@ namespace Sicem_Blazor {
             services.AddScoped<PadronService>(s => new PadronService(Configuration, s.GetService<SicemService>()));
             services.AddScoped<ConceptosService>();
             services.AddScoped<LogeadoFilter>();
+            services.AddScoped<PagoLineaService>();
 
             services.AddHttpClient<UbitomaHttpClient>("ubitoma", client => {
                 string url = Configuration.GetSection("AppSettings").GetValue<string>("Ubitoma_Api");

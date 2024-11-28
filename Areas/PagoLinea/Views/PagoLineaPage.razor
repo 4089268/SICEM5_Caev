@@ -79,8 +79,25 @@
         </SfGrid>
     </div>
 
-    <!--- ****** Graficas ****** -->
+    <!--- Upload files-->
     <div class="d-flex" style="grid-area:5/1/6/2;">
+        
+        <InputFile OnChange="HandleFileSelected" />
+
+        <div id="table-wrapper">
+            
+            @if (CsvData?.Any())
+            {
+                <ul>
+                    @foreach (var row in CsvData)
+                    {
+                        <li>@row</li>
+                    }
+                </ul>
+            }else{
+                <span>Sin datos</span>
+            }
+        </div>
     </div>
 
 </div>

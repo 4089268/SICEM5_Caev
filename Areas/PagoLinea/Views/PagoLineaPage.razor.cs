@@ -5,8 +5,6 @@ using System.Linq;
 using System.IO;
 using Microsoft.JSInterop;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Logging;
 using Syncfusion.Blazor.Grids;
 using Syncfusion.Blazor.Charts;
@@ -36,9 +34,6 @@ namespace Sicem_Blazor.PagoLinea.Views
         public SicemService SicemService {get;set;} = default!;
         
         [Inject]
-        public IWebHostEnvironment Environment {get;set;} = default!;
-
-        [Inject]
         public ILogger<PagoLineaPage> Logger {get;set;} = default!;
 
 
@@ -51,8 +46,6 @@ namespace Sicem_Blazor.PagoLinea.Views
         private int Subsistema, Sector;
         private List<ResumeOffice> DatosRecaudacion {get;set;}
 
-
-        //********* Funciones *********
         protected override void OnInitialized()
         {
             var _now = DateTime.Now;
@@ -194,50 +187,6 @@ namespace Sicem_Blazor.PagoLinea.Views
             this.busyDialog = true;
             await Task.Delay(2000);
             this.busyDialog = false;
-        }
-
-        private IEnumerable<string> CsvData { get; set; } = [];
-
-        private async Task HandleFileSelected(InputFileChangeEventArgs e)
-        {
-            Logger.LogInformation("File uploaded!!");
-            var file = e.File;
-            if (file != null)
-            {
-                // Get a temporary path to store the file
-                var tempPath = Path.Combine(Environment.ContentRootPath, "Temp", file.Name);
-
-                // Save the file temporarily
-                Logger.LogInformation("Prepare to save the file");
-                Directory.CreateDirectory(Path.GetDirectoryName(tempPath));
-                await using var fileStream = new FileStream(tempPath, FileMode.Create);
-                await file.OpenReadStream().CopyToAsync(fileStream);
-                Logger.LogInformation("File save on temporally folder!!");
-
-                // Read the CSV file
-                CsvData = await ReadCsvAsync(tempPath);
-                Logger.LogInformation("Total records: " + CsvData.Count());
-                
-                // Clean up the temporary file
-                File.Delete(tempPath);
-
-                // Refresh UI
-                StateHasChanged();
-            }
-        }
-
-        private async Task<IEnumerable<string>> ReadCsvAsync(string filePath)
-        {
-            var csvData = new List<string>();
-
-            using var reader = new StreamReader(filePath);
-            while (!reader.EndOfStream)
-            {
-                var line = await reader.ReadLineAsync();
-                csvData.Add(line);
-            }
-
-            return csvData;
         }
 
     }

@@ -1,4 +1,4 @@
-@page "/Pago-Linea"
+@page "/PagoLinea"
 @namespace Sicem_Blazor.PagoLinea.Views
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Charts
@@ -79,24 +79,13 @@
         </SfGrid>
     </div>
 
-    <!--- Upload files-->
-    <div class="d-flex" style="grid-area:5/1/6/2;">
-        
-        <InputFile OnChange="HandleFileSelected" />
 
-        <div id="table-wrapper">
-            
-            @if (CsvData?.Any())
-            {
-                <ul>
-                    @foreach (var row in CsvData)
-                    {
-                        <li>@row</li>
-                    }
-                </ul>
-            }else{
-                <span>Sin datos</span>
-            }
+    <!--- Process files -->
+    <div class="container-fluid border p-2" style="grid-area:5/1/6/2;">
+        <div class="row">
+            <div class="col-12">
+                Graficas
+            </div>
         </div>
     </div>
 

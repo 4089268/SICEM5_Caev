@@ -44,7 +44,21 @@ namespace Sicem_Blazor.PagoLinea.Views
 
         private SfGrid<TransactionRecord> DataGrid {get;set;}
         private SfGrid<RecordsFile> DataGridFiles {get;set;}
+        private SfGrid<OprVenta> DataGridNoAplicados {get;set;}
         private List<TransactionRecord> Records {get;set;} = new();
+        private List<OprVenta> OprVentas {get;set;} = new();
+
+        private List<TransactionRecord> RecordsMissings
+        {
+            get {
+                if(!OprVentas.Any())
+                {
+                    return Records;
+                }
+                var recordsReferencias = OprVentas.Select( item => item.ReferenciaComercio.Trim()).ToArray();
+                return Records.Where( item => ! recordsReferencias.Contains(item.ReferenciaComercio.Trim())).ToList();
+            }
+        }
 
         private bool busyDialog = false;
         private DateTime f1, f2;
@@ -54,6 +68,9 @@ namespace Sicem_Blazor.PagoLinea.Views
         private int tabIndex = 0;
         private MatTabBar mattabbar;
 
+
+        private DateTime fecha1 = DateTime.Now;
+        private DateTime fecha2 = DateTime.Now;
 
         protected override void OnInitialized()
         {
@@ -123,6 +140,9 @@ namespace Sicem_Blazor.PagoLinea.Views
                 Logger.LogInformation("Cant delete the file {file}: {message}", filePath, err.Message);
             }
 
+            // * update date ranges
+            UpdateDateRanges();
+
             // * refresh UI
             this.busyDialog = false;
             StateHasChanged();
@@ -157,6 +177,15 @@ namespace Sicem_Blazor.PagoLinea.Views
             this.busyDialog = false;
         }
 
+        private void UpdateDateRanges()
+        {
+            var from = this.recordsFiles.Select( item => item.From).OrderBy( item => item).First();
+            var to = this.recordsFiles.Select( item => item.To).OrderByDescending( item => item).First().AddDays(1);
+            this.fecha1 = from;
+            this.fecha2 = to;
+        }
+
+        
         private async Task MatTabBarActiveChanged(BaseMatTabLabel label)
         {
             tabIndex = label.Id switch {
@@ -167,5 +196,42 @@ namespace Sicem_Blazor.PagoLinea.Views
             };
             await Task.CompletedTask;
         }
+
+
+        private async Task Procesar()
+        {
+            if( busyDialog)
+            {
+                return;
+            }
+            busyDialog = true;
+            await Task.Delay(100);
+
+            OprVentas = new List<OprVenta>();
+            IEnlace[] enlaces = SicemService.ObtenerOficinasDelUsuario().ToArray();
+            IEnumerable<Task> processTasks = enlaces.Select( e => Task.Run( () => ProcessOffice(e) ));
+            await Task.WhenAll(processTasks);
+
+            busyDialog = false;
+            StateHasChanged();
+            DataGridNoAplicados.Refresh();
+        }
+
+        private void ProcessOffice(IEnlace enlace)
+        {
+            try
+            {
+                var data = this.PagoLineaService.ObtenerDetallePagos(enlace, new DateRange(fecha1, fecha2));
+                lock(OprVentas)
+                {
+                    OprVentas.AddRange(data);
+                }
+            }
+            catch (System.Exception err)
+            {
+                this.Logger.LogError(err, "Fail at process the office {name}", enlace.Nombre);
+            }
+        }
+
     }
 }

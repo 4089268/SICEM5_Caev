@@ -47,6 +47,15 @@ namespace Sicem_Blazor.PagoLinea.Views
         private SfGrid<TransactionRecord> DataGrid {get;set;}
         private List<TransactionRecord> Records {get;set;} = new();
 
+        private List<TransactionRecord> RecordsFiltered {
+            get {
+                if(_chbOnlyPaided)
+                {
+                    return Records.Where(item => item.Status == TransactionRecord.ProcessFileStatues.NoPaided).ToList();
+                }
+                return Records;
+            }
+        }
 
         private bool busyDialog = false;
         private DateTime f1, f2;
@@ -58,6 +67,17 @@ namespace Sicem_Blazor.PagoLinea.Views
 
         private DateTime fecha1 = DateTime.Now;
         private DateTime fecha2 = DateTime.Now;
+
+        private bool _chbOnlyPaided = false;
+        public bool ChboOnlyPaided
+        {
+            get => _chbOnlyPaided;
+
+            set {
+                _chbOnlyPaided = value;
+                DataGrid.Refresh();
+            }
+        }
 
         protected override void OnInitialized()
         {
@@ -72,7 +92,7 @@ namespace Sicem_Blazor.PagoLinea.Views
         {
             Logger.LogDebug("Attemp to upload the File");
             
-            if( e.File == null || !BrowserFileValidator.IsCsvFile(e.File))
+            if(e.File == null || !BrowserFileValidator.IsCsvFile(e.File))
             {
                 Toaster.Add("El archivo debe ser un archivo CSV válido.", MatToastType.Warning);
                 return;
@@ -133,7 +153,6 @@ namespace Sicem_Blazor.PagoLinea.Views
             // * update date ranges
             UpdateDateRanges();
 
-
             // * refresh UI
             this.busyDialog = false;
             StateHasChanged();
@@ -187,5 +206,9 @@ namespace Sicem_Blazor.PagoLinea.Views
             await Task.CompletedTask;
         }
 
+        private async Task DownloadExcel()
+        {
+            await DataGrid.ExportToExcelAsync();
+        }
     }
 }

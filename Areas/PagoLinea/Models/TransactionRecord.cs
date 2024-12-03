@@ -40,4 +40,14 @@ public class TransactionRecord
     public string Plataforma { get; set; }
     public string EstatusReclamacion { get; set; }
     public string FileName { get; set; }
+
+    public ProcessFileStatues Status { get; set; } = ProcessFileStatues.Pending;
+
+    public enum ProcessFileStatues {
+        Pending,
+        Paided,
+        NoPaided,
+        Fail
+    }
+
 }

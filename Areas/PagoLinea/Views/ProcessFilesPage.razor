@@ -19,9 +19,6 @@
             <MatTabLabel Id="cargados">
                 <h6>Pagos cargados</h6>
             </MatTabLabel>
-            <MatTabLabel Id="noaplicados">
-                <h6>Pagos no aplicados</h6>
-            </MatTabLabel>
         </MatTabBar>
     </div>
 
@@ -39,7 +36,7 @@
     <div class="nav-content">
         @if(tabIndex == 0)
         {
-            <div class="d-flex flex-column">
+            <div class="w-100 h-100 d-flex flex-column">
                 <div>
                     <label for="uploadFile" class="btn btn-primary px-3 py-2 mx-2 my-2">
                         <i class="fa fa-upload mr-1"></i>
@@ -77,13 +74,36 @@
         @if(tabIndex == 1)
         {
             <div class="w-100 h-100">
-                <SfGrid @ref="DataGrid" DataSource="@Records" TValue="TransactionRecord" AllowGrouping="true" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
+                <SfGrid @ref="DataGrid" DataSource="@Records" TValue="TransactionRecord" AllowGrouping="false" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
                     <GridGroupSettings ShowDropArea="false" Columns="@(new string[]{"Concepto"})"></GridGroupSettings>
                     <GridColumns>
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="40">
+                        <Template>
+                            @{
+                                var data = (context as TransactionRecord);
+                                @switch (data.Status)
+                                {
+                                    case TransactionRecord.ProcessFileStatues.Paided:
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="22" viewBox="0 0 24 24"><path fill="none" stroke="#65a30d" stroke-width="2" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2S2 6.477 2 12s4.477 10 10 10ZM7 12l4 3l5-7"/></svg>
+                                        break;
+                                    case TransactionRecord.ProcessFileStatues.NoPaided:
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><path fill="none" stroke="#db2777" stroke-linejoin="round" stroke-width="2" d="m12 3l10 18H2zm0 6v6m0 1v2"/></svg>
+                                        break;
+                                    case TransactionRecord.ProcessFileStatues.Fail:
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><path fill="none" stroke="#eab308" stroke-width="2" d="M2 3.99C2 2.892 2.898 2 3.99 2h16.02C21.108 2 22 2.898 22 3.99v16.02c0 1.099-.898 1.99-1.99 1.99H3.99A1.995 1.995 0 0 1 2 20.01zM12 15v-1c0-1 0-1.5 1-2s2-1 2-2.5c0-1-1-2.5-3-2.5s-3 1.264-3 3m3 6v2"/></svg>
+                                        break;
+                                    default:
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><path fill="none" stroke="#0284c7" stroke-width="2" d="M2 3.99C2 2.892 2.898 2 3.99 2h16.02C21.108 2 22 2.898 22 3.99v16.02c0 1.099-.898 1.99-1.99 1.99H3.99A1.995 1.995 0 0 1 2 20.01zM12 10v8m0-12v2"/></svg>
+                                        break;
+                                }
+                            }
+                        </Template>
+                    </GridColumn>
                         <GridColumn Field="@nameof(TransactionRecord.ID)" HeaderText="Id" TextAlign="TextAlign.Left" Width="170" />
+                        <GridColumn Field="@nameof(TransactionRecord.Concepto)" HeaderText="Concepto" TextAlign="TextAlign.Left" Width="250" />
                         <GridColumn Field="@nameof(TransactionRecord.ReferenciaComercio)" HeaderText="Referencia" TextAlign="TextAlign.Left" Width="115"/>
-                        <GridColumn Field="@nameof(TransactionRecord.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Left" Width="115"/>
-                        <GridColumn Field="@nameof(TransactionRecord.FechaDispersion)" HeaderText="Fecha Dispersion" TextAlign="TextAlign.Left" Width="125" />
+                        <GridColumn Field="@nameof(TransactionRecord.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Left" Width="150"/>
+                        <GridColumn Field="@nameof(TransactionRecord.FechaDispersion)" HeaderText="Fecha Dispersion" TextAlign="TextAlign.Left" Width="150" />
                         <GridColumn Field="@nameof(TransactionRecord.Tipo)" HeaderText="Tipo" TextAlign="TextAlign.Left" Width="125" />
                         <GridColumn Field="@nameof(TransactionRecord.MedioDePago)" HeaderText="Medidos de Pago" TextAlign="TextAlign.Left" Width="125" />
                         <GridColumn Field="@nameof(TransactionRecord.Plataforma)" HeaderText="MedidPlataforma de Pago" TextAlign="TextAlign.Left" Width="125" />
@@ -94,77 +114,9 @@
                         <GridColumn Field="@nameof(TransactionRecord.IvaComision)" HeaderText="IVA Comision" TextAlign="TextAlign.Right" Width="125" Format="c2" />
                         <GridColumn Field="@nameof(TransactionRecord.TotalImporte)" HeaderText="Total Importe" TextAlign="TextAlign.Right" Width="125" Format="c2" />
                         <GridColumn Field="@nameof(TransactionRecord.TotalCobrado)" HeaderText="Total Cobrado" TextAlign="TextAlign.Right" Width="125" Format="c2" />
-                        <GridColumn Field="@nameof(TransactionRecord.FileName)" HeaderText="Archivo" TextAlign="TextAlign.Right" Width="120" />
-                        <GridColumn Field="@nameof(TransactionRecord.Concepto)" HeaderText="Concepto" TextAlign="TextAlign.Left" Width="115" />
+                        <GridColumn Field="@nameof(TransactionRecord.FileName)" HeaderText="Archivo" TextAlign="TextAlign.Left" Width="240" />
                     </GridColumns>
                 </SfGrid>
-            </div>
-        }
-
-        @if(tabIndex == 2)
-        {
-            <div class="oprventas-container">
-                <div class="mx-1 d-flex flex-column">
-                    <div class="d-flex flex-row">
-                        <input type="date" class="" style="width:110px;" @bind-value="@fecha1">
-                        <input type="date" class="" style="width:110px;" @bind-value="@fecha2">
-                    </div>
-                    <div>
-                        <input type="button" style="width:220px; border:1px solid gray;" @onclick="@Procesar" Value="PROCESAR"></input>
-                    </div>
-                </div>
-                
-                <div class="detalle-container">
-                    <SfGrid @ref="DataGridNoAplicados" DataSource="@OprVentas" TValue="OprVenta" AllowGrouping="true" AllowResizing="true" AllowSorting="true" AllowFiltering="false"
-                    AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
-                        <GridColumns>
-                            <GridGroupSettings ShowDropArea="false" Columns="@(new string[]{"Oficina"})"></GridGroupSettings>
-                            <GridColumn Field="@nameof(OprVenta.Id)" HeaderText="Id Venta" TextAlign="TextAlign.Left" Width="100" />
-                            <GridColumn Field="@nameof(OprVenta.ReferenciaComercio)" HeaderText="Referencia" TextAlign="TextAlign.Left" Width="150"/>
-                            <GridColumn Field="@nameof(OprVenta.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Center" Width="100" Format="d" />
-                            <GridColumn Field="@nameof(OprVenta.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="125" Format="c2" />
-                            <GridColumn Field="@nameof(OprVenta.Iva)" HeaderText="Iva" TextAlign="TextAlign.Center" Width="135" Format="c2" />
-                            <GridColumn Field="@nameof(OprVenta.Total)" HeaderText="Total" TextAlign="TextAlign.Center" Width="135" Format="c2" />
-                            <GridColumn Field="@nameof(OprVenta.Cobrado)" HeaderText="Cobrado" TextAlign="TextAlign.Center" Width="135" Format="c2" />
-                            <GridColumn Field="@nameof(OprVenta.Oficina)" HeaderText="Oficina" TextAlign="TextAlign.Left" Width="100" />
-                            <GridColumn HeaderText="Acciones" TextAlign="TextAlign.Left" Width="230" Visible="false">
-                                <Template>
-                                    @{
-                                        var data = (context as OprVenta);
-                                        <div class="d-flex p-1">
-                                            <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Some action">
-                                                <i class="fa fa-calendar-day" aria-hidden="true"></i>
-                                            </button>
-                                        </div>
-                                    }
-                                </Template>
-                            </GridColumn>
-                        </GridColumns>
-                    </SfGrid>
-                </div>
-                <div class="pendientes-container">
-                    <SfGrid DataSource="@RecordsMissings" TValue="TransactionRecord" AllowGrouping="true" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
-                    <GridColumns>
-                        <GridGroupSettings ShowDropArea="false" Columns="@(new string[]{"Concepto"})"></GridGroupSettings>
-                        <GridColumn Field="@nameof(TransactionRecord.ID)" HeaderText="Id" TextAlign="TextAlign.Left" Width="170" />
-                        <GridColumn Field="@nameof(TransactionRecord.ReferenciaComercio)" HeaderText="Referencia" TextAlign="TextAlign.Left" Width="115"/>
-                        <GridColumn Field="@nameof(TransactionRecord.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Left" Width="115"/>
-                        <GridColumn Field="@nameof(TransactionRecord.FechaDispersion)" HeaderText="Fecha Dispersion" TextAlign="TextAlign.Left" Width="125" />
-                        <GridColumn Field="@nameof(TransactionRecord.Tipo)" HeaderText="Tipo" TextAlign="TextAlign.Left" Width="125" />
-                        <GridColumn Field="@nameof(TransactionRecord.MedioDePago)" HeaderText="Medidos de Pago" TextAlign="TextAlign.Left" Width="125" />
-                        <GridColumn Field="@nameof(TransactionRecord.Plataforma)" HeaderText="MedidPlataforma de Pago" TextAlign="TextAlign.Left" Width="125" />
-                        <GridColumn Field="@nameof(TransactionRecord.Estado)" HeaderText="Estado" TextAlign="TextAlign.Left" Width="125" />
-                        <GridColumn Field="@nameof(TransactionRecord.MensajeMedioDePago)" HeaderText="Mensaje MP" TextAlign="TextAlign.Left" Width="125" />
-                        <GridColumn Field="@nameof(TransactionRecord.Contrato)" HeaderText="Contrato" TextAlign="TextAlign.Left" Width="125" />
-                        <GridColumn Field="@nameof(TransactionRecord.ComisionComercio)" HeaderText="Comision" TextAlign="TextAlign.Right" Width="125" Format="c2" />
-                        <GridColumn Field="@nameof(TransactionRecord.IvaComision)" HeaderText="IVA Comision" TextAlign="TextAlign.Right" Width="125" Format="c2" />
-                        <GridColumn Field="@nameof(TransactionRecord.TotalImporte)" HeaderText="Total Importe" TextAlign="TextAlign.Right" Width="125" Format="c2" />
-                        <GridColumn Field="@nameof(TransactionRecord.TotalCobrado)" HeaderText="Total Cobrado" TextAlign="TextAlign.Right" Width="125" Format="c2" />
-                        <GridColumn Field="@nameof(TransactionRecord.FileName)" HeaderText="Archivo" TextAlign="TextAlign.Right" Width="120" />
-                        <GridColumn Field="@nameof(TransactionRecord.Concepto)" HeaderText="Concepto" TextAlign="TextAlign.Left" Width="115" />
-                    </GridColumns>
-                </SfGrid>
-                </div>
             </div>
         }
     </div>

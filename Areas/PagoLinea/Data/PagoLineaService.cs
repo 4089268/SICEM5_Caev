@@ -2,11 +2,15 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using Sicem_Blazor.Data;
 using Sicem_Blazor.Data.Contracts;
 using Sicem_Blazor.Services;
 using Sicem_Blazor.PagoLinea.Models;
+using Sicem_Blazor.Models;
+using Microsoft.VisualBasic;
 
 namespace Sicem_Blazor.PagoLinea.Data
 {
@@ -15,6 +19,8 @@ namespace Sicem_Blazor.PagoLinea.Data
     {
         private readonly SicemService sicemService;
         private readonly ILogger<PagoLineaService> logger;
+
+        private IEnumerable<Ruta> enlaces = [];
         
         public PagoLineaService(SicemService s, ILogger<PagoLineaService> l)
         {
@@ -32,7 +38,7 @@ namespace Sicem_Blazor.PagoLinea.Data
 
             try
             {
-                logger.LogInformation("Obteniendo ingresos por pago en linea oficina:{Oficina} del {FechaInicial} al {FechaFin} ", enlace.Nombre, dateRange.Desde, dateRange.Hasta);
+                logger.LogInformation("Obteniendo ingresos por pago en linea oficina:{Oficina} del {FechaInicial} al {FechaFin} ", enlace.Nombre, dateRange.Desde.Date, dateRange.Hasta.Date);
                 using(var connection = new SqlConnection(enlace.GetConnectionString()))
                 {
                     connection.Open();
@@ -181,5 +187,63 @@ namespace Sicem_Blazor.PagoLinea.Data
             return response;
         }
 
+        public async Task<IEnumerable<TransactionRecord>> CalulateStatusPayment(IEnumerable<TransactionRecord> records)
+        {
+            // * load the enlaces
+            this.enlaces = this.sicemService.ObtenerEnlaces();
+
+            // * group the records by Concepto (Office)
+            var recordsGroupedByConcepto = records.GroupBy(item => item.Concepto);
+
+            // * process each group asynchronously
+            var processedRecords = await Task.WhenAll(
+                recordsGroupedByConcepto.Select(async group =>
+                    await ProcessOffice(group.Key, group.ToArray())
+                )
+            );
+
+            // * flatten the results and return
+            return processedRecords.SelectMany(records => records);
+        }
+
+        public async Task<IEnumerable<TransactionRecord>> ProcessOffice(string concepto, IEnumerable<TransactionRecord> records)
+        {
+            // * TODO: Create adapter to retrive the enlace by the concept
+            await Task.CompletedTask;
+
+            try
+            {
+                var enlace = this.enlaces.FirstOrDefault( item => concepto.ToLower().Contains( item.Nombre, StringComparison.CurrentCultureIgnoreCase));
+                if( enlace == null)
+                {
+                    throw new ArgumentNullException($"Enlace of concept {concepto} not found");
+                }
+
+                var f1 = records.OrderBy( item => item.Fecha).First().Fecha;
+                var f2 = records.OrderByDescending( item => item.Fecha).First().Fecha.AddDays(1);
+                var payments = this.ObtenerDetallePagos(enlace, new DateRange(f1, f2));
+                var referencesPaided = payments.Select( item => item.ReferenciaComercio.Trim()).ToArray();
+                
+                // * compare the reference with the references stored in the office
+                foreach( var r in records)
+                {
+                    r.Status = referencesPaided.Contains(r.ReferenciaComercio.Trim())
+                        ?TransactionRecord.ProcessFileStatues.Paided
+                        :TransactionRecord.ProcessFileStatues.NoPaided;
+                }
+
+                return records;
+            }
+            catch (Exception err)
+            {
+                this.logger.LogError(err, "Fail at retrive payments: {message}", err.Message);
+                foreach(var r in records)
+                {
+                    r.Status = TransactionRecord.ProcessFileStatues.Fail;
+                };
+                return records;
+                
+            }
+        }
     }
 }

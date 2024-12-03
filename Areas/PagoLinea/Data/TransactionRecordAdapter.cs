@@ -35,7 +35,7 @@ public static class TransactionRecordAdapter
             TotalCobrado = ParseDecimal(csvRow[23]),
             Promocion = csvRow[24],
             Estado = csvRow[25],
-            Contrato = long.Parse(csvRow[26]),
+            Contrato = long.TryParse(csvRow[26], out long tmpC) ?tmpC :0,
             MensajeMedioDePago = csvRow[27],
             Email = csvRow[28],
             Telefono = csvRow[29],

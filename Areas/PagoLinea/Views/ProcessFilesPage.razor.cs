@@ -168,9 +168,17 @@ namespace Sicem_Blazor.PagoLinea.Views
             var csvDataLines = await File.ReadAllLinesAsync(filePath);
             foreach (var item in csvDataLines.Skip(1))
             {
-                var newRecord = TransactionRecordAdapter.Adapt(fileName, item.Split(","));
-                records.Add(newRecord);
+                try
+                {
+                    var newRecord = TransactionRecordAdapter.Adapt(fileName, item.Replace("\"", "").Split(","));
+                    records.Add(newRecord);
+                }
+                catch (Exception err)
+                {
+                    this.Logger.LogError(err, "Fail");
+                }
             }
+            Logger.LogDebug("Total records {total}", records.Count);
             return records;
         }
 

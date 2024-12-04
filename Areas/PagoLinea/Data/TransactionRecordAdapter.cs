@@ -47,7 +47,11 @@ public static class TransactionRecordAdapter
 
     static private decimal ParseDecimal(string value)
     {
-        return decimal.TryParse(value.Trim('$'), NumberStyles.Any, CultureInfo.InvariantCulture, out var result)
+        if(value.Contains(",")){
+            Console.WriteLine(value);
+        }
+
+        return decimal.TryParse(value.Replace("\"", "").Replace(",","").Trim('$'), NumberStyles.Any, CultureInfo.InvariantCulture, out var result)
             ? result
             : 0m;
     }

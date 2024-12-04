@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Text.RegularExpressions;
 using Microsoft.JSInterop;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
@@ -78,6 +79,7 @@ namespace Sicem_Blazor.PagoLinea.Views
                 DataGrid.Refresh();
             }
         }
+
 
         protected override void OnInitialized()
         {
@@ -166,11 +168,14 @@ namespace Sicem_Blazor.PagoLinea.Views
             var records = new List<TransactionRecord>();
             var fileName = filePath.Split(Path.DirectorySeparatorChar).Last();
             var csvDataLines = await File.ReadAllLinesAsync(filePath);
+            
+            var csvPattern = @",(?=(?:[^""]*""[^""]*"")*[^""]*$)";
+            
             foreach (var item in csvDataLines.Skip(1))
             {
                 try
                 {
-                    var newRecord = TransactionRecordAdapter.Adapt(fileName, item.Replace("\"", "").Split(","));
+                    var newRecord = TransactionRecordAdapter.Adapt(fileName, Regex.Split(item, csvPattern));
                     records.Add(newRecord);
                 }
                 catch (Exception err)

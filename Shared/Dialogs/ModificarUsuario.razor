@@ -1,7 +1,4 @@
-﻿@inject IMatToaster Toaster
-@inject IJSRuntime JSRuntime
-@inject SicemService sicemService
-@inject IMatToaster Toaster
+﻿@namespace Sicem_Blazor.Shared.Dialogs
 
 @if (Visible) {
 
@@ -10,42 +7,42 @@
             <div class="d-flex flex-column p-2 m-1 bg-white border rounded" style="grid-area:1/1/2/2">
                 <div class="cfg-div-input">
                     <div class="label">Nombre:</div>
-                    <input id="cf_user-nombre" class="text-uppercase" type="text" @bind="@NuevoUsuario.Nombre" disabled="@Modificado" />
+                    <input id="cf_user-nombre" class="text-uppercase" type="text" @bind="@usuario.Nombre" disabled="@modificado" />
                 </div>
 
                 <div class="cfg-div-input">
                     <div class="label">Usuario:</div>
-                    <input id="cf_user-usuario" type="text" @bind="@NuevoUsuario.Usuario1" disabled="@Modificado" />
+                    <input id="cf_user-usuario" type="text" @bind="@usuario.Usuario1" disabled="@modificado" />
                 </div>
 
                 <div class="cfg-div-input">
                     <div class="label">Contrase&ntilde;a:</div>
-                    <input id="cf_user-pass" type="password" @bind="@password" placeholder="@(Modificado?"**************":"")" />
+                    <input id="cf_user-pass" type="password" @bind="@password" placeholder="@(modificado?"**************":"")" />
                 </div>
 
                 <div class="cfg-div-input">
                     <div class="label">Confirmar Contrase&ntilde;a:</div>
-                    <input type="password" @bind="@confirm_password" placeholder="@(Modificado?"**************":"")" />
+                    <input type="password" @bind="@confirm_password" placeholder="@(modificado?"**************":"")" />
                 </div>
 
                 <div class="cfg-div-input">
                     <div class="label">Administrador:</div>
-                    <input type="checkbox" checked=@NuevoUsuario.Administrador @onchange="@((e)=> CheckBox_Changed("Admin", e.Value) )" />
+                    <input type="checkbox" checked=@usuario.Administrador @onchange="@((e)=> CheckBox_Changed("Admin", e.Value) )" />
                 </div>
 
                 <div class="cfg-div-input">
                     <div class="label">Configurar Oficinas:</div>
-                    <input type="checkbox" checked=@NuevoUsuario.CfgOfi @onchange="@((e)=> CheckBox_Changed("Ofi", e.Value) )" />
+                    <input type="checkbox" checked=@usuario.CfgOfi @onchange="@((e)=> CheckBox_Changed("Ofi", e.Value) )" />
                 </div>
 
                 <div class="cfg-div-input">
                     <div class="label">Configurar Usuarios:</div>
-                    <input type="checkbox" checked=@NuevoUsuario.CfgOpc @onchange="@((e)=> CheckBox_Changed("Ops", e.Value) )" />
+                    <input type="checkbox" checked=@usuario.CfgOpc @onchange="@((e)=> CheckBox_Changed("Ops", e.Value) )" />
                 </div>
-                @* @if (Modificado) {
+                @* @if (modificado) {
                     <div class="cfg-div-input">
                         <div class="label">Ultima Modificacion:</div>
-                        <input type="text" value="@(NuevoUsuario.UltimaModif.ToString() )" disabled />
+                        <input type="text" value="@(usuario.UltimaModif.ToString() )" disabled />
                     </div>
                 } *@
 
@@ -90,7 +87,7 @@
             </div>
 
             <div class="d-flex justify-content-center p-2 m-1 bg-white border rounded" style="grid-area:2/1/3/4">
-                <input class="px-2" style="height:100%;" type="button" value="Guardar Cambios" @onclick="@BotonAgregarNuevo_Click" />
+                <input class="px-2" style="height:100%;" type="button" value="Guardar Cambios" @onclick="@HandleGuardarCambiosClick" />
             </div>
         </Content>
     </VentanaSecundaria>
@@ -121,182 +118,5 @@
                 width: 200px;
             }
     </style>
-
-}
-
-@code{
-    [Parameter] public bool Visible { get; set; } = false;
-    [Parameter] public EventCallback CerrarModal { get; set; }
-    public List<int> OpcionesSeleccionadas { get; set; }
-    public List<int> OficinasSeleccionadas { get; set; }
-    public string Titulo { get; set; } = "CREAR NUEVO USUARIO";
-    private List<CatOpcione> CatalogoOpciones { get; set; }
-    private List<Ruta> CatalogoOficinas { get; set; }
-    public Usuario NuevoUsuario { get; set; }
-    public bool Modificado { get; set; } = false;
-    public string password { get; set; } = "";
-    public string confirm_password { get; set; } = "";
-
-    public async Task Inicializar(bool modif=false){
-        this.Modificado = modif;
-        if (!modif) {
-            NuevoUsuario = new Usuario() {
-                Nombre = "",
-                Usuario1 = "",
-                Administrador = false,
-                Inactivo = true,
-                CfgOpc = false
-                //UltimaModif = DateTime.Now
-            };
-            this.OpcionesSeleccionadas = new List<int>();
-            this.OficinasSeleccionadas = new List<int>();
-        }
-        this.password = "";
-        this.confirm_password = "";
-
-        this.CatalogoOpciones = sicemService.ObtenerCatalogoOpciones();
-        this.CatalogoOficinas = sicemService.ObtenerEnlaces().ToList();
-        await Task.Delay(100);
-    }
-    private async Task BotonAgregarNuevo_Click(){
-
-        if(NuevoUsuario == null){
-            return;
-        }
-        if(NuevoUsuario.Nombre.Length <= 1){
-            Toaster.Add("Escriba un nombre valido e intente de nuevo.", MatToastType.Warning);
-            try {
-                await JSRuntime.InvokeVoidAsync("shake", "#cf_user-nombre");
-                await JSRuntime.InvokeVoidAsync("FocusElement", "cf_user-nombre");
-            }
-            catch (Exception) { }
-            return;
-        }
-        if (NuevoUsuario.Usuario1.Length <= 1) {
-            Toaster.Add("Escriba un usuario valido e intente de nuevo.", MatToastType.Warning);
-            try {
-                await JSRuntime.InvokeVoidAsync("shake", "#cf_user-usuario");
-                await JSRuntime.InvokeVoidAsync("FocusElement", "cf_user-usuario");
-            }
-            catch (Exception) { }
-            return;
-        }
-        if( (!Modificado && password.Length < 8 ) || (Modificado && password.Trim().Length > 0 && password.Trim().Length < 8 )){
-            Toaster.Add("Escriba una contraseña con mínimo de 8 caracteres.", MatToastType.Warning);
-            try {
-                await JSRuntime.InvokeVoidAsync("shake", "#cf_user-pass");
-                await JSRuntime.InvokeVoidAsync("FocusElement", "cf_user-pass");
-            }
-            catch (Exception) { }
-            return;
-        }
-        if(password != confirm_password ) {
-            Toaster.Add("Las contraseñas no coinciden, verifique e intente de nuevo.", MatToastType.Warning);
-            try {
-                await JSRuntime.InvokeVoidAsync("shake", "#cf_user-pass");
-                await JSRuntime.InvokeVoidAsync("FocusElement", "cf_user-pass");
-            }
-            catch (Exception) { }
-            return;
-        }
-        if(OpcionesSeleccionadas.Count <= 0) {
-            Toaster.Add("Seleccione mínimo una opción para el usuario.  ", MatToastType.Warning);
-            try {
-                await JSRuntime.InvokeVoidAsync("shake", "#cf-tit-opc");
-            }
-            catch (Exception) { }
-            return;
-        }
-        if (OficinasSeleccionadas.Count <= 0) {
-            Toaster.Add("Seleccione mínimo una oficina para el usuario.  ", MatToastType.Warning);
-            try {
-                await JSRuntime.InvokeVoidAsync("shake", "#cf-tit-ofi");
-            }
-            catch (Exception) { }
-            return;
-        }
-
-
-        //*** Comprobar si usuario existe ***
-        if (!Modificado) {
-            if (sicemService.ExisteUsuario(NuevoUsuario.Usuario1)) {
-                Toaster.Add("El usuario se encuentra en uso.", MatToastType.Warning);
-                await JSRuntime.InvokeVoidAsync("shake", "#cf_user-usuario");
-                await JSRuntime.InvokeVoidAsync("FocusElement", "cf_user-usuario");
-                return;
-            }
-        }
-
-        //*** Generar Nuevo Usuario ***
-        var idUsuarioNuevo = 0;
-        Console.WriteLine($">> Oficinas Seleccionadas: {OficinasSeleccionadas.Count}  Opciones Seleccionadas {OpcionesSeleccionadas.Count}");
-
-        var response = sicemService.GenerarUsuarioNuevo(NuevoUsuario, password, OpcionesSeleccionadas.ToArray(), out idUsuarioNuevo, Modificado);
-        if (response == null){
-            //*** Actualizar Oficinas
-            sicemService.ModificarCadOficinasUsuario(idUsuarioNuevo, OficinasSeleccionadas.ToArray());
-
-            Toaster.Add((this.Modificado)?$"Usuario {NuevoUsuario.Nombre.ToUpper()} actualizado!!": $"Usuario {NuevoUsuario.Nombre.ToUpper()} generado!!", MatToastType.Success);
-            await this.CerrarModal.InvokeAsync(null);
-        }
-        else {
-            Toaster.Add(response, MatToastType.Danger);
-        }
-    }
-    private void CheckBox_Changed(string opcion, object val) {
-        switch (opcion) {
-            case "Admin":
-                NuevoUsuario.Administrador = (bool)val;
-                break;
-
-            case "Ofi":
-                NuevoUsuario.CfgOfi = (bool)val;
-                break;
-
-            case "Ops":
-                NuevoUsuario.CfgOpc = (bool)val;
-                break;
-        }
-    }
-
-    public bool ComprobarOpcionSeleccionada(int idOpcion) {
-        if (OpcionesSeleccionadas.Count <= 0) {
-            return false;
-        }
-        else {
-            return OpcionesSeleccionadas.Contains(idOpcion);
-        }
-    }
-    public bool ComprobarOficinaSeleccionada(int idOficina){
-        if(OficinasSeleccionadas.Count <= 0) {
-            return false;
-        }
-        else {
-            return OficinasSeleccionadas.Contains(idOficina);
-        }
-    }
-    private async Task ChechBoxGrid_Changed(string grid, int idOpcion, bool isCheked) {
-        if(grid == "catOpciones"){
-            if (isCheked) {
-                if (!OpcionesSeleccionadas.Contains(idOpcion)) {
-                    OpcionesSeleccionadas.Add(idOpcion);
-                }
-            }
-            else {
-                OpcionesSeleccionadas.Remove(idOpcion);
-            }
-        }
-        if(grid == "catOficinas"){
-            if (isCheked) {
-                if (!OficinasSeleccionadas.Contains(idOpcion)) {
-                    OficinasSeleccionadas.Add(idOpcion);
-                }
-            }
-            else {
-                OficinasSeleccionadas.Remove(idOpcion);
-            }
-        }
-        await Task.Delay(100);
-    }
 
 }

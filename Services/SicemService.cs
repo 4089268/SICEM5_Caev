@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Sicem_Blazor.Data;
 using Sicem_Blazor.Models;
 using Sicem_Blazor.Models.Entities.Arquos;
+using ServiceReference;
 
 namespace Sicem_Blazor.Services {
     public class SicemService {
@@ -22,6 +23,7 @@ namespace Sicem_Blazor.Services {
         public string IdSession {get;set;} = "";
 
         const string secret = "*SICEM*";
+
 
         public SicemService(SicemContext context, IConfiguration c, SessionService s, ILogger<SicemService> logger) {
             this.sicemContext = context;
@@ -157,93 +159,25 @@ namespace Sicem_Blazor.Services {
                 return false;
             }
         }
-        public Usuario[] ObtenerListadoUsuarios() {
-            Usuario[] res;
-            res = sicemContext.Usuarios.ToArray();
-            return res;
-        }
-        public string GenerarUsuarioNuevo(Usuario user, string pass, int[] opcionesIds, out int idUsuarioGenerado, bool modificado = false) {
-            var _cadConexion = appSettings.GetConnectionString("SICEM");
-            try {
-                int tmpIdUsuario = 0;
-                using(var xConnecton = new SqlConnection(_cadConexion)) {
-                    xConnecton.Open();
-
-                    //*** Generar opciones xml
-                    var xmlCadOciones = "";
-                    if(opcionesIds.Count() > 0) xmlCadOciones = GenerarOpcionesOficinasXml(opcionesIds);
-
-                    //*** Gemerar query
-                    var _query = new System.Text.StringBuilder();
-                    _query.Append("Exec [dbo].[Usp_Usuarios] ");
-
-                    if(modificado) {
-                        _query.Append($" @IdUsuario={user.Id},");
-                        _query.Append($" @Alias='ACTUALIZAR-USUARIO',");
-                    }
-                    else {
-                        _query.Append($" @Alias='NUEVO-USUARIO',");
-                    }
-                    _query.Append($" @Nombre='{user.Nombre.ToUpper()}',");
-                    _query.Append($" @Usuario='{user.Usuario1}',");
-                    _query.Append($" @Password='{pass}',");
-                    _query.Append($" @Secret='{secret}',");
-                    int cAdmin = (user.Administrador==true)?1:0;
-                    _query.Append($" @IsAdmin={cAdmin},");
-                    int cOfi = (user.CfgOfi==true)?1:0;
-                    _query.Append($" @CanConfOfi={cOfi},");
-                    _query.Append($" @Oficinas='{user.Oficinas}',");
-                    _query.Append($" @OpcionesXml='{xmlCadOciones}'");
-
-                    var xCommand = new SqlCommand(_query.ToString(), xConnecton);
-                    using(SqlDataReader xReader = xCommand.ExecuteReader()) {
-                        if(xReader.Read()) {
-                            tmpIdUsuario = int.Parse(xReader["id"].ToString());
-                        }
-                    }
-                }
-                idUsuarioGenerado = tmpIdUsuario;
-                return null;
-            } catch(Exception err) {
-                Console.Write($">> Error al generar el usuario\n\t{err.Message}");
-                idUsuarioGenerado = -1;
-                return "Error al modificar el usuario, inténtelo más tarde.";
-            }
-
-        }
         public List<CatOpcione> ObtenerListaOpcionesDelUsuario(int idUsuario = 0) {
-            throw new NotImplementedException();
-            // var _listaOpciones = new List<CatOpcione>();
-            // var _idsOpciones = new List<int>();
-            // if(idUsuario > 0) {
-            //     _idsOpciones = sicemContext.OprOpciones.Where(item => item.IdUsuario == idUsuario).Select(item => item.IdOpcion).ToList<int>();
-            // }
-            // else {
-            //     var _idUsuario = ConvertUtils.ParseInteger(Usuario.Id);
-            //     _idsOpciones = sicemContext.OprOpciones.Where(item => item.IdUsuario == _idUsuario).Select(item => item.IdOpcion).ToList<int>();
-            // }
-            // _listaOpciones = sicemContext.CatOpciones.Where(item => _idsOpciones.Contains((int)item.IdOpcion)).ToList();
-            // return _listaOpciones;
+            var _listaOpciones = new List<CatOpcione>();
+            var _idsOpciones = new List<int>();
+            if(idUsuario > 0)
+            {
+                _idsOpciones = sicemContext.OprOpciones.Where(item => item.IdUsuario == idUsuario).Select(item => item.IdOpcion).ToList<int>();
+            }
+            else
+            {
+                var _idUsuario = ConvertUtils.ParseInteger(Usuario.Id);
+                _idsOpciones = sicemContext.OprOpciones.Where(item => item.IdUsuario == _idUsuario).Select(item => item.IdOpcion).ToList<int>();
+            }
+            _listaOpciones = sicemContext.CatOpciones.Where(item => _idsOpciones.Contains((int)item.IdOpcion)).ToList();
+            return _listaOpciones;
         }
         public List<CatOpcione> ObtenerCatalogoOpciones() {
             List<CatOpcione> _result = new List<CatOpcione>();
             _result = sicemContext.CatOpciones.ToList();
             return _result;
-        }
-        public bool ExisteUsuario(string usuario) {
-            int r = 0;
-            r = sicemContext.Usuarios.Where(item => item.Usuario1.ToLower() == usuario.ToLower()).Count();
-            return (r > 0);
-        }
-        public void ModificarCadOficinasUsuario(int idUsuario, int[] oficinasIds) {
-            var _cadOfi = new System.Text.StringBuilder();
-            foreach(int id in oficinasIds) { _cadOfi.Append($"{id};"); }
-
-            var _usuario = sicemContext.Usuarios.Where(item => item.Id == idUsuario).FirstOrDefault();
-            _usuario.Oficinas = _cadOfi.ToString();
-            sicemContext.Usuarios.Update(_usuario);
-            sicemContext.SaveChanges();
-            
         }
         public Usuario ObtenerUsuarioToken(string token, string ipAddress){
             throw new NotImplementedException();

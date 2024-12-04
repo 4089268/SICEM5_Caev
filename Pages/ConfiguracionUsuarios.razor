@@ -1,5 +1,6 @@
 @page "/Configuracion/CatUsuarios"
 @inject SicemService sicemService
+@inject UsersSicemService usersSicemService
 
 <div class="tarifasLayout">
     <div style="grid-area:1/1/2/2;">
@@ -54,6 +55,7 @@
                             }
                         </Template>
                     </GridColumn>
+                    <GridColumn Field=@nameof(Usuario.UltimaModif) HeaderText="Ultima Modificacion" TextAlign="TextAlign.Center" Width="120"/>
                     <GridColumn HeaderText="" TextAlign="TextAlign.Left" Width="120">
                         <Template>
                             @{
@@ -83,7 +85,7 @@
 
     protected override void OnInitialized()
     {
-        this.catUsuarios = sicemService.ObtenerListadoUsuarios().ToList();
+        this.catUsuarios = usersSicemService.ObtenerListadoUsuarios().ToList();
     }
 
 
@@ -92,8 +94,7 @@
             return;
         }
         ModificarUsuarioVtn_Visible = true;
-        ModificarUsuarioVtn.Titulo = "CREAR NUEVO USUARIO";
-        await ModificarUsuarioVtn.Inicializar();
+        ModificarUsuarioVtn.ShowDialog();
         await Task.Delay(100);
     }
     private async Task BotonModificarUsuario_Click(Usuario u){
@@ -101,13 +102,7 @@
             return;
         }
         ModificarUsuarioVtn_Visible = true;
-        ModificarUsuarioVtn.Titulo = $"MODIFICAR USUARIO {u.Nombre.ToUpper()}";
-        var _idsOpciones = sicemService.ObtenerListaOpcionesDelUsuario(idUsuario:u.Id).Select(item => (int) item.IdOpcion).ToList<int>();
-        var _idsOficinas = sicemService.ObtenerOficinasDelUsuario(idUsuario: u.Id).Select(item => (int) item.Id).ToList<int>();
-        ModificarUsuarioVtn.OpcionesSeleccionadas = _idsOpciones;
-        ModificarUsuarioVtn.OficinasSeleccionadas = _idsOficinas;
-        ModificarUsuarioVtn.NuevoUsuario = u;
-        await ModificarUsuarioVtn.Inicializar(modif:true);
+        ModificarUsuarioVtn.ShowDialog(u);
         await Task.Delay(100);
     }
     private async Task CheckBoxModificarUsuario_Click(int idUsuario, string opcion, object val){
@@ -119,7 +114,7 @@
         this.Busy = true;
         await Task.Delay(100);
 
-        this.catUsuarios = sicemService.ObtenerListadoUsuarios().ToList();
+        this.catUsuarios = usersSicemService.ObtenerListadoUsuarios().ToList();
 
         await Task.Delay(100);
         this.Busy = false;

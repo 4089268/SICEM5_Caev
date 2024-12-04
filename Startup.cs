@@ -54,6 +54,7 @@ namespace Sicem_Blazor {
             services.Configure<BingMapsSettings>(Configuration.GetSection("BingMapsSettings"));
             services.AddSingleton<SessionService>();
             services.AddScoped<SicemService>();
+            services.AddScoped<UsersSicemService>();
             services.AddScoped<ConsultaGralService>();
             services.AddScoped<IAtencionService, AtencionService>();
             services.AddScoped<IRecaudacionService, RecaudacionService>();

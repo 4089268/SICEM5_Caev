@@ -7,6 +7,7 @@
 @inject IMatToaster Toaster
 @inject IJSRuntime JSRuntime
 @inject SicemService sicemService
+@inject UsersSicemService usersSicemService
 @inject ConsultaGralService consultaGralService;
 
 @if (Show) {
@@ -77,21 +78,9 @@
     private ModificarUsuario ModificarUsuarioVtn { get; set; }
     private bool ModificarUsuarioVtn_Visible { get; set; } = false;
 
-    public async Task Inicializar() {
-
-        catUsuarios = sicemService.ObtenerListadoUsuarios().ToList();
-
-        // Generar Catalogo de oficinas model
-        //try {
-        //    var tmpOfi = sicemService.ObtenerEnlaces().Where(item => item.Inactivo != true).ToArray();
-        //    GenerarCatalogoOficinas(tmpOfi);
-        //}
-        //catch (Exception){
-        //    Toaster.Add("Error al conectarse con el servidor, inténtelo más tarde.", MatToastType.Warning);
-        //    await Task.Delay(100);
-        //    await Cerrar_Modal();
-        //}
-
+    public async Task Inicializar()
+    {
+        catUsuarios = usersSicemService.ObtenerListadoUsuarios().ToList();
         await Task.Delay(100);
         this.Busy = false;
     }
@@ -104,8 +93,7 @@
             return;
         }
         ModificarUsuarioVtn_Visible = true;
-        ModificarUsuarioVtn.Titulo = "CREAR NUEVO USUARIO";
-        await ModificarUsuarioVtn.Inicializar();
+        ModificarUsuarioVtn.ShowDialog();
         await Task.Delay(100);
     }
     private async Task BotonModificarUsuario_Click(Usuario u){
@@ -113,13 +101,7 @@
             return;
         }
         ModificarUsuarioVtn_Visible = true;
-        ModificarUsuarioVtn.Titulo = $"MODIFICAR USUARIO {u.Nombre.ToUpper()}";
-        var _idsOpciones = sicemService.ObtenerListaOpcionesDelUsuario(idUsuario:u.Id).Select(item => (int) item.IdOpcion).ToList<int>();
-        var _idsOficinas = sicemService.ObtenerOficinasDelUsuario(idUsuario: u.Id).Select(item => (int) item.Id).ToList<int>();
-        ModificarUsuarioVtn.OpcionesSeleccionadas = _idsOpciones;
-        ModificarUsuarioVtn.OficinasSeleccionadas = _idsOficinas;
-        ModificarUsuarioVtn.NuevoUsuario = u;
-        await ModificarUsuarioVtn.Inicializar(modif:true);
+        ModificarUsuarioVtn.ShowDialog(u);
         await Task.Delay(100);
     }
     private async Task CheckBoxModificarUsuario_Click(int idUsuario, string opcion, object val){
@@ -131,7 +113,7 @@
         this.Busy = true;
         await Task.Delay(100);
 
-        this.catUsuarios = sicemService.ObtenerListadoUsuarios().ToList();
+        this.catUsuarios = usersSicemService.ObtenerListadoUsuarios().ToList();
 
         await Task.Delay(100);
         this.Busy = false;

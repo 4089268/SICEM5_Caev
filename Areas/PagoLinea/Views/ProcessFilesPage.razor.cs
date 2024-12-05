@@ -129,6 +129,11 @@ namespace Sicem_Blazor.PagoLinea.Views
 
             // * process the CSV file
             var tmpRecords = await ProcessTheFileCsvAsync(filePath);
+            if(!tmpRecords.Any()){
+                Toaster.Add("Error al procesar el archivo", MatToastType.Danger);
+                this.busyDialog = false;
+                StateHasChanged();
+            }
 
             // * get the satus of the payments
             Records.AddRange( await PagoLineaService.CalulateStatusPayment(tmpRecords));
@@ -165,25 +170,29 @@ namespace Sicem_Blazor.PagoLinea.Views
         private async Task<IEnumerable<TransactionRecord>> ProcessTheFileCsvAsync(string filePath)
         {
             Logger.LogDebug("Attempt ot process the file {tempPath}", filePath);
+            
             var records = new List<TransactionRecord>();
             var fileName = filePath.Split(Path.DirectorySeparatorChar).Last();
-            var csvDataLines = await File.ReadAllLinesAsync(filePath);
-            
-            var csvPattern = @",(?=(?:[^""]*""[^""]*"")*[^""]*$)";
-            
-            foreach (var item in csvDataLines.Skip(1))
+
+            try
             {
-                try
+                // * process the file and return the lines
+                IEnumerable<string[]> csvData = Helpers.ProcessCSV.LoadFile(filePath);
+                foreach (var data in csvData.Skip(1)) // * skip the first row because has the headers
                 {
-                    var newRecord = TransactionRecordAdapter.Adapt(fileName, Regex.Split(item, csvPattern));
+                    if(string.IsNullOrWhiteSpace(data[0])) continue;
+                    var newRecord = TransactionRecordAdapter.Adapt(fileName, data);
                     records.Add(newRecord);
                 }
-                catch (Exception err)
-                {
-                    this.Logger.LogError(err, "Fail");
-                }
             }
+            catch (System.Exception ex)
+            {
+                this.Logger.LogError(ex, "Fail at process the csv: {message}", ex.Message);
+                return [];
+            }
+            
             Logger.LogDebug("Total records {total}", records.Count);
+            await Task.CompletedTask;
             return records;
         }
 

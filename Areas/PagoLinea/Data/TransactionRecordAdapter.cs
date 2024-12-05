@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using Sicem_Blazor.PagoLinea.Models;
 
+namespace Sicem_Blazor.PagoLinea.Data;
+
 public static class TransactionRecordAdapter
 {
     public static TransactionRecord Adapt(string fileName, string[] csvRow)
@@ -47,12 +49,10 @@ public static class TransactionRecordAdapter
 
     static private decimal ParseDecimal(string value)
     {
-        if(value.Contains(",")){
-            Console.WriteLine(value);
-        }
-
-        return decimal.TryParse(value.Replace("\"", "").Replace(",","").Trim('$'), NumberStyles.Any, CultureInfo.InvariantCulture, out var result)
-            ? result
-            : 0m;
+        return decimal.TryParse(value.Replace("\"", "")
+            .Replace(",","")
+            .Trim('$'), NumberStyles.Any, CultureInfo.InvariantCulture, out var result)
+                ? result
+                : 0m;
     }
 }

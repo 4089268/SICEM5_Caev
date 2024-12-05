@@ -40,6 +40,7 @@ namespace Sicem_Blazor.PagoLinea.Views
         private SfGrid<ResumeOffice> DataGrid {get;set;}
         private SfChart GraficaIngresos {get;set;}
         private SfChart GraficaUsuarios {get;set;}
+        private DetallePagosVtn detallePagosVtn;
 
         private bool busyDialog = false;
         private DateTime f1, f2;
@@ -182,12 +183,49 @@ namespace Sicem_Blazor.PagoLinea.Views
             await this.DataGrid.ExportToExcelAsync(_options);
         }
 
-        private async Task IngresosDiasClick(ResumeOffice data)
+        private async Task HandleShowDetails(ResumeOffice office)
         {
             this.busyDialog = true;
-            await Task.Delay(2000);
+            await Task.Delay(100);
+
+            IEnumerable<OprVenta> data = [];
+            try
+            {
+                data = this.PagoLineaService.ObtenerDetallePagos(office.Enlace, new DateRange(f1,f2));
+                if (!data.Any())
+                {
+                    throw new KeyNotFoundException("No hay datos disponibles");
+                }
+            }
+            catch (KeyNotFoundException)
+            {
+                Toaster.Add("No hay datos disponibles para este periodo", MatToastType.Info);
+                this.busyDialog = false;
+                return;
+            }
+            catch (System.Exception)
+            {
+                Toaster.Add("Erro al obtener el detalle", MatToastType.Danger);
+                this.busyDialog = false;
+                return;
+            }
+
+
+            if(detallePagosVtn != null)
+            {
+                var titulo = string.Format("Detalle de pagos del {0} al {1}, {2}", f1.ToShortDateString(), f2.ToShortDateString(), office.Enlace.Nombre);
+                detallePagosVtn.Show(office.Enlace, data, titulo);
+            }
+
             this.busyDialog = false;
         }
 
+        private async Task HandleClosedDetallePagos(object e)
+        {
+            this.Logger.LogDebug("Detalle Pagos vtn closed");
+            await Task.CompletedTask;
+        }
+
     }
+
 }

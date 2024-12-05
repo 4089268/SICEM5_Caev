@@ -1,0 +1,33 @@
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.PagoLinea.Models;
+@namespace Sicem_Blazor.PagoLinea.Views
+
+@if (mostrarVentana) {
+    <VentanaSecundaria Titulo="@titulo" CerrarVentana="@HandleCloseModal" Filas="@(new double[] { 50, 610 })" Columnas="@(new double[]{1100})">
+        <Content>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@ExportData">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="DataGrid" DataSource="@Datos" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(OprVenta.Id)" HeaderText="ID" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(OprVenta.Fecha)" HeaderText="Fecha de Pago" TextAlign="TextAlign.Center" Width="180" Format="d" />
+                        <GridColumn Field="@nameof(OprVenta.Periodo)" HeaderText="Periodo" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(OprVenta.IdCuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="150"/>
+                        <GridColumn Field="@nameof(OprVenta.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn Field="@nameof(OprVenta.Iva)" HeaderText="Iva" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn Field="@nameof(OprVenta.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn Field="@nameof(OprVenta.Cobrado)" HeaderText="Cobrado" TextAlign="TextAlign.Right" Width="140" Format="c2" />
+                        <GridColumn Field="@nameof(OprVenta.ReferenciaComercio)" HeaderText="Referencia" TextAlign="TextAlign.Left" Width="140" Format="n0" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+}

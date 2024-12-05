@@ -27,6 +27,14 @@ public class OprVenta
         get => Enlace.Nombre;
     }
 
+    public string Periodo
+    {
+        get {
+            var date = new DateTime(Af, Mf,1);
+            return date.ToString("MMM yyyy").ToUpper();
+        }
+    }
+
 
     public OprVenta(IEnlace enlace){
         this.Enlace = enlace;

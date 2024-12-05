@@ -61,14 +61,14 @@
 
                 <GridColumn Field="@nameof(ResumeOffice.Importe)" HeaderText="Importe Total" TextAlign="TextAlign.Center" Width="135" Format="c2" />
                 <GridColumn Field="@nameof(ResumeOffice.Cobrado)" HeaderText="Importe Cobrado" TextAlign="TextAlign.Center" Width="135" Format="c2" />
-                <GridColumn HeaderText="Acciones" TextAlign="TextAlign.Left" Width="230" Visible="false">
+                <GridColumn HeaderText="Acciones" TextAlign="TextAlign.Left" Width="70">
                     <Template>
                         @{
                             var data = (context as ResumeOffice);
                             if (data.Id > 0 && data.Id < 90) {
                                 <div class="d-flex p-1">
-                                    <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Ingresos por Dias" disabled="@(data.Estatus != ResumenOficinaEstatus.Completado )">
-                                        <i class="fa fa-calendar-day" aria-hidden="true"></i>
+                                    <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Detalle" disabled="@(data.Estatus != ResumenOficinaEstatus.Completado )" @onclick="@(e => HandleShowDetails(data))">
+                                        <i class="fa fa-table" aria-hidden="true"></i>
                                     </button>
                                 </div>
                             }
@@ -94,3 +94,4 @@
 
 @* ****** Dialogos y ventanas secundarias ****** *@
 <BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+<DetallePagosVtn @ref="detallePagosVtn" CerrarModal="HandleClosedDetallePagos" />

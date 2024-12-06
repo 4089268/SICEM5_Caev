@@ -94,7 +94,13 @@ namespace Sicem_Blazor.PagoLinea.Views
         {
             Logger.LogDebug("Attemp to upload the File");
             
-            if(e.File == null || !BrowserFileValidator.IsCsvFile(e.File))
+            if(e.File == null)
+            {
+                Toaster.Add("El archivo no se puede cargar.", MatToastType.Warning);
+                return;
+            }
+
+            if(BrowserFileValidator.IsCsvFile(e.File))
             {
                 Toaster.Add("El archivo debe ser un archivo CSV válido.", MatToastType.Warning);
                 return;

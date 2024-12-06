@@ -39,7 +39,7 @@
     }
 
     #mainLayout #contentPage {
-        background-color: white;
+        background-color: #ffffffbb;
         display: flex;
         flex-direction: column;
         grid-area: 3/2/4/3;

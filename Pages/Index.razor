@@ -3,25 +3,26 @@
 @inject IJSRuntime JSRuntime
 @inject SicemService sicemService
 
-<div style="height:100vh; width: 100vw; overflow: hidden;">
-    <img id="imglogo" style="height:100%; width: 100%; opacity: 0;" src="/img/fondo-caev.jpeg" />
+<div class="index-conteiner" style="height:100vh; width: 100vw; overflow: hidden;">
 </div>
 
 <style>
-    body {
-        background-color: white;
-        background-image: url("./img/textures/texture.png");
-        background-position: center;
-        background-repeat: repeat;
 
+    #contentPage
+    {
+        background-color: #0000 !important;
     }
-    .logoIndex{
-        height: 70%;
+    .index-conteiner
+    {
+        opacity: 0;
+        background-image: url("/img/indexImg.png");
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 50vh;
     }
     @@media (max-width: 580px) {
-        .logoIndex{
+        .index-conteiner{
             width: 90%;
-            
         }
     }
 </style>
@@ -29,7 +30,7 @@
 @code {
 
     protected override async Task OnAfterRenderAsync(bool firstRender) {
-        await JSRuntime.InvokeVoidAsync("fadeIn", "#imglogo", 600);
+        await JSRuntime.InvokeVoidAsync("fadeIn", ".index-conteiner", 600);
     }
 
 }

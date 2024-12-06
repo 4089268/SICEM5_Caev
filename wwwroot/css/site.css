@@ -18,9 +18,14 @@
 }
 
 html, body {
+    background-color: #0000 !important;
+    background-image: url("/img/textures/texture-caev-2024.png") !important;
+    background-position: center;
+    background-repeat: repeat;
+    background-size: 96px;
+
     font-family: 'Montzerrat' !important;
     font-weight: 400;
-    background-color: #ebeff2;
     user-select: none;
     -ms-user-selec: none;
     -moz-user-select: none;

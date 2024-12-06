@@ -76,7 +76,7 @@ namespace Sicem_Blazor {
                 client.BaseAddress = new Uri(url);
             });
             
-
+            // * external services
             services.AddServerSideBlazor();
             services.AddSyncfusionBlazor();
             services.AddMatToaster(config =>{
@@ -87,6 +87,7 @@ namespace Sicem_Blazor {
                 config.MaximumOpacity = 95;
                 config.VisibleStateDuration = 4000;
             });
+            services.AddBlazorBootstrap();
             
             services.AddCors(policy => {
                 policy.AddPolicy("CorsPolicy", opt => opt

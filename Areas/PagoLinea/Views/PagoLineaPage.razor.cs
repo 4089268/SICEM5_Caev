@@ -7,8 +7,8 @@ using Microsoft.JSInterop;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Syncfusion.Blazor.Grids;
-using Syncfusion.Blazor.Charts;
 using MatBlazor;
+using BlazorBootstrap;
 using Sicem_Blazor.Data;
 using Sicem_Blazor.Data.Contracts;
 using Sicem_Blazor.Models;
@@ -38,8 +38,6 @@ namespace Sicem_Blazor.PagoLinea.Views
 
 
         private SfGrid<ResumeOffice> DataGrid {get;set;}
-        private SfChart GraficaIngresos {get;set;}
-        private SfChart GraficaUsuarios {get;set;}
         private DetallePagosVtn detallePagosVtn;
 
         private bool busyDialog = false;
@@ -54,6 +52,73 @@ namespace Sicem_Blazor.PagoLinea.Views
             this.f2 = new DateTime(_now.Year, _now.Month, DateTime.DaysInMonth(_now.Year, _now.Month));
             this.Subsistema = 0;
             this.Sector = 0;
+
+
+            var colors = ColorUtility.CategoricalTwelveColors;
+
+            var labels = new List<string> { "Chrome", "Firefox", "Safari", "Edge" };
+            var datasets = new List<IChartDataset>();
+
+            var dataset1 = new BarChartDataset()
+                {
+                    Label = "Windows",
+                    Data = new List<double?> { 28000, 8000, 2000, 17000 },
+                    BackgroundColor = new List<string> { colors[0] },
+                    BorderColor = new List<string> { colors[0] },
+                    BorderWidth = new List<double> { 0 },
+                };
+            datasets.Add(dataset1);
+
+            var dataset2 = new BarChartDataset()
+                {
+                    Label = "macOS",
+                    Data = new List<double?> { 8000, 10000, 14000, 8000 },
+                    BackgroundColor = new List<string> { colors[1] },
+                    BorderColor = new List<string> { colors[1] },
+                    BorderWidth = new List<double> { 0 },
+                };
+            datasets.Add(dataset2);
+
+            var dataset3 = new BarChartDataset()
+                {
+                    Label = "Other",
+                    Data = new List<double?> { 28000, 10000, 14000, 8000 },
+                    BackgroundColor = new List<string> { colors[2] },
+                    BorderColor = new List<string> { colors[2] },
+                    BorderWidth = new List<double> { 0 },
+                };
+            datasets.Add(dataset3);
+
+            chartData = new ChartData
+                {
+                    Labels = labels,
+                    Datasets = datasets
+                };
+
+            barChartOptions = new();
+            barChartOptions.Responsive = true;
+            barChartOptions.Interaction = new Interaction { Mode = InteractionMode.Y };
+            barChartOptions.IndexAxis = "y";
+
+            barChartOptions.Scales.X!.Title = new ChartAxesTitle { Text = "Visitors", Display = true };
+            barChartOptions.Scales.Y!.Title = new ChartAxesTitle { Text = "Browser", Display = true };
+
+            barChartOptions.Scales.X.Stacked = true;
+            barChartOptions.Scales.Y.Stacked = true;
+
+            barChartOptions.Plugins.Title!.Text = "Operating system";
+            barChartOptions.Plugins.Title.Display = true;
+
+        }
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender)
+            {
+                // pass the plugin name to enable the data labels
+                await barChart.InitializeAsync(chartData: chartData, chartOptions: barChartOptions, plugins: new string[] { "ChartDataLabels" });
+            }
+            await base.OnAfterRenderAsync(firstRender);
         }
 
         public void Procesar(SeleccionarFechaEventArgs e)
@@ -225,6 +290,13 @@ namespace Sicem_Blazor.PagoLinea.Views
             this.Logger.LogDebug("Detalle Pagos vtn closed");
             await Task.CompletedTask;
         }
+
+
+
+
+        private BarChart barChart = default!;
+        private BarChartOptions barChartOptions = default!;
+        private ChartData chartData = default!;
 
     }
 

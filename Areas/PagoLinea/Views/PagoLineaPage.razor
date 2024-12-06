@@ -1,7 +1,7 @@
 @page "/PagoLinea"
 @namespace Sicem_Blazor.PagoLinea.Views
 @using Syncfusion.Blazor.Grids
-@using Syncfusion.Blazor.Charts
+@using BlazorBootstrap
 @using System.Threading.Tasks
 @using Sicem_Blazor.PagoLinea.Models
 @using Sicem_Blazor.PagoLinea.Data
@@ -22,10 +22,9 @@
 
     @* ****** DataGrid ****** *@
     <div class="border rounded bg-white p-2 d-flex" style="grid-area:4/1/5/2;">
-        <SfGrid @ref="DataGrid" DataSource="@DatosRecaudacion" TValue="ResumeOffice" AllowResizing="true" AllowSorting="true" AllowFiltering="false"
-                AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
-            <GridColumns>
-                <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="40">
+        <SfGrid @ref="DataGrid" DataSource="@DatosRecaudacion" TValue="ResumeOffice" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
+            <Syncfusion.Blazor.Grids.GridColumns>
+                <Syncfusion.Blazor.Grids.GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="40">
                     <Template>
                         @{
                             var data = (context as ResumeOffice);
@@ -47,21 +46,20 @@
                             }
                         }
                     </Template>
-                </GridColumn>
-                <GridColumn Field="@nameof(ResumeOffice.Oficina)" HeaderText="Oficina" TextAlign="TextAlign.Left" Width="170" />
+                </Syncfusion.Blazor.Grids.GridColumn>
+                <Syncfusion.Blazor.Grids.GridColumn Field="@nameof(ResumeOffice.Oficina)" HeaderText="Oficina" TextAlign="TextAlign.Left" Width="170" />
                 
-                <GridColumn Field="@nameof(ResumeOffice.UsuariosPropios)" HeaderText="Usu Propios" TextAlign="TextAlign.Right" Width="115" Format="n0" />
-                <GridColumn Field="@nameof(ResumeOffice.ImporteOtros)" HeaderText="Imp Propios" TextAlign="TextAlign.Right" Width="125" Format="c2" />
+                <Syncfusion.Blazor.Grids.GridColumn Field="@nameof(ResumeOffice.UsuariosPropios)" HeaderText="Usu Propios" TextAlign="TextAlign.Right" Width="115" Format="n0" />
+                <Syncfusion.Blazor.Grids.GridColumn Field="@nameof(ResumeOffice.ImporteOtros)" HeaderText="Imp Propios" TextAlign="TextAlign.Right" Width="125" Format="c2" />
 
-                <GridColumn Field="@nameof(ResumeOffice.UsuariosOtros)" HeaderText="Usu Otros" TextAlign="TextAlign.Right" Width="115" Format="n0" />
-                <GridColumn Field="@nameof(ResumeOffice.ImporteOtros)" HeaderText="Imp Otros" TextAlign="TextAlign.Right" Width="125" Format="c2" />
-                
+                <Syncfusion.Blazor.Grids.GridColumn Field="@nameof(ResumeOffice.UsuariosOtros)" HeaderText="Usu Otros" TextAlign="TextAlign.Right" Width="115" Format="n0" />
+                <Syncfusion.Blazor.Grids.GridColumn Field="@nameof(ResumeOffice.ImporteOtros)" HeaderText="Imp Otros" TextAlign="TextAlign.Right" Width="125" Format="c2" />
 
-                <GridColumn Field="@nameof(ResumeOffice.Usuarios)" HeaderText="Usuarios Total" TextAlign="TextAlign.Center" Width="125" Format="n0" />
+                <Syncfusion.Blazor.Grids.GridColumn Field="@nameof(ResumeOffice.Usuarios)" HeaderText="Usuarios Total" TextAlign="TextAlign.Center" Width="125" Format="n0" />
 
-                <GridColumn Field="@nameof(ResumeOffice.Importe)" HeaderText="Importe Total" TextAlign="TextAlign.Center" Width="135" Format="c2" />
-                <GridColumn Field="@nameof(ResumeOffice.Cobrado)" HeaderText="Importe Cobrado" TextAlign="TextAlign.Center" Width="135" Format="c2" />
-                <GridColumn HeaderText="Acciones" TextAlign="TextAlign.Left" Width="70">
+                <Syncfusion.Blazor.Grids.GridColumn Field="@nameof(ResumeOffice.Importe)" HeaderText="Importe Total" TextAlign="TextAlign.Center" Width="135" Format="c2" />
+                <Syncfusion.Blazor.Grids.GridColumn Field="@nameof(ResumeOffice.Cobrado)" HeaderText="Importe Cobrado" TextAlign="TextAlign.Center" Width="135" Format="c2" />
+                <Syncfusion.Blazor.Grids.GridColumn HeaderText="Acciones" TextAlign="TextAlign.Left" Width="70">
                     <Template>
                         @{
                             var data = (context as ResumeOffice);
@@ -74,18 +72,16 @@
                             }
                         }
                     </Template>
-                </GridColumn>
-            </GridColumns>
+                </Syncfusion.Blazor.Grids.GridColumn>
+            </Syncfusion.Blazor.Grids.GridColumns>
         </SfGrid>
     </div>
 
 
     <!--- Process files -->
     <div class="container-fluid border p-2" style="grid-area:5/1/6/2;">
-        <div class="row">
-            <div class="col-12">
-                Graficas
-            </div>
+        <div class="w-100 h-100">
+            <BarChart @ref="barChart" Height="300" Style="width:100%" />
         </div>
     </div>
 

@@ -4,7 +4,7 @@ using Sicem_Blazor.Data;
 
 namespace Sicem_Blazor.Models
 {
-    public partial class Usuario:IUsuario
+    public partial class Usuario : IUsuario
     {
         public Usuario()
         {
@@ -23,16 +23,22 @@ namespace Sicem_Blazor.Models
         public bool? CfgOpc { get; set; }
         public DateTime? UltimaModif { get; set; }
 
-//*** Implementaciones de la interfas
         private IEnumerable<IEnlace> _enlaces;
+        private IEnumerable<IOpcionSistema> _opciones;
+
         public virtual ICollection<ModsOficina> ModsOficinas { get; set; }
-string IUsuario.Id { get => this.Id.ToString(); }
+        string IUsuario.Id { get => this.Id.ToString(); }
         string IUsuario.Usuario { get => this.Usuario1;}
         bool IUsuario.Administrador { get => this.Administrador == true; }
         IEnumerable<IEnlace> IUsuario.Enlaces { get => _enlaces; }
+        IEnumerable<IOpcionSistema> IUsuario.OpcionSistemas => _opciones;
 
         public void SetEnlaces(IEnumerable<IEnlace> enlaces){
             _enlaces = enlaces;
+        }
+        public void SetOpciones(IEnumerable<IOpcionSistema> opciones)
+        {
+            _opciones = opciones;
         }
         public string GetCadEnlaces()
         {

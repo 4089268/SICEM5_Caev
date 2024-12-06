@@ -93,6 +93,12 @@ namespace Sicem_Blazor.Services {
                         var idEnlaces = _usuario.Oficinas.Split(";").Select( item => ConvertUtils.ParseInteger(item,-1)).ToList<int>();
                         var _tmpEnlaces = ObtenerEnlaces().Where(item => idEnlaces.Contains(item.Id)).ToList();
                         _usuario.SetEnlaces( _tmpEnlaces);
+
+                        //**** Cargar Opciones disponibles
+                        var _catOpciones = ObtenerListaOpcionesDelUsuario(_usuario.Id).ToList<IOpcionSistema>();
+                        _usuario.SetOpciones(_catOpciones);
+                        
+
                         this.Usuario = _usuario;
                         
                     }else{

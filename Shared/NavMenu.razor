@@ -3,38 +3,105 @@
 @inject SicemService sicemService
 
 <div class="sidebar-menu h-100">
-    <div class="itemMenu" Key="1" @onclick="@(()=>MenuClick(1))">
-        <a href="./ConsultaGeneral"><span class="fa fa-address-book-o"></span>Consulta General</a>
-    </div>
-    @if(sicemService.Usuario.Enlaces.Count() > 1){
-        <div class="itemMenu" Key="665" @onclick="@(()=>MenuClick(665))">
-            <a href="./AnalisisInfo"><span class="fa fa-search"></span>Búsqueda Avanzada</a>
-        </div>
-    }
+    <MatNavMenu @ref="navMenu">
 
-    <div class="separador" />
-    <div class="itemMenu" Key="2" @onclick="@(()=>MenuClick(2))"><a href="./Recaudacion"><span class="fa fa-money"></span>Recaudación</a></div>
-    
-    <div class="separador" />
-    <div class="itemMenu" Key="15" @onclick="@(()=>MenuClick(15))"><a href="./PagoLinea"><span class="fa fa-money-check"></span><span>Pago En Linea</span></a></div>
-    <div class="itemMenu" Key="16" @onclick="@(()=>MenuClick(16))"><a href="./PagoLineaAnalitycs"><span class="fa fa-file-invoice-dollar"></span><span>Analisis Pago Linea</span></a></div>
-    <div class="separador" />
+        @if(OpcionesDisponibles.Contains(12)){
+        <MatNavItem Title="Consulta General Test" Href="/consultaGeneral">
+            <MatIcon Icon="assignment_ind"/>&nbsp;Consulta General
+        </MatNavItem>
+        }
 
-    <div class="itemMenu" Key="3" @onclick="@(()=>MenuClick(3))"><a href="./Descuentos"><span class="fa fa-book"></span>Descuentos</a></div>
-    <div class="itemMenu" Key="4" @onclick="@(()=>MenuClick(4))"><a href="./Facturacion"><span class="fa fa-fax"></span>Facturación</a></div>
-    <div class="itemMenu" Key="11" @onclick="@(()=>MenuClick(11))"><a href="./Eficiencia"><span class="fa fa-chart-area"></span>Eficiencia</a></div>
-    <div class="itemMenu" Key="5" @onclick="@(()=>MenuClick(5))"><a href="./Micromedicion"><span class="fa fa-tachometer"></span>Micromedición</a></div>
-    <div class="itemMenu" Key="8" @onclick="@(()=>MenuClick(8))"><a href="./Padron"><span class="fa fa-address-card-o"></span>Padrón de Usuarios</a></div>
-    <div class="itemMenu" Key="9" @onclick="@(()=>MenuClick(9))"><a href="./Ordenes"><span class="fa fa-map-signs"></span>Ordenes de Trabajo</a></div>
-    <div class="itemMenu" Key="6" @onclick="@(()=>MenuClick(6))"><a href="./ControlRezago"><span class="fa fa-bar-chart"></span>Antiguedad de Saldos</a></div>
-    <div class="itemMenu" Key="10" @onclick="@(()=>MenuClick(10))"><a href="./Atencion"><span class="fa fa-users"></span>Atención de Usuarios</a></div>
-    <div class="separador" />
-    <div class="itemMenu" Key="12" @onclick="@(()=>MenuClick(12))"><a href="./SimuladorTarifario"><span class="fa fa-hand-holding-usd"></span>Simulador Tarifario</a></div>
-    <div class="itemMenu" Key="13" @onclick="@(()=>MenuClick(13))"><a href="./Consulta-Ubitoma"><span class="fa fa-mobile"></span>Consulta Ubitoma</a></div>
-    
-    @if(sicemService.Usuario.Administrador){
-        <div class="itemMenu" Key="666" @onclick="@(()=>MenuClick(666))"><a href="./Configuracion"><span class="fa fa-gear"></span>Configuración</a></div>
-    }
+        @if(OpcionesDisponibles.Contains(11)){
+        <MatNavItem Title="Busqueda Avanzada Test" Href="/analisisInfo">
+            <MatIcon Icon="search"/>&nbsp;Busqueda Avanzada
+        </MatNavItem>
+        }
+
+        <MatDivider></MatDivider>
+
+        @if(OpcionesDisponibles.Contains(1)){
+        <MatNavItem Title="Recaudacion" Href="/recaudacion">
+            <MatIcon Icon="local_atm"/>&nbsp;Recaudación
+        </MatNavItem>
+        }
+
+        @if(OpcionesDisponibles.Contains(15)){
+        <MatNavSubMenu>
+            <MatNavSubMenuHeader Title="Pago En Linea">
+                <MatNavItem AllowSelection="false">
+                    <MatIcon Icon="payment"/>&nbsp;Pago En Linea
+                </MatNavItem>
+            </MatNavSubMenuHeader>
+            <MatNavSubMenuList>
+                <MatNavItem Title="Resumen Ingresos" Href="/PagoLinea">
+                    <MatIcon Icon="library_books"/>&nbsp;Resumen Ingresos
+                </MatNavItem>
+                <MatNavItem Title="Analisis" Href="/PagoLineaAnalitycs">
+                    <MatIcon Icon="playlist_add_check"/>&nbsp;Analisis
+                </MatNavItem>
+            </MatNavSubMenuList>
+        </MatNavSubMenu>
+        }
+
+
+        @if(OpcionesDisponibles.Contains(2)){
+        <MatNavItem Title="Descuentos" Href="/descuentos">
+            <MatIcon Icon="book"/>&nbsp;Descuentos
+        </MatNavItem>
+        }
+
+        @if(OpcionesDisponibles.Contains(5)){
+        <MatNavItem Title="Facturación" Href="/facturacion">
+            <MatIcon Icon="receipt"/>&nbsp;Facturación
+        </MatNavItem>
+        }
+
+        @if(OpcionesDisponibles.Contains(13)){
+        <MatNavItem Title="Eficiencia Comercial" Href="/Eficiencia">
+            <MatIcon Icon="attach_money"/>&nbsp;Eficiencia Comercial
+        </MatNavItem>
+        }
+
+        @if(OpcionesDisponibles.Contains(14)){
+        <MatNavItem Title="Micromedición" Href="/micromedicion">
+            <MatIcon Icon="looks"/>&nbsp;Micromedición
+        </MatNavItem>
+        }
+
+        @if(OpcionesDisponibles.Contains(9)){
+        <MatNavItem Title="Padrón de Usuarios" Href="/padron">
+            <MatIcon Icon="supervisor_account"/>&nbsp;Padrón de Usuarios
+        </MatNavItem>
+        }
+
+        @if(OpcionesDisponibles.Contains(10)){
+        <MatNavItem Title="Ordenes de Trabajo" Href="/ordenes">
+            <MatIcon Icon="event_note"/>&nbsp;Ordenes de Trabajo
+        </MatNavItem>
+        }
+
+        @if(OpcionesDisponibles.Contains(8)){
+        <MatNavItem Title="Antiguedad de Saldos" Href="/controlRezago">
+            <MatIcon Icon="ballot"/>&nbsp;Antiguedad de Saldos
+        </MatNavItem>
+        }
+
+        @if(OpcionesDisponibles.Contains(16)){
+        <MatNavItem Title="Atención de Usuarios" Href="/atencion">
+            <MatIcon Icon="beenhere"/>&nbsp;Atención de Usuarios
+        </MatNavItem>
+        }
+
+        
+        <MatDivider></MatDivider>
+
+        @if(sicemService.Usuario.Administrador){
+        <MatNavItem Title="Configuración" Href="/configuracion">
+            <MatIcon Icon="settings"/>&nbsp;Configuración
+        </MatNavItem>
+        }
+
+    </MatNavMenu>
 
 </div>
 
@@ -43,8 +110,22 @@
 
     public string msg = "test";
     private bool collapseNavMenu = true;
+    
+    private MatNavMenu navMenu;
 
     private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private IEnumerable<int> OpcionesDisponibles {
+        get{
+            try
+            {
+                return sicemService.Usuario.OpcionSistemas.Select(item => item.Id);
+            }
+            catch(Exception){
+                return new int[]{};
+            }
+        }
+    }
 
     private void ToggleNavMenu() {
         collapseNavMenu = !collapseNavMenu;

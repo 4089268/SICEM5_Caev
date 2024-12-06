@@ -178,6 +178,19 @@ select.ns-input{
         border-bottom: 1px solid #eee;
     }
 
+/****** Sidebar Menu MatBlazor ******/
+.mdc-nav-menu li{
+    width: 240px;
+    padding: 0px 3px;
+}
+
+.mdc-nav-menu .material-icons {
+    padding: 0 1rem 0 .25rem;
+}
+.mdc-nav-menu li a{
+    padding: 0px 3px;
+}
+
 
 /********* SICEM DIALOG *********/
 .SicemDialog-control{

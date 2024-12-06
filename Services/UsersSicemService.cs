@@ -84,7 +84,6 @@ namespace Sicem_Blazor.Services
         }
 
         public Usuario ActualizarUsuario( Usuario user, string pass, IEnumerable<int> opciones, IEnumerable<int> oficinas ) {
-            logger.LogInformation(">> " + pass);
             var _cadConexion = appSettings.GetConnectionString("SICEM");
             int userID = 0;
             try {

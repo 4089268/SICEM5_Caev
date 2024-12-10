@@ -1,0 +1,62 @@
+@page "/Configuracion/Oficinas"
+@using Sicem_Blazor.Tarifas.Data
+@using Sicem_Blazor.Models.Entities.Arquos
+@using Sicem_Blazor.Shared.Dialogs
+@inject SicemService sicemService
+@inject IMatToaster Toaster
+
+<div class="tarifasLayout">
+    <div style="grid-area:1/1/2/2;">
+        <div class="title-page text-uppercase" style="grid-area:1/1/2/2;">Catalogo Oficinas</div>
+    </div>
+
+    <nav aria-label="breadcrumb" style="grid-area:2/1/3/2;">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="./">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="./Configuracion">Configuracion</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Oficinas</li>
+        </ol>
+    </nav>
+
+     <!-- ****** Datagrid ****** -->
+    <div class="d-flex align-items-center" style="grid-area:4/1/5/2;">
+        <SfGrid @ref="DataGrid" DataSource="@Oficinas" AllowResizing="true" Height="100%" AllowSorting="true" RowHeight="28">
+            <GridColumns>
+                <GridColumn Field=@nameof(Ruta.Id) HeaderText="ID" TextAlign="TextAlign.Center" Width="50"></GridColumn>
+                <GridColumn Field=@nameof(Ruta.Oficina) HeaderText="Oficina" TextAlign="TextAlign.Left" Width="200"></GridColumn>
+                <GridColumn Field=@nameof(Ruta.Inactivo) HeaderText="Inactivo" TextAlign="TextAlign.Center" DisplayAsCheckBox="true" Width="100"></GridColumn>
+                <GridColumn Field=@nameof(Ruta.Servidor) HeaderText="Servidor" TextAlign="TextAlign.Left" Width="240"></GridColumn>
+                <GridColumn Field=@nameof(Ruta.BaseDatos) HeaderText="Base de datos" TextAlign="TextAlign.Left" Width="180"></GridColumn>
+                <GridColumn Field=@nameof(Ruta.Usuario) HeaderText="Usuario" TextAlign="TextAlign.Left" Width="180"></GridColumn>
+                <GridColumn Field=@nameof(Ruta.ServidorA) HeaderText="Servidor Alterno" TextAlign="TextAlign.Left" Width="240"></GridColumn>
+                <GridColumn Field=@nameof(Ruta.Alterno) HeaderText="Alterno" TextAlign="TextAlign.Center" Width="100" DisplayAsCheckBox="true"></GridColumn>
+                <GridColumn Field=@nameof(Ruta.Alias) HeaderText="Alias" TextAlign="TextAlign.Left" Width="160"></GridColumn>
+            </GridColumns>
+        </SfGrid>
+    </div>
+
+</div>
+
+<BusyIndicator Busy="@busy" ContentText="Cargando datos...." />
+
+
+@code {
+    private IEnumerable<Ruta> Oficinas {get;set;} = Array.Empty<Ruta>();
+    private SfGrid<Ruta> DataGrid {get;set;}
+    
+    private bool busy = false ;
+    
+    protected override void OnInitialized() {
+        CargarOficinas();
+    }
+
+    private void CargarOficinas(){
+        try{
+            this.Oficinas = sicemService.ObtenerEnlaces().ToList()
+                ?? throw new Exception("Error al tratar de obtener las oficinas");
+        }catch(Exception){
+            this.Oficinas = null;
+        }
+    }
+    
+}

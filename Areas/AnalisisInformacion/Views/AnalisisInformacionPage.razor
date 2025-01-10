@@ -1,18 +1,13 @@
 @page "/AnalisisInfo"
+@namespace Sicem_Blazor.AnalisisInformacion.Views
 @using Syncfusion.Blazor.Navigations
 @using Sicem_Blazor.Data.KML
 @using Microsoft.Extensions.Configuration
 @using System.IO
-@inject SicemService sicemService
-@inject IMatToaster MatToaster
-@inject IJSRuntime JSRuntime
-@inject IConfiguration Configuration
 
 <div class="d-flex flex-column w-100 h-100">
 
     <div class="title-page" style="text-transform:uppercase;">Búsqueda Avanzada</div>
-
-    
 
     @* **** Componente tabs **** *@
     <div class="border rounded bg-white p-2" style="height: calc( 100% - 45px);" >
@@ -30,7 +25,7 @@
         
         @* **** Area filtros **** *@
         <div class="div-filtros w-100 @(mostrarResultados?"d-none":"d-block")" style=" height: calc(100% - 60px);">
-            <FiltroDatosComponent  ProcesarConsulta="@(e => RealizarConsulta(e) )" 
+            <FiltroDatosComponent  ProcesarConsulta="@(e => RealizarConsulta(e) )"
                 CatOficinas="@catOficinas" 
                 CatEstatus="@catEstatus"
                 CatTipoCalculo="@catTipoCalculo"
@@ -55,7 +50,7 @@
                     <span>Exportar Resultados</span>
                 </div>
 
-                <div class="button px-3 py-2 bg-success mr-4" @onclick="MostrarUbicaciones_Click" >
+                <div class="button px-3 py-2 bg-success mr-4" @onclick="mostrarUbicaciones_Click" >
                     <i class="fa fa-map-marker mr-2"></i>
                     <span>Mostrar Ubicaciones</span>
                 </div>
@@ -161,7 +156,7 @@
                         <GridColumn Field="@nameof(CatPadron.FechaAlta)" HeaderText="Fecha Alta" TextAlign="TextAlign.Left" Width="120" />
                         <GridColumn Field="@nameof(CatPadron.FechaLecturaAct)" HeaderText="Fecha Lectura Ant" TextAlign="TextAlign.Left" Width="120" />
                         <GridColumn Field="@nameof(CatPadron.FechaFacturaAct)" HeaderText="Fecha Lectura Act" TextAlign="TextAlign.Left" Width="120" />
-                        <GridColumn Field="@nameof(CatPadron.FechaVencimiento)" HeaderText="Fecha Vencimiento" TextAlign="TextAlign.Left" Width="120" />                
+                        <GridColumn Field="@nameof(CatPadron.FechaVencimiento)" HeaderText="Fecha Vencimiento" TextAlign="TextAlign.Left" Width="120" />
                     </GridColumns>
                 </SfGrid>
             </div>
@@ -173,147 +168,12 @@
 
 
 <BusyIndicator Busy="cargando" ContentText="Cargando datos..." />
-@if(DatosGenerales_visible){
-    <DatosGenerales_Dialog IdOficina="@OficinaActual" Cuenta="@CuentaActual" CerrarVentana="@(e => DatosGenerales_visible = false)"/>
+
+@if(datosGeneralesVisible)
+{
+    <DatosGenerales_Dialog IdOficina="@oficinaActual" Cuenta="@cuentaActual" CerrarVentana="@(e => datosGeneralesVisible = false)"/>
 }
-@if(MostrarUbicaciones){
-    <MapaComponent OnClosed="@(e => MostrarUbicaciones = false)" MarkerDataSource="@MapPoints" />
-}
-
-
-@code {
-
-    private SfGrid<CatPadron> DataGrid {get;set;}
-    private List<CatPadron> DatosGrid {get;set;}
-    private bool cargando {get;set;} = false;
-    private bool mostrarResultados {get;set;} = false;
-    private bool enableGridPaging {get;set;}  = false;
-    
-
-    private Dictionary<int, string> catOficinas {get;set;}
-    private Dictionary<int,string> catEstatus {get;set;}
-    private Dictionary<int,string> catTipoCalculo {get;set;}
-    private Dictionary<int,string> catSetvicios {get;set;}
-    private Dictionary<int,string> catTarifas {get;set;}
-    private Dictionary<int,string> catAnomalias {get;set;}
-    private Dictionary<int,string> catGiro {get;set;}
-    private Dictionary<int,string> catClaseUsuaro {get;set;}
-    
-    private AnalisysInfoFilter FiltroBusqueda {get;set;} = new AnalisysInfoFilter();
-    private bool DatosGenerales_visible = false;
-    private string CuentaActual = "";
-    private int OficinaActual = 0;
-
-    private bool MostrarUbicaciones = false;
-    private List<MapMark> MapPoints {get;set;} = new List<MapMark>();
-    
-    protected override async Task OnParametersSetAsync(){
-        this.cargando = true;
-        await Task.Delay(200);
-
-        
-        var _oficinas = sicemService.ObtenerEnlaces().Where(item => item.Inactivo != true ).ToList();
-        catOficinas = new Dictionary<int, string>();
-        _oficinas.ForEach(ofi => {
-            catOficinas.Add(ofi.Id, ofi.Oficina);
-        });
-        
-        catEstatus = sicemService.ObtenerCatalogoEstatus(1, "CAT_PADRON");
-        catTipoCalculo = sicemService.ObtenerCatalogoTipoCalculo(1);
-        catSetvicios = sicemService.ObtenerCatalogoServicios(1);
-        catTarifas = sicemService.ObtenerCatalogoTarifas(1);
-        catAnomalias = sicemService.ObtenerCatalogoAnomalias(1);
-        catGiro = sicemService.ObtenerCatalogoGiros(1);
-        catClaseUsuaro = sicemService.ObtenerCatalogoClaseUsuario(1);
-        
-        await Task.Delay(200);
-        this.cargando = false;
-
-    }
-
-    private async Task RealizarConsulta(AnalisysInfoFilter datosFiltro){
-        if( datosFiltro == null ){
-            return;
-        }
-
-        if( datosFiltro.Id_Oficinas.Count() <= 0 ){
-            MatToaster.Add("Seleccione una oficina", MatToastType.Info);
-            return;
-        }
-
-        Console.WriteLine(datosFiltro.Localidad);
-
-        this.cargando = true;
-        await Task.Delay(200);
-
-        var _oficinas = sicemService.ObtenerEnlaces().Where(item => item.Inactivo != true && datosFiltro.Id_Oficinas.Contains(item.Id) ).ToList();
-        var _tmpDatos = sicemService.ObtenerAnalisisInfo(_oficinas, datosFiltro);
-        this.enableGridPaging = _tmpDatos.Count() > 1000;
-        this.DatosGrid = _tmpDatos;
-
-        this.mostrarResultados = true;
-
-        await Task.Delay(200);
-        this.cargando = false;
-    }
-
-    private async Task ExportarExcel_Click(){
-        cargando = true;
-        await Task.Delay(100);
-
-        var _tmpFolder = Configuration.GetValue<string>("TempFolder");
-        var _exportador = new ExportarExcel<CatPadron>(DatosGrid, new Uri(_tmpFolder) );
-        var _archivo = _exportador.GenerarExcel();
-
-        if(!String.IsNullOrEmpty(_archivo)){
-            var _endPointDownload = Configuration.GetSection("AppSettings").GetValue<string>("Direccion_Api");
-            var _targetUrl = $"{_endPointDownload}/download/{_archivo}";
-            await JSRuntime.InvokeVoidAsync("OpenNewTabUrl", _targetUrl);
-        }
-        
-        await Task.Delay(500);
-        cargando = false;
-    }
-    private void MostrarEnConsultaGeneral(CatPadron e){
-        this.CuentaActual = e.Id_Cuenta.ToString();
-        this.OficinaActual = e.Id_Oficina;
-        DatosGenerales_visible = true;
-    }
-    private void MostrarUbicacion_Click(CatPadron e){
-        var _newItem = new MapMark();
-        _newItem.Latitude = (double)e.Latitude;
-        _newItem.Longitude = (double)e.Longitude;
-        _newItem.Zoom = 17;
-        _newItem.Descripcion = $"{e.Id_Cuenta}";
-        _newItem.Subtitulo = e.RazonSocial;
-        _newItem.Padron = e;
-        MapPoints.Clear();
-        MapPoints.Add(_newItem);
-        
-        this.MostrarUbicaciones = true;
-    }
-
-    private void MostrarUbicaciones_Click(){
-        if(DatosGrid.Count() <= 0){
-            return;
-        }
-
-        MapPoints.Clear();
-        foreach(var pad in DatosGrid){
-             var _newItem = new MapMark();
-            _newItem.Latitude = (double)pad.Latitude;
-            _newItem.Longitude = (double)pad.Longitude;
-            _newItem.Zoom = 17;
-            _newItem.Descripcion = $"{pad.Id_Cuenta}";
-            _newItem.Subtitulo = pad.RazonSocial;
-            _newItem.Padron = pad;
-            _newItem.IdOficina = pad.Id_Oficina;
-            MapPoints.Add(_newItem);
-        }
-
-        this.MostrarUbicaciones = true;
-
-    }
-
-
+@if(mostrarUbicaciones)
+{
+    <MapaComponent OnClosed="@(e => mostrarUbicaciones = false)" MarkerDataSource="@mapPoints" />
 }

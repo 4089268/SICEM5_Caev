@@ -70,6 +70,7 @@ namespace Sicem_Blazor {
             services.AddScoped<ConceptosService>();
             services.AddScoped<LogeadoFilter>();
             services.AddScoped<PagoLineaService>();
+            services.AddScoped<AnalisisInformacionService>();
 
             services.AddHttpClient<UbitomaHttpClient>("ubitoma", client => {
                 string url = Configuration.GetSection("AppSettings").GetValue<string>("Ubitoma_Api");

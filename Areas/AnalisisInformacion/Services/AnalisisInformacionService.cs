@@ -28,27 +28,17 @@ namespace Sicem_Blazor.Services
         }
 
 
-        public List<CatPadron> ObtenerAnalisisInfo(ICollection<Ruta> oficinas, AnalisysInfoFilter filtro){
-            var _result = new List<CatPadron>();
-            
-            var _tareas = new List<Task<List<CatPadron>>>();
-            foreach(var ofi in oficinas){
-                var _tmpTask = Task.Run<List<CatPadron>>( () => { return AnalisisInfoOfi2(ofi, filtro);} );
-                _tareas.Add(_tmpTask);
-            }
+        public async Task<List<CatPadron>> ObtenerAnalisisInfo(ICollection<Ruta> oficinas, AnalisysInfoFilter filtro)
+        {
+            logger.LogInformation("Begining analisis info search to offices:{offices} and filters [{filters}]", String.Join(",", oficinas), filtro);
+            var tareas = oficinas.Select( ofi => Task.Run(() => AnalisisInfoOfi2(ofi, filtro))).ToList();
+            var results = await Task.WhenAll(tareas);
 
-            Task.WaitAll(_tareas.ToArray());
-
-            foreach( var _tarea in _tareas ){
-                var _awaiter = _tarea.GetAwaiter();
-                var _result_c = _awaiter.GetResult();
-                if(_result_c != null){
-                    _result.AddRange(_result_c);
-                }
-            }
-                
-            return _result;
+            // * combine the results from all tasks
+            var response = results.Where( r => r != null).SelectMany(r => r).ToList();
+            return response;
         }
+
         private List<CatPadron> AnalisisInfoOfi(Ruta ofi, AnalisysInfoFilter filtro)
         {
             throw new NotImplementedException();
@@ -348,25 +338,29 @@ namespace Sicem_Blazor.Services
         }
         private List<CatPadron> AnalisisInfoOfi2(Ruta ofi, AnalisysInfoFilter filtro)
         {
-            Console.WriteLine($">> Iniciando Analisis Info Oficina: {ofi.Oficina}");
+            logger.LogDebug("Beginning search on office {officeId}:{officeName}", ofi.Id, ofi.Oficina);
             var _result = new List<CatPadron>();
-            try{
+            try
+            {
                 var busquea = new BusquedaAvanzada();
                 var _query = busquea.GenerarQuery(filtro);
                 var _datos = busquea.EjecutarConsulta(ofi, _query).ToList();
 
-                //****** Convertir lista
+                // * Convertir lista
                 _result = _datos.Select( item => new CatPadron(ofi, item)).ToList();
 
-                //****** Si se paso como parametro un listado de cuentas, filtrarlas
-                if(filtro.Cuentas.Count() > 0){
+                // * Si se paso como parametro un listado de cuentas, filtrarlas
+                if(filtro.Cuentas.Count() > 0)
+                {
                     _result = _result.Where( item => filtro.Cuentas.Contains((int)item.Id_Cuenta)).ToList();
                 }
-                
-                Console.WriteLine($">> Finalizando Analisis Info Oficina: {ofi.Oficina}");
+
+                logger.LogInformation("Finished search on office '{officeId}:{officeName}'", ofi.Id, ofi.Oficina);
                 return _result;
-            }catch(Exception err){
-                Console.WriteLine($">> Error analisis infomarcion oficina: {ofi.Oficina}\n\tError: {err.Message}\n\tStacktrace:{err.StackTrace}");
+            }
+            catch(Exception err)
+            {
+                logger.LogError(err, "Fail at get the results of the search on the office '{officeId}:{officeName}': {message}", ofi.Id, ofi.Nombre, err.Message);
                 return null;
             }
         }

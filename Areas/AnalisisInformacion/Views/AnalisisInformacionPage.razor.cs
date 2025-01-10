@@ -106,7 +106,7 @@ public partial class AnalisisInformacionPage
         await Task.Delay(200);
 
         var _oficinas = SicemService1.ObtenerEnlaces().Where(item => item.Inactivo != true && datosFiltro.Id_Oficinas.Contains(item.Id) ).ToList();
-        var _tmpDatos = AnalisisInfoService.ObtenerAnalisisInfo(_oficinas, datosFiltro);
+        var _tmpDatos = await AnalisisInfoService.ObtenerAnalisisInfo(_oficinas, datosFiltro);
         this.enableGridPaging = _tmpDatos.Count() > 1000;
         this.DatosGrid = _tmpDatos;
 

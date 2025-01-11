@@ -619,9 +619,11 @@ namespace Sicem_Blazor.Data
 
                 entity.ToView("vw_Cat_Padron", "Padron");
 
-                entity.Property(e => e.Af)
-                    .HasColumnType("numeric(4, 0)")
-                    .HasColumnName("af");
+                entity.Property(e => e.AlculoAct)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false)
+                    .HasColumnName("_alculo_act");
 
                 entity.Property(e => e.AltaFactura)
                     .HasMaxLength(8000)
@@ -638,12 +640,6 @@ namespace Sicem_Blazor.Data
                     .IsUnicode(false)
                     .HasColumnName("_anomalia_ant");
 
-                entity.Property(e => e.Anual).HasColumnName("anual");
-
-                entity.Property(e => e.AreaConstruida)
-                    .HasColumnType("numeric(10, 2)")
-                    .HasColumnName("area_construida");
-
                 entity.Property(e => e.AreaJardin)
                     .HasColumnType("numeric(10, 2)")
                     .HasColumnName("area_jardin");
@@ -657,12 +653,6 @@ namespace Sicem_Blazor.Data
                     .HasMaxLength(50)
                     .IsUnicode(false)
                     .HasColumnName("_calculo");
-
-                entity.Property(e => e.CalculoAct)
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .IsUnicode(false)
-                    .HasColumnName("_calculo_act");
 
                 entity.Property(e => e.CalculoAnt)
                     .IsRequired()
@@ -712,8 +702,7 @@ namespace Sicem_Blazor.Data
                     .HasColumnName("_claseusuario");
 
                 entity.Property(e => e.CodigoPostal)
-                    .HasMaxLength(5)
-                    .IsUnicode(false)
+                    .HasColumnType("numeric(5, 0)")
                     .HasColumnName("codigo_postal");
 
                 entity.Property(e => e.Colonia)
@@ -723,38 +712,34 @@ namespace Sicem_Blazor.Data
 
                 entity.Property(e => e.Colonia1)
                     .IsRequired()
-                    .HasMaxLength(100)
+                    .HasMaxLength(50)
                     .IsUnicode(false)
                     .HasColumnName("_colonia");
 
                 entity.Property(e => e.ConsumoAct)
-                    .HasColumnType("numeric(10, 0)")
+                    .HasColumnType("numeric(10, 2)")
                     .HasColumnName("consumo_act");
 
                 entity.Property(e => e.ConsumoAnt)
-                    .HasColumnType("numeric(10, 0)")
+                    .HasColumnType("numeric(10, 2)")
                     .HasColumnName("consumo_ant");
 
                 entity.Property(e => e.ConsumoFijo)
-                    .HasColumnType("numeric(10, 0)")
+                    .HasColumnType("numeric(10, 2)")
                     .HasColumnName("consumo_fijo");
 
                 entity.Property(e => e.ConsumoForzado)
                     .HasColumnType("numeric(10, 0)")
                     .HasColumnName("consumo_forzado");
 
-                entity.Property(e => e.ConsumoRealAct)
-                    .HasColumnType("numeric(10, 0)")
-                    .HasColumnName("consumo_real_act");
-
-                entity.Property(e => e.ConsumoRealAnt)
-                    .HasColumnType("numeric(10, 0)")
-                    .HasColumnName("consumo_real_ant");
-
-                entity.Property(e => e.Curp)
-                    .HasMaxLength(20)
+                entity.Property(e => e.CveRegjubilado)
+                    .HasMaxLength(5)
                     .IsUnicode(false)
-                    .HasColumnName("curp");
+                    .HasColumnName("cve_regjubilado");
+
+                entity.Property(e => e.Dependen)
+                    .HasColumnType("numeric(2, 0)")
+                    .HasColumnName("dependen");
 
                 entity.Property(e => e.Desviacion)
                     .HasColumnType("numeric(10, 0)")
@@ -767,22 +752,30 @@ namespace Sicem_Blazor.Data
                     .HasColumnName("_diametro");
 
                 entity.Property(e => e.Direccion)
-                    .HasMaxLength(356)
+                    .HasMaxLength(90)
                     .IsUnicode(false)
                     .HasColumnName("direccion");
+
+                entity.Property(e => e.DocumentoNo)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasColumnName("documento_no");
+
+                entity.Property(e => e.Edad).HasColumnName("_edad");
+
+                entity.Property(e => e.Edocivil)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false)
+                    .HasColumnName("_edocivil");
 
                 entity.Property(e => e.Email)
                     .HasMaxLength(80)
                     .IsUnicode(false)
-                    .HasColumnName("email");
-
-                entity.Property(e => e.EsAltoconsumidor).HasColumnName("es_altoconsumidor");
-
-                entity.Property(e => e.EsDraef).HasColumnName("es_draef");
+                    .HasColumnName("email")
+                    .IsFixedLength();
 
                 entity.Property(e => e.EsFiscal).HasColumnName("es_fiscal");
-
-                entity.Property(e => e.EsMacromedidor).HasColumnName("es_macromedidor");
 
                 entity.Property(e => e.Estado)
                     .HasMaxLength(40)
@@ -795,7 +788,26 @@ namespace Sicem_Blazor.Data
                     .IsUnicode(false)
                     .HasColumnName("_estatus");
 
+                entity.Property(e => e.Extension1)
+                    .HasMaxLength(5)
+                    .IsUnicode(false)
+                    .HasColumnName("extension1");
+
+                entity.Property(e => e.Extension2)
+                    .HasMaxLength(5)
+                    .IsUnicode(false)
+                    .HasColumnName("extension2");
+
+                entity.Property(e => e.Extension3)
+                    .HasMaxLength(5)
+                    .IsUnicode(false)
+                    .HasColumnName("extension3");
+
                 entity.Property(e => e.FechaAlta)
+                    .HasColumnType("datetime")
+                    .HasColumnName("fecha_alta");
+
+                entity.Property(e => e.FechaAlta1)
                     .HasMaxLength(8000)
                     .IsUnicode(false)
                     .HasColumnName("_fecha_alta");
@@ -825,26 +837,27 @@ namespace Sicem_Blazor.Data
                     .IsUnicode(false)
                     .HasColumnName("_fecha_lectura_ant");
 
+                entity.Property(e => e.FechaNacimiento)
+                    .HasColumnType("datetime")
+                    .HasColumnName("fecha_nacimiento");
+
+                entity.Property(e => e.FechaNacimiento1)
+                    .HasMaxLength(8000)
+                    .IsUnicode(false)
+                    .HasColumnName("_fecha_nacimiento");
+
                 entity.Property(e => e.FechaVencimiento)
                     .HasMaxLength(8000)
                     .IsUnicode(false)
                     .HasColumnName("_fecha_vencimiento");
-
-                entity.Property(e => e.FechaVencimientoAct)
-                    .HasMaxLength(8000)
-                    .IsUnicode(false)
-                    .HasColumnName("_fecha_vencimiento_act");
-
-                entity.Property(e => e.Fraccion)
-                    .HasColumnType("numeric(2, 0)")
-                    .HasColumnName("fraccion");
 
                 entity.Property(e => e.Frente)
                     .HasColumnType("numeric(10, 2)")
                     .HasColumnName("frente");
 
                 entity.Property(e => e.Giro)
-                    .HasMaxLength(80)
+                    .IsRequired()
+                    .HasMaxLength(50)
                     .IsUnicode(false)
                     .HasColumnName("_giro");
 
@@ -854,125 +867,55 @@ namespace Sicem_Blazor.Data
                     .IsUnicode(false)
                     .HasColumnName("_hidrocircuito");
 
-                entity.Property(e => e.IdAnomaliaAct)
-                    .HasColumnType("numeric(10, 0)")
-                    .HasColumnName("id_anomalia_act");
-
-                entity.Property(e => e.IdClaseusuario)
-                    .HasColumnType("numeric(10, 0)")
-                    .HasColumnName("id_claseusuario");
-
-                entity.Property(e => e.IdColonia)
-                    .HasColumnType("numeric(10, 0)")
-                    .HasColumnName("id_colonia");
-
                 entity.Property(e => e.IdCuenta)
                     .HasColumnType("numeric(10, 0)")
                     .HasColumnName("id_cuenta");
-
-                entity.Property(e => e.IdEstatus)
-                    .HasColumnType("numeric(10, 0)")
-                    .HasColumnName("id_estatus");
-
-                entity.Property(e => e.IdGiro)
-                    .HasColumnType("numeric(10, 0)")
-                    .HasColumnName("id_giro");
-
-                entity.Property(e => e.IdLocalidad)
-                    .HasColumnType("numeric(10, 0)")
-                    .HasColumnName("id_localidad");
-
-                entity.Property(e => e.IdMedidor)
-                    .HasMaxLength(20)
-                    .IsUnicode(false)
-                    .HasColumnName("id_medidor");
 
                 entity.Property(e => e.IdPadron)
                     .HasColumnType("numeric(10, 0)")
                     .HasColumnName("id_padron");
 
-                entity.Property(e => e.IdServicio)
-                    .HasColumnType("numeric(10, 0)")
-                    .HasColumnName("id_servicio");
-
-                entity.Property(e => e.IdSituacion)
-                    .HasColumnType("numeric(10, 0)")
-                    .HasColumnName("id_situacion");
-
-                entity.Property(e => e.IdTarifa)
-                    .HasColumnType("numeric(10, 0)")
-                    .HasColumnName("id_tarifa");
-
-                entity.Property(e => e.IdTarifafija)
-                    .HasColumnType("numeric(10, 0)")
-                    .HasColumnName("id_tarifafija");
-
-                entity.Property(e => e.IdTipocalculo)
-                    .HasColumnType("numeric(10, 0)")
-                    .HasColumnName("id_tipocalculo");
-
-                entity.Property(e => e.IdTipodraef)
-                    .HasColumnType("numeric(1, 1)")
-                    .HasColumnName("id_tipodraef");
-
                 entity.Property(e => e.ImporteFijo)
-                    .HasColumnType("money")
+                    .HasColumnType("decimal(14, 2)")
                     .HasColumnName("importe_fijo");
 
                 entity.Property(e => e.ImporteFijoDren)
-                    .HasColumnType("money")
+                    .HasColumnType("decimal(14, 2)")
                     .HasColumnName("importe_fijo_dren");
 
                 entity.Property(e => e.ImporteFijoSane)
-                    .HasColumnType("money")
+                    .HasColumnType("decimal(14, 2)")
                     .HasColumnName("importe_fijo_sane");
 
                 entity.Property(e => e.Iva)
-                    .HasColumnType("money")
+                    .HasColumnType("decimal(14, 2)")
                     .HasColumnName("iva");
 
-                entity.Property(e => e.LastIdAbono)
-                    .HasMaxLength(20)
+                entity.Property(e => e.JubiladoIngreso)
+                    .HasMaxLength(8000)
                     .IsUnicode(false)
-                    .HasColumnName("last_idAbono");
-
-                entity.Property(e => e.LastIdVenta)
-                    .HasMaxLength(20)
-                    .IsUnicode(false)
-                    .HasColumnName("last_idVenta");
+                    .HasColumnName("_jubilado_ingreso");
 
                 entity.Property(e => e.Latitud)
-                    .HasColumnType("decimal(10, 8)")
+                    .HasColumnType("decimal(12, 8)")
                     .HasColumnName("latitud");
 
                 entity.Property(e => e.LecturaAct)
-                    .HasColumnType("numeric(10, 0)")
+                    .HasColumnType("numeric(10, 2)")
                     .HasColumnName("lectura_act");
 
                 entity.Property(e => e.LecturaAnt)
-                    .HasColumnType("numeric(10, 0)")
+                    .HasColumnType("numeric(10, 2)")
                     .HasColumnName("lectura_ant");
 
                 entity.Property(e => e.Localizacion)
                     .HasMaxLength(8000)
                     .IsUnicode(false)
-                    .HasColumnName("_localizacion");
+                    .HasColumnName("_Localizacion");
 
                 entity.Property(e => e.Longitud)
-                    .HasColumnType("decimal(10, 8)")
+                    .HasColumnType("decimal(12, 8)")
                     .HasColumnName("longitud");
-
-                entity.Property(e => e.Lote)
-                    .HasColumnType("numeric(5, 0)")
-                    .HasColumnName("lote");
-
-                entity.Property(e => e.LpsPagados)
-                    .HasColumnType("decimal(8, 4)")
-                    .HasColumnName("lps_pagados");
-
-                entity.Property(e => e.Manzana)
-                    .HasColumnType("numeric(4, 0)")
-                    .HasColumnName("manzana");
 
                 entity.Property(e => e.MaterialBanqueta)
                     .IsRequired()
@@ -999,31 +942,17 @@ namespace Sicem_Blazor.Data
                     .HasColumnName("_materialmedidor");
 
                 entity.Property(e => e.MesAdeudoAct)
-                    .HasColumnType("numeric(10, 0)")
+                    .HasColumnType("numeric(10, 2)")
                     .HasColumnName("mes_adeudo_act");
 
                 entity.Property(e => e.MesAdeudoAnt)
-                    .HasColumnType("numeric(10, 0)")
+                    .HasColumnType("numeric(10, 2)")
                     .HasColumnName("mes_adeudo_ant");
 
                 entity.Property(e => e.MesFacturado)
-                    .HasMaxLength(8)
+                    .HasMaxLength(15)
                     .IsUnicode(false)
                     .HasColumnName("_MesFacturado");
-
-                entity.Property(e => e.Mf)
-                    .HasColumnType("numeric(2, 0)")
-                    .HasColumnName("mf");
-
-                entity.Property(e => e.Nivel)
-                    .HasColumnType("numeric(3, 0)")
-                    .HasColumnName("nivel");
-
-                entity.Property(e => e.Nivelsocial)
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .IsUnicode(false)
-                    .HasColumnName("_nivelsocial");
 
                 entity.Property(e => e.NomComercial)
                     .HasMaxLength(80)
@@ -1035,15 +964,30 @@ namespace Sicem_Blazor.Data
                     .IsUnicode(false)
                     .HasColumnName("nom_propietario");
 
+                entity.Property(e => e.NombreEmpresa)
+                    .HasMaxLength(50)
+                    .IsUnicode(false)
+                    .HasColumnName("nombre_empresa");
+
+                entity.Property(e => e.NombreJubilado)
+                    .HasMaxLength(50)
+                    .IsUnicode(false)
+                    .HasColumnName("nombre_jubilado");
+
                 entity.Property(e => e.NumExt)
-                    .HasMaxLength(20)
+                    .HasMaxLength(10)
                     .IsUnicode(false)
                     .HasColumnName("num_ext");
 
                 entity.Property(e => e.NumInt)
-                    .HasMaxLength(20)
+                    .HasMaxLength(10)
                     .IsUnicode(false)
                     .HasColumnName("num_int");
+
+                entity.Property(e => e.ObservaJubilado)
+                    .HasMaxLength(255)
+                    .IsUnicode(false)
+                    .HasColumnName("observa_jubilado");
 
                 entity.Property(e => e.PaginaInternet)
                     .HasMaxLength(80)
@@ -1057,29 +1001,21 @@ namespace Sicem_Blazor.Data
                     .HasColumnName("_poblacion");
 
                 entity.Property(e => e.PorDescto)
-                    .HasColumnType("decimal(12, 2)")
+                    .HasColumnType("decimal(4, 2)")
                     .HasColumnName("por_descto");
 
-                entity.Property(e => e.Prefacturado).HasColumnName("prefacturado");
-
                 entity.Property(e => e.PromedioAct)
-                    .HasColumnType("numeric(10, 0)")
+                    .HasColumnType("numeric(10, 2)")
                     .HasColumnName("promedio_act");
 
                 entity.Property(e => e.PromedioAnt)
-                    .HasColumnType("numeric(10, 0)")
+                    .HasColumnType("numeric(10, 2)")
                     .HasColumnName("promedio_ant");
 
                 entity.Property(e => e.RazonSocial)
-                    .HasMaxLength(250)
+                    .HasMaxLength(80)
                     .IsUnicode(false)
                     .HasColumnName("razon_social");
-
-                entity.Property(e => e.Recibo)
-                    .HasColumnType("numeric(10, 0)")
-                    .HasColumnName("recibo");
-
-                entity.Property(e => e.ReciboMail).HasColumnName("recibo_mail");
 
                 entity.Property(e => e.Rfc)
                     .HasMaxLength(20)
@@ -1089,18 +1025,6 @@ namespace Sicem_Blazor.Data
                 entity.Property(e => e.Ruta)
                     .HasColumnType("numeric(3, 0)")
                     .HasColumnName("ruta");
-
-                entity.Property(e => e.SalidasHidraulicas)
-                    .HasColumnType("numeric(10, 0)")
-                    .HasColumnName("salidas_hidraulicas");
-
-                entity.Property(e => e.Sb)
-                    .HasColumnType("numeric(2, 0)")
-                    .HasColumnName("sb");
-
-                entity.Property(e => e.Sector)
-                    .HasColumnType("numeric(2, 0)")
-                    .HasColumnName("sector");
 
                 entity.Property(e => e.Servicio)
                     .IsRequired()
@@ -1114,11 +1038,12 @@ namespace Sicem_Blazor.Data
                     .HasColumnName("_situacion");
 
                 entity.Property(e => e.Subtotal)
-                    .HasColumnType("money")
+                    .HasColumnType("decimal(14, 2)")
                     .HasColumnName("subtotal");
 
                 entity.Property(e => e.Tarifafija)
-                    .HasMaxLength(61)
+                    .IsRequired()
+                    .HasMaxLength(50)
                     .HasColumnName("_tarifafija");
 
                 entity.Property(e => e.Telefono1)
@@ -1136,13 +1061,29 @@ namespace Sicem_Blazor.Data
                     .IsUnicode(false)
                     .HasColumnName("telefono3");
 
-                entity.Property(e => e.TienePozo).HasColumnName("tiene_pozo");
-
-                entity.Property(e => e.Tipodraef)
-                    .IsRequired()
-                    .HasMaxLength(1)
+                entity.Property(e => e.TelefonoFax)
+                    .HasMaxLength(30)
                     .IsUnicode(false)
-                    .HasColumnName("_tipodraef");
+                    .HasColumnName("telefono_fax");
+
+                entity.Property(e => e.Tipocasa)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false)
+                    .HasColumnName("_tipocasa");
+
+                entity.Property(e => e.Tipodocto)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false)
+                    .HasColumnName("_tipodocto");
+
+                entity.Property(e => e.Tipoempresa)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false)
+                    .HasColumnName("_tipoempresa")
+                    .IsFixedLength();
 
                 entity.Property(e => e.Tipofactible)
                     .IsRequired()
@@ -1162,6 +1103,12 @@ namespace Sicem_Blazor.Data
                     .IsUnicode(false)
                     .HasColumnName("_tipoinstalacion");
 
+                entity.Property(e => e.Tipojubilado)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false)
+                    .HasColumnName("_tipojubilado");
+
                 entity.Property(e => e.Tipotoma)
                     .IsRequired()
                     .HasMaxLength(50)
@@ -1177,15 +1124,10 @@ namespace Sicem_Blazor.Data
                 entity.Property(e => e.Tipousuario)
                     .IsRequired()
                     .HasMaxLength(50)
-                    .IsUnicode(false)
                     .HasColumnName("_tipousuario");
 
-                entity.Property(e => e.Toma)
-                    .HasColumnType("numeric(2, 0)")
-                    .HasColumnName("toma");
-
                 entity.Property(e => e.Total)
-                    .HasColumnType("money")
+                    .HasColumnType("decimal(14, 2)")
                     .HasColumnName("total");
 
                 entity.Property(e => e.Ubicacionmedidor)
@@ -1199,12 +1141,6 @@ namespace Sicem_Blazor.Data
                 entity.Property(e => e.Viviendas)
                     .HasColumnType("numeric(10, 0)")
                     .HasColumnName("viviendas");
-
-                entity.Property(e => e.Zona)
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .IsUnicode(false)
-                    .HasColumnName("_zona");
             });
 
             OnModelCreatingPartial(modelBuilder);

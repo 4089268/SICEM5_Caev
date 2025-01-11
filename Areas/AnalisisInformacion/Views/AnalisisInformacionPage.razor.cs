@@ -12,6 +12,7 @@ using MatBlazor;
 using Sicem_Blazor.Services;
 using Sicem_Blazor.Models;
 using Sicem_Blazor.Data;
+using Sicem_Blazor.AnalisisInformacion.Models;
 
 namespace Sicem_Blazor.AnalisisInformacion.Views;
 

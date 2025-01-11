@@ -3,6 +3,7 @@
 @using System.Collections
 @using System.Linq
 @using System.Data
+@using Sicem_Blazor.AnalisisInformacion.Models
 
 <div class="d-flex flex-column align-items-start" style="height: 100%;">
     <div class="d-flex align-items-center w-100" style="padding: 1rem 1rem 0.5rem 1rem; ">
@@ -65,6 +66,15 @@
             <div class="item">
                 <label>Tiene Ubicacion</label>
                 <select class="ns-input" @bind="FiltroBusqueda.TieneUbicacion">
+                    <option value="0">Cualquiera</option>
+                    <option value="1">Si</option>
+                    <option value="2">No</option>
+                </select>
+            </div>
+
+            <div class="item">
+                <label>Telefono Registrado</label>
+                <select class="ns-input" @bind="FiltroBusqueda.TelefonoRegistrado">
                     <option value="0">Cualquiera</option>
                     <option value="1">Si</option>
                     <option value="2">No</option>

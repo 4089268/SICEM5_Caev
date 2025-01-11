@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
-using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Sicem_Blazor.Data;
 using Sicem_Blazor.Models;
 using Sicem_Blazor.Models.Entities.Arquos;
-using ServiceReference;
+using Sicem_Blazor.AnalisisInformacion.Models;
 
 namespace Sicem_Blazor.Services
 {

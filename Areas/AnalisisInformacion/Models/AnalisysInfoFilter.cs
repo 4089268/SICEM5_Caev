@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Sicem_Blazor.Models {
+namespace Sicem_Blazor.AnalisisInformacion.Models {
     public class AnalisysInfoFilter {
         public List<int> Id_Oficinas {get;set;} = new List<int>();
 
@@ -84,6 +84,8 @@ namespace Sicem_Blazor.Models {
         public decimal Saldo_Valor2 { get; set; } = 0m;
         
         public int TieneUbicacion { get; set; } = 0;
+
+        public int TelefonoRegistrado { get; set; } = 0;
 
         public int Subsistema_Opcion {get;set;} = 0;
         public decimal Subsistema_Valor1 {get;set;} = 0m;

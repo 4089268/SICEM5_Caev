@@ -5,6 +5,7 @@ using System.Data;
 using System.Data.SqlClient;
 using Sicem_Blazor.Models;
 using Sicem_Blazor.Models.Entities.Arquos;
+using Sicem_Blazor.AnalisisInformacion.Models;
 
 namespace Sicem_Blazor {
     public class BusquedaAvanzada {
@@ -162,6 +163,18 @@ namespace Sicem_Blazor {
                             break;
                     }
                 }
+
+                if(filtro.TelefonoRegistrado > 0) {
+                    switch(filtro.TelefonoRegistrado) {
+                        case 1:
+                            _queryBuilder.Append($" and Len(IsNull(telefono1,'')) > 1 ");
+                            break;
+                        case 2:
+                            _queryBuilder.Append($" and Len(IsNull(telefono1,'')) <= 1");
+                            break;
+                    }
+                }
+
 
                 if(filtro.Subsistema_Opcion > 0){
                     switch (filtro.Subsistema_Opcion){

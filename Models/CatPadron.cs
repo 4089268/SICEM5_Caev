@@ -102,7 +102,7 @@ namespace Sicem_Blazor.Models {
 
         public bool TieneTelefono {
             get {
-                return !String.IsNullOrEmpty(Telefono1);
+                return !String.IsNullOrEmpty(Telefono1.Trim());
             }
         }
 

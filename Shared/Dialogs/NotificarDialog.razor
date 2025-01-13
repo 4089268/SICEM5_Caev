@@ -1,0 +1,113 @@
+@namespace Sicem_Blazor.Shared.Dialogs
+@using Syncfusion.Blazor.Maps
+@using System.Text.RegularExpressions
+@using Sicem_Blazor.Models
+@using Sicem_Blazor.Services.Whatsapp
+
+
+<VentanaSecundaria Titulo="@Titulo" Filas="@FilasTemplate" Columnas="@ColumnasTemplate" CerrarVentana="CerrarVentana_Click">
+    <Content>
+
+        <div class="pb-1" id="lista-templates">
+            
+            <SfGrid DataSource="@DatosGrid" TValue="NotificacionTemplate" AllowResizing="true" AllowSorting="true" AllowFiltering="false"
+                AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
+                <GridEvents RowSelected="OnDataGrid_SelectionChanged" TValue="NotificacionTemplate"></GridEvents>
+                <GridColumns>
+                    <GridColumn Field=@nameof(NotificacionTemplate.Titulo) HeaderText="Templates" TextAlign="TextAlign.Left" Width="140">
+                        <Template>
+                            @{
+                                var data = (context as NotificacionTemplate);
+                                <i class="fa fa-newspaper mr-2" />
+                                <span>@data.Titulo</span>
+                            }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </div>
+
+        <div id="panel-message" class="carousel slide d-flex" data-ride="carousel">
+            <SfTextBox Multiline=true Placeholder="Mensaje a notificar" @bind-Value="@TextoMensaje"></SfTextBox>
+        </div>
+
+        <div id="panel-dest" class="carousel slide" data-ride="carousel">
+            <SfGrid DataSource="@PadronUsuarios_ConTelefono" AllowGrouping="false" TValue="CatPadron" AllowResizing="true" AllowSorting="true" AllowExcelExport="false" Height="100%" Width="100%" EnableHover="true" RowHeight="14">
+                <GridEvents RowSelected="OnDestinatarioSeleccionado" TValue="CatPadron"></GridEvents>
+                <GridColumns>
+                    <GridColumn Field="@nameof(CatPadron.RazonSocial)" HeaderText="Razon Social" TextAlign="TextAlign.Left" Width="210" />
+                    <GridColumn Field="@nameof(CatPadron.Telefono1)" HeaderText="Telefono" TextAlign="TextAlign.Left" Width="120" />
+                </GridColumns>
+            </SfGrid>
+        </div>
+
+        <div class="p-2 d-flex bg-white border rounded" style="width:100%; height:100%; grid-area:2/2/3/4;">
+
+            <div class="button px-3 py-2 bg-success mr-4  @( DestinatarioSeleccionado == null?"dissable": " ")" @onclick="PrevisualizarTexto_Click" >
+                <i class="fa fa-terminal mr-2"></i>
+                <span>Pre-Visualizar mensaje</span>
+            </div>
+
+
+            <div class="button px-3 py-2 bg-success mr-4" @onclick="EnviarMensaje">
+                <i class="fa fa-send mr-2"></i>
+                <span>Notificar destinatarios</span>
+            </div>
+
+        </div>
+
+    </Content>
+</VentanaSecundaria>
+
+<BusyIndicator Busy="cargando" ContentText="Cargando datos..." />
+
+@if(mostrarPre){
+    <div class="busy-control" >
+        <div class="busy-content justify-content-start" style="width:34rem; height:14rem;">
+            <div class="d-flex align-items-end justify-content-end w-100">
+                <i class="fa fa-close" @onclick="@(e => mostrarPre = false)"></i>
+            </div>
+            <div class="w-100 h-100">
+                @MesnajePrevisualizado
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+
+    #lista-templates{
+        width:100%;
+        height:100%;
+        grid-area:1/1/4/2;
+    }
+    #textarea-message
+    {
+        height: 100%;
+        width: 100%;
+    }
+
+    #panel-message
+    {
+        width:100%;
+        height:100%;
+        grid-area:1/2/2/3;
+    }
+    #panel-message textarea{
+        height: 100%;
+        width: 100%;
+        resize: none;
+    }
+
+    #panel-dest
+    {
+        width:100%;
+        height:100%;
+        grid-area:1/3/2/4;
+    }
+
+    #panel-dest .e-rowcell{
+        font-size: 10px !important;
+    }
+
+</style>

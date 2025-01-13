@@ -48,7 +48,9 @@ public partial class AnalisisInformacionPage
     private string cuentaActual = "";
     private int oficinaActual = 0;
     private bool mostrarUbicaciones = false;
+    private bool notificarDialogVisible = false;
     private List<MapMark> mapPoints = new List<MapMark>();
+    private List<CatPadron> UsuariosANotificar { get; set;} = new List<CatPadron>();
 
     private Dictionary<int, string> catOficinas = new();
     private Dictionary<int,string> catEstatus = new();
@@ -155,7 +157,8 @@ public partial class AnalisisInformacionPage
         this.mostrarUbicaciones = true;
     }
 
-    private void mostrarUbicaciones_Click(){
+    private void MostrarUbicacionesClick()
+    {
         if(DatosGrid.Count() <= 0){
             return;
         }
@@ -177,4 +180,26 @@ public partial class AnalisisInformacionPage
 
     }
 
+    private async void HandleNotificationPanelClick(long? id_padron)
+    {
+        UsuariosANotificar.Clear();
+        if(id_padron != null)
+        {
+            var _padron = this.DatosGrid.Where(item => item.Id_Padron == id_padron).First();
+            UsuariosANotificar.Add( _padron );
+        }
+        else
+        {
+            UsuariosANotificar.AddRange( DatosGrid.Where(item => item.TieneTelefono) );
+        }
+
+        notificarDialogVisible = true;
+        await Task.Delay(100);
+    }
+
+    private void HandleNotificationClose()
+    {
+        notificarDialogVisible = false;
+        UsuariosANotificar.Clear();
+    }
 }

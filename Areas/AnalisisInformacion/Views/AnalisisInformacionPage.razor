@@ -51,7 +51,7 @@
                     <span>Exportar Resultados</span>
                 </div>
 
-                <div class="button px-3 py-2 bg-success mr-4" @onclick="mostrarUbicaciones_Click" >
+                <div class="button px-3 py-2 bg-success mr-4" @onclick="MostrarUbicacionesClick" >
                     <i class="fa fa-map-marker mr-2"></i>
                     <span>Mostrar Ubicaciones</span>
                 </div>
@@ -70,7 +70,7 @@
                     </GridGroupSettings>
                     <GridPageSettings PageSize="1000"></GridPageSettings>
                     <GridColumns>
-                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="65">
+                        <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="90">
                             <Template>
                                 @{
                                     var data = (context as CatPadron);
@@ -80,6 +80,9 @@
                                         </button>
                                         <button type="button" class="btn btn-primary btn-sm mr-2" data-toggle="tooltip" data-placement="top" title="Mostrar Ubicacion" @onclick="@( e => MostrarUbicacion_Click(data))" disabled="@(!data.TieneUbicacion)">
                                             <i class="fa fa-map-marker" aria-hidden="true"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-primary btn-sm @(data.TieneTelefono?"bg-success border-success":"bg-danger border-danger") mr-2" data-toggle="tooltip" data-placement="top" title="Notificar Whatsapp" @onclick="@( e => HandleNotificationPanelClick(data.Id_Padron))"  disabled="@(!data.TieneTelefono)">
+                                            <i class="fa fa-phone" aria-hidden="true"></i>
                                         </button>
                                     </div>
                                 }
@@ -177,4 +180,11 @@
 @if(mostrarUbicaciones)
 {
     <MapaComponent OnClosed="@(e => mostrarUbicaciones = false)" MarkerDataSource="@mapPoints" />
+}
+
+@if(notificarDialogVisible){
+    <NotificarDialog
+        OnClosed="@(e => HandleNotificationClose() )" 
+        PadronUsuarios="@UsuariosANotificar"
+    />
 }

@@ -46,7 +46,13 @@ namespace Sicem_Blazor.Models
             foreach( var enlace in _enlaces){
                 stringBuilder.Append($"{enlace.Id};");
             }
-            return stringBuilder.ToString();
+            return stringBuilder.ToString().Trim(';');
+
+        }
+
+        public override string ToString()
+        {
+            return $"{Id}:{Nombre}";
         }
     }
 }

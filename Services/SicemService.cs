@@ -153,15 +153,18 @@ namespace Sicem_Blazor.Services {
         public async Task<bool> GuardarCambiosUsuario() {
             int res = 0;
             var _idUsuario = ConvertUtils.ParseInteger(this.Usuario.Id);
-            var _usuario = sicemContext.Usuarios.Where( item => item.Id == _idUsuario).FirstOrDefault();
-            if(_usuario != null){
-                _usuario.Oficinas = this.Usuario.GetCadEnlaces();
+            try
+            {
+                var _usuario = sicemContext.Usuarios.Where( item => item.Id == _idUsuario).FirstOrDefault() ?? throw new KeyNotFoundException("The user is not found on the system");
+
+                var newCadOffices = this.Usuario.GetCadEnlaces();
+                _usuario.Oficinas = newCadOffices;
                 res = await sicemContext.SaveChangesAsync();
-            }
-            if(res > 0) {
-                return true;
-            }
-            else {
+                this.logger.LogInformation("The user {user} has changed the cad of offices to [{newCadOffices}]", this.Usuario, newCadOffices );
+                return res > 0;
+            }catch(Exception err)
+            {
+                this.logger.LogError(err, "Fail at attempt to update the offices of the user: {message}", err.Message);
                 return false;
             }
         }

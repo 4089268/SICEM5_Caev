@@ -21,6 +21,7 @@ namespace Sicem_Blazor.Models
         public virtual DbSet<CatContable1> CatContables1 { get; set; }
         public virtual DbSet<CatDispositivo> CatDispositivos { get; set; }
         public virtual DbSet<CatFirma> CatFirmas { get; set; }
+        public virtual DbSet<CatImagenesTemplate> CatImagenesTemplates { get; set; }
         public virtual DbSet<CatLocalidade> CatLocalidades { get; set; }
         public virtual DbSet<CatMessagesTemplate> CatMessagesTemplates { get; set; }
         public virtual DbSet<CatOpcione> CatOpciones { get; set; }
@@ -225,6 +226,25 @@ namespace Sicem_Blazor.Models
                     .HasColumnName("puesto");
             });
 
+            modelBuilder.Entity<CatImagenesTemplate>(entity =>
+            {
+                entity.ToTable("Cat_ImagenesTemplate", "Notificacion");
+
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.Property(e => e.DeletedAt).HasColumnType("smalldatetime");
+
+                entity.Property(e => e.Path)
+                    .IsRequired()
+                    .HasMaxLength(250)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Titulo)
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .IsUnicode(false);
+            });
+
             modelBuilder.Entity<CatLocalidade>(entity =>
             {
                 entity.HasNoKey();
@@ -292,17 +312,18 @@ namespace Sicem_Blazor.Models
 
             modelBuilder.Entity<CatMessagesTemplate>(entity =>
             {
+                entity.HasNoKey();
+
                 entity.ToTable("Cat_MessagesTemplate", "Notificacion");
 
-                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+                entity.Property(e => e.DeletedAt).HasColumnType("smalldatetime");
 
-                entity.Property(e => e.FechaCreacion)
-                    .HasColumnType("datetime")
-                    .HasDefaultValueSql("(getdate())");
+                entity.Property(e => e.FechaCreacion).HasColumnType("smalldatetime");
+
+                entity.Property(e => e.ImagePropertiesJson).IsUnicode(false);
 
                 entity.Property(e => e.Mensaje)
                     .IsRequired()
-                    .HasMaxLength(200)
                     .IsUnicode(false);
 
                 entity.Property(e => e.Titulo)
@@ -310,9 +331,12 @@ namespace Sicem_Blazor.Models
                     .HasMaxLength(200)
                     .IsUnicode(false);
 
-                entity.Property(e => e.UltimaModificacion)
-                    .HasColumnType("datetime")
-                    .HasDefaultValueSql("(getdate())");
+                entity.Property(e => e.UltimaModificacion).HasColumnType("smalldatetime");
+
+                entity.HasOne(d => d.Image)
+                    .WithMany()
+                    .HasForeignKey(d => d.ImageId)
+                    .HasConstraintName("FK_Cat_MessagesTemplate_ImageId");
             });
 
             modelBuilder.Entity<CatOpcione>(entity =>
@@ -1321,7 +1345,7 @@ namespace Sicem_Blazor.Models
                     .HasColumnName("nombre");
 
                 entity.Property(e => e.Oficinas)
-                    .HasMaxLength(150)
+                    .HasMaxLength(250)
                     .IsUnicode(false)
                     .HasColumnName("oficinas");
 

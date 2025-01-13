@@ -6,6 +6,12 @@ namespace Sicem_Blazor.Models
 {
     public partial class Ruta: IEnlace
     {
+        public Ruta()
+        {
+            HistTarifas = new HashSet<HistTarifa>();
+            ModsOficinas = new HashSet<ModsOficina>();
+        }
+
         public int Id { get; set; }
         public string Oficina { get; set; }
         public string Ruta1 { get; set; }

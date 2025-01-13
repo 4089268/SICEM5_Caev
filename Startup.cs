@@ -25,6 +25,7 @@ using Sicem_Blazor.ModsUbitoma.Data;
 using Sicem_Blazor.Descuentos.Data;
 using Sicem_Blazor.PagoLinea.Data;
 using Sicem_Blazor.Helpers;
+using Sicem_Blazor.Services.Whatsapp;
 
 
 namespace Sicem_Blazor {
@@ -71,6 +72,8 @@ namespace Sicem_Blazor {
             services.AddScoped<LogeadoFilter>();
             services.AddScoped<PagoLineaService>();
             services.AddScoped<AnalisisInformacionService>();
+            services.AddScoped<NotificacionesTemplateService>();
+            services.AddWhatsappService(Configuration);
 
             services.AddHttpClient<UbitomaHttpClient>("ubitoma", client => {
                 string url = Configuration.GetSection("AppSettings").GetValue<string>("Ubitoma_Api");

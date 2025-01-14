@@ -1,0 +1,110 @@
+@namespace Sicem_Blazor.Pages.Configuracion
+@page "/NotificacionesTemplates"
+@using Sicem_Blazor.Pages.Configuracion.Partials
+
+<div class="content-layout">
+    <div style="grid-area:1/1/2/3;">
+        <div class="title-page text-uppercase" style="grid-area:1/1/2/2;">Notificaciones Templates</div>
+    </div>
+
+    <nav aria-label="breadcrumb" style="grid-area:2/1/3/3;">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="./">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="./Configuracion">Configuracion</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Notificaciones Templates</li>
+        </ol>
+    </nav>
+
+    @* Area Opciones *@
+    <div class="grid border rounded bg-white px-2 d-flex align-items-center" style="grid-area:3/1/4/3;">
+
+        <div class="button px-3 py-2 bg-success mr-3" @onclick="AgregarNuevoTemplateClick" >
+            <i class="fa fa-plus mr-2"></i>
+            <span>Agregar Template</span>
+        </div>
+    </div>
+    
+    <!-- ****** Grid Catalogo Historial ******-->
+    <div class="border rounded bg-white p-2" style="grid-area:4/1/5/2" >
+        <div class="d-flex align-items-center p-1" style="height:4rem;">
+            <div class="d-flex align-items-center border rounded p-2" style="width: 24rem; height:100%; font-size:1.1rem;">
+                <i class="fa fa-search ml-2 mr-2" style="color:#555;"></i>
+                <input type="text" placeholder="Buscar" @bind-value="searchText" @onkeyup="OnGridSearch_KeyUp" style="border: none; outline:none; background-color:#fff; width:100%; box-shadow:none;" />
+                @if(searchText.Trim().Length > 1){
+                    <i class="fa fa-close link-btn aling ali align-self-start m m-1" aria-hidden="true" style="width: 1rem;height: 1rem;color: #333;text-decoration: none !important;" @onclick="ClearSearch_Click"></i>
+                }
+            </div>
+        </div>
+
+        <div class="p-1" style="width: 100%; height: calc(100% - 4.5rem);">
+            <SfGrid @ref="DataGrid" DataSource="@DatosGrid" TValue="NotificacionTemplate" AllowResizing="true" AllowSorting="true" AllowFiltering="false"
+                AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
+                <GridEvents RowSelected="OnDataGrid_SelectionChanged" TValue="NotificacionTemplate"></GridEvents>
+                <GridColumns>
+                    <GridColumn Field=@nameof(NotificacionTemplate.Titulo) HeaderText="Titulo" TextAlign="TextAlign.Left" Width="140">
+                        <Template>
+                            @{
+                                var data = (context as NotificacionTemplate);
+                                <i class="fa fa-newspaper mr-2" />
+                                <span>@data.Titulo</span>
+                            }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </div>
+    </div>
+
+    <!-- ****** Grid Detalle ******-->
+    <div class="border rounded bg-white p-2" style="grid-area:4/2/5/3;">
+        <div class="d-flex" style="width: 100%; height: calc(100% - 4.1rem);">
+            @if(TemplateSeleccionado == null)
+            {
+                <DisplayEmptyTemplate />
+            }
+            else
+            {
+                <DisplayFormTemplate NotificacionTemplate1="@TemplateSeleccionado" />
+            }
+        </div>
+
+        <div class="d-flex pt-3 justify-content-center" style="height:4rem;">
+            <div class="button px-3 py-2 bg-success mr-3" style="width:12rem;" @onclick="GuardarOCrear">
+                <i class="fa fa-save mr-3"></i>
+                <span>Actualizar</span>
+            </div>
+            <div class="button px-3 py-2 bg-primary mr-3" style="width:12rem;" @onclick="GuardarCopia">
+                <i class="fa fa-save mr-3"></i>
+                <span>Guardar Copia</span>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<style>
+    .content-layout
+    {
+        width: 100%;
+        height: 100%;
+        display: grid;
+        grid-template-columns: 30% 70%;
+        grid-template-rows: 3rem 3rem 4rem calc(100% - 12rem);
+        grid-gap: .4rem .4rem;
+    }
+
+    .list-props .prop
+    {
+        padding: 2px 4px;
+        margin-bottom: 2px;
+        background-color: #80acc9;
+        border: 1px solid #6491af;
+        border-radius: 4px;
+    }
+    .area-texto textarea
+    {
+        resize: none;
+    }
+</style>
+
+<BusyIndicator Busy="@cargando" ContentText="Cargando datos..." />

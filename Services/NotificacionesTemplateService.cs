@@ -41,7 +41,7 @@ namespace Sicem_Blazor.Services
             if(sicemContext.CatMessagesTemplates.ToList().Select(e => e.Id).Contains(template.UUID)){
                 Console.WriteLine("Actualizar template");
 
-                var tmpData = sicemContext.CatMessagesTemplates.Find(template.UUID);
+                var tmpData = sicemContext.CatMessagesTemplates.FirstOrDefault(item => item.Id == template.UUID);
                 tmpData.Titulo = template.Titulo;
                 tmpData.Mensaje = template.Texto;
                 tmpData.UltimaModificacion = DateTime.Now;

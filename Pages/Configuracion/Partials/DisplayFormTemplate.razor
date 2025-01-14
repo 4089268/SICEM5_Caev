@@ -1,0 +1,238 @@
+@namespace Sicem_Blazor.Pages.Configuracion.Partials
+@using System.Linq
+@using System.IO
+@using Microsoft.Extensions.Configuration
+@using Microsoft.Extensions.Logging
+@using Microsoft.AspNetCore.Hosting
+@using Sicem_Blazor.Data.Notification
+@inject NotificacionesTemplateService NotificacionesTemplateService1
+@inject ILogger<DisplayFormTemplate> Logger
+@inject IMatToaster Toaster
+@inject SicemService SicemService1
+@inject IConfiguration Configuration
+@inject IWebHostEnvironment WebHostEnvironment
+@inject IJSRuntime JSRuntime
+
+
+<div class="container h-100" style="overflow-y: auto; overflow-x: hidden;">
+    <div class="row">
+
+        <div class="col-12 p-3" style="height:80px;">
+            <label class="pb-1" style="font-size:1.5em;">Titulo</label>
+            <SfTextBox Multiline=false Placeholder="Titulo" @bind-Value="@NotificacionTemplate1.Titulo"></SfTextBox>
+        </div>
+
+        <div class="col-9 p-3">
+            <label class="pb-1" style="font-size:1.5em;">Mensaje</label>
+            <SfTextBox Multiline=true Placeholder="Mensaje a notificar" Style="height:20rem;" @bind-Value="@NotificacionTemplate1.Texto"></SfTextBox>
+        </div>
+
+        <div class="col-3 p-3" style="overflow-y: scroll; overflow-x: hidden; height: 24rem;">
+            <ListPropsAvailables />
+        </div>
+
+        <div class="col-12 d-flex p-4 ml-4" style="display:none; ">
+            @* <input class="form-check-input" type="checkbox" id="chbUseImage" @bind="UseImage"> *@
+            <input class="form-check-input" type="checkbox" id="chbUseImage" checked disabled>
+            <label class="form-check-label ml-2" style="font-size: 1.25em;" for="chbUseImage">
+                Usa Imagen
+            </label>
+        </div>
+
+        @if(UseImage)
+        {
+        <div class="col-12 p-3">
+            <label class="pb-1" for="selecctBanner" style="font-size:1.25em;">Imagenes Disponibles</label>
+
+            <div class="row border rounded p-2 bg-light">
+                @foreach(var image in Imagenes)
+                {
+                    <div class="col-4 p-2">
+                        <div class="car border">
+                            <img src="@image.Path" class="card-img-top img-thumbnail mx-auto" alt="@image.Titulo" style="max-height: 32rem;">
+                            <div class="card-body">
+                                <h5 class="card-title">@image.Titulo</h5>
+                                <div class="d-flex justify-content-center" style="height: 3.5rem;">
+                                    @if(NotificacionTemplate1.ImageId == image.Id)
+                                    {
+                                        <div class="alert alert-success text-center p-1 w-100" role="alert">
+                                            Elemento seleccionado
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-primary px-4 mx-auto" @onclick="@(e => HandleSelectedImageChange(image))">Seleccionar</button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            @if(NotificacionTemplate1.AppendTextSettings != null)
+            {
+            <div class="row border-top rounded p-2 bg-light">
+
+                <div class="mb-3 col-md-6 col-lg-4 col-xl-2">
+                    <label for="paddingLeft" class="form-label">Margen Izquierdo</label>
+                    <input type="number" @bind-value="NotificacionTemplate1.AppendTextSettings.PaddingLeft" id="paddingLeft" class="form-control" />
+                </div>
+
+                <div class="mb-3 col-md-6 col-lg-4 col-xl-2">
+                    <label for="paddingTop" class="form-label">Margen Superior</label>
+                    <input type="number" @bind-value="NotificacionTemplate1.AppendTextSettings.PaddingTop" id="paddingTop" class="form-control" />
+                </div>
+
+                <div class="mb-3 col-md-6 col-lg-4 col-xl-2">
+                    <label for="fontSize" class="form-label">Tamaño de texto</label>
+                    <input type="number" @bind-value="NotificacionTemplate1.AppendTextSettings.FontSize" id="fontSize" class="form-control" />
+                </div>
+
+                <div class="mb-3 col-md-6 col-lg-4 col-xl-2">
+                    <label for="fontColor" class="form-label">Color de Texto</label>
+                    <input type="color" @bind-value="NotificacionTemplate1.AppendTextSettings.FontColor" id="fontColor" class="form-control" />
+                </div>
+
+                <div class="mb-3 col-md-6 col-lg-4 col-xl-2">
+                    <label for="wrappingLength" class="form-label">Ancho de Linea</label>
+                    <input type="number" @bind-value="NotificacionTemplate1.AppendTextSettings.WrappingLength" id="wrappingLength" class="form-control" />
+                </div>
+
+                <div class="mb-3 col-md-6 col-lg-4 col-xl-2">
+                    <label for="lineSpacing" class="form-label">Interlineado de Texto</label>
+                    <input type="number" @bind-value="NotificacionTemplate1.AppendTextSettings.LineSpacing" id="lineSpacing" class="form-control" />
+                </div>
+
+                <div class="mb-3 d-flex flex-column col-md-6 col-lg-4 col-xl-2">
+                    <label for="textAlignment" class="form-label">Alineación del texto</label>
+                    <select @bind="NotificacionTemplate1.AppendTextSettings.TextAlignment" id="textAlignment" class="form-select form-control">
+                        <option value="0">Inicio</option>
+                        <option value="1">Fin</option>
+                        <option value="2">Centro</option>
+                    </select>
+                </div>
+            </div>
+            }
+
+            <div class="row border-top p-2 bg-light">
+                <div class="mb-3 mx-auto">
+                    <button type="button" class="btn btn-primary" @onclick="HandlePreviewMessageClick">
+                        <i class="fa fa-picture-o"/>
+                        <span>Previsualizar Mensaje</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+        }
+
+    </div>
+</div>
+
+@code
+{
+    [Parameter]
+    public NotificacionTemplate NotificacionTemplate1 {get; set;}
+
+    private string selectedElement = "";
+    private bool _useImage = false;
+    private bool UseImage {
+        get => _useImage;
+        set {
+            _useImage = value;
+            if(!_useImage)
+            {
+                NotificacionTemplate1.AppendTextSettings = new AppendTextSettings();
+            }
+        }
+    }
+    private List<CatImagenesTemplate> Imagenes = new List<CatImagenesTemplate>();
+    private CatPadron catPadron;
+    private Guid TemplateImageUUID = Guid.NewGuid();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTemplateImages();
+        base.OnInitialized();
+    }
+
+    protected override void OnParametersSet()
+    {
+        this._useImage = NotificacionTemplate1.ImageId != null;
+        //this.UseImage = NotificacionTemplate1.ImageId != null;
+    }
+
+    private async Task LoadTemplateImages()
+    {
+        this.Imagenes = NotificacionesTemplateService1.GetImagenesTemplates().ToList();
+        StateHasChanged();
+        Logger.LogDebug("Total imagesTemplate: {total}", this.Imagenes.Count);
+        await Task.CompletedTask;
+    }
+
+    private async Task HandleSelectedImageChange(CatImagenesTemplate image)
+    {
+        this.NotificacionTemplate1.ImageId = image.Id;
+        Toaster.Add("Elemento seleccionado", MatToastType.Info);
+        await Task.CompletedTask;
+    }
+
+    private void PrintSettings()
+    {
+        Logger.LogDebug(NotificacionTemplate1.AppendTextSettings.ToString());
+    }
+
+    private async Task HandlePreviewMessageClick()
+    {
+
+        // * Get random account info for make the text
+        LoadRandomAccountInfo();
+
+        // * Generate the message text
+        var message = MessageUtils.GenerateMessage(NotificacionTemplate1.Texto, catPadron);
+
+        var destinationPath = Path.Join(this.Configuration["TempFolder"], TemplateImageUUID.ToString());
+        Logger.LogDebug("Temporal path: {path}", destinationPath);
+
+        // * get the original image path
+        var originalImagePath = this.Imagenes.FirstOrDefault(item => item.Id == NotificacionTemplate1.ImageId)?.Path;
+        if(originalImagePath == null)
+        {
+            Toaster.Add("No se ha seleccionado una imagen", MatToastType.Warning);
+            return;
+        }
+        var fullOriginalImagePath = Path.Combine(WebHostEnvironment.WebRootPath, originalImagePath);
+        Logger.LogDebug("Original image path: {path}", fullOriginalImagePath);
+        
+        // * Generate the notification image
+        var notificationB64 = await MessageUtils.MakeImageNotification(fullOriginalImagePath, destinationPath, message, NotificacionTemplate1.AppendTextSettings);
+
+        // * show a the notification in a new vindow
+        await JSRuntime.InvokeVoidAsync("ShowFileFromBase64", notificationB64, "image/jpg");
+        
+        Toaster.Add("Notification Image generated", MatToastType.Info);
+
+        await Task.CompletedTask;
+    }
+
+    private void LoadRandomAccountInfo()
+    {
+        // * get a random enalce
+        var random = new Random();
+        IEnlace _office = SicemService1.ObtenerOficinasDelUsuario().OrderBy( _office => random.Next()).FirstOrDefault() ?? throw new ArgumentNullException("The user has nor office selected");
+
+        // * get a random account info
+        using var arquosContext = new ArquosContext(_office.GetConnectionString());
+        var totalRecords = arquosContext.VwCatPadrons.Count( item => item.Telefono1 != null && item.Total != null && item.Total > 0);
+        var accountInfo = arquosContext.VwCatPadrons
+            .Where(item => item.Telefono1 != null && item.Total != null && item.Total > 0)
+            .Skip(random.Next(totalRecords))
+            .FirstOrDefault() ?? throw new ArgumentNullException($"Can't retrive the a random account info of the office {_office.Nombre}");
+
+        var ruta = _office as Ruta ?? throw new InvalidCastException("The IEnlace instance could not be cast to Ruta.");
+        catPadron = new CatPadron(ruta, accountInfo);
+    }
+
+}

@@ -312,9 +312,9 @@ namespace Sicem_Blazor.Models
 
             modelBuilder.Entity<CatMessagesTemplate>(entity =>
             {
-                entity.HasNoKey();
-
                 entity.ToTable("Cat_MessagesTemplate", "Notificacion");
+
+                entity.Property(e => e.Id).ValueGeneratedNever();
 
                 entity.Property(e => e.DeletedAt).HasColumnType("smalldatetime");
 
@@ -334,7 +334,7 @@ namespace Sicem_Blazor.Models
                 entity.Property(e => e.UltimaModificacion).HasColumnType("smalldatetime");
 
                 entity.HasOne(d => d.Image)
-                    .WithMany()
+                    .WithMany(p => p.CatMessagesTemplates)
                     .HasForeignKey(d => d.ImageId)
                     .HasConstraintName("FK_Cat_MessagesTemplate_ImageId");
             });

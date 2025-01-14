@@ -1,0 +1,103 @@
+@namespace Sicem_Blazor.Pages.Configuracion
+
+<div class="list-props d-inline-flex flex-column p-2 overflow-auto" style="width:12rem;">
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Id_Oficina"))">Id_Oficina</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Id_Padron"))">Id_Padron</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Oficina"))">Oficina</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Id_Cuenta"))">Id_Cuenta</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("NomComercial"))">NomComercial</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("NomPropietario"))">NomPropietario</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("RazonSocial"))">RazonSocial</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Rfc"))">Rfc</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Curp"))">Curp</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Direccion"))">Direccion</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("IdLocalidad"))">IdLocalidad</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Poblacion"))">Poblacion</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Id_Colonia"))">Id_Colonia</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Colonia"))">Colonia</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Ciudad"))">Ciudad</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Estado"))">Estado</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("CodigoPostal"))">CodigoPostal</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Telefono1"))">Telefono1</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Telefono2"))">Telefono2</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("ReciboMail"))">ReciboMail</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Email"))">Email</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("CallePpal"))">CallePpal</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("NumExt"))">NumExt</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("NumInt"))">NumInt</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("CalleLat1"))">CalleLat1</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("CalleLat2"))">CalleLat2</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Ruta"))">Ruta</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Sb"))">Sb</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Sector"))">Sector</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Manzana"))">Manzana</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Lote"))">Lote</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Nivel"))">Nivel</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Fraccion"))">Fraccion</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Toma"))">Toma</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Localizacion"))">Localizacion</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Id_Giro"))">Id_Giro</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Giro"))">Giro</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Id_Claseusuario"))">Id_Claseusuario</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Clase_Usuario"))">Clase_Usuario</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Id_Estatus"))">Id_Estatus</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Estatus"))">Estatus</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Mf"))">Mf</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Af"))">Af</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("PromedioAnt"))">PromedioAnt</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("PromedioAct"))">PromedioAct</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("MesAdeudoAnt"))">MesAdeudoAnt</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("MesAdeudoAct"))">MesAdeudoAct</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Id_Servicio"))">Id_Servicio</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Servicio"))">Servicio</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Id_Tarifa"))">Id_Tarifa</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Tipo_Usuario"))">Tipo_Usuario</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Id_TarifaFija"))">Id_TarifaFija</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Tarifa_Fija"))">Tarifa_Fija</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("ConsumoFijo"))">ConsumoFijo</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("ImporteFijo"))">ImporteFijo</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("ImporteFijoDren"))">ImporteFijoDren</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("ImporteFijoSane"))">ImporteFijoSane</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Id_Situacion"))">Id_Situacion</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Situacion"))">Situacion</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Id_AnomaliaAct"))">Id_AnomaliaAct</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("AnomaliaAct"))">AnomaliaAct</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("LecturaAnt"))">LecturaAnt</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("LecturaAct"))">LecturaAct</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("ConsumoAnt"))">ConsumoAnt</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("ConsumoAct"))">ConsumoAct</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Consumo_RealAnt"))">Consumo_RealAnt</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Consumo_RealAct"))">Consumo_RealAct</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Id_Tipocalculo"))">Id_Tipocalculo</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Calculo"))">Calculo</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Calculo_Act"))">Calculo_Act</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Subtotal"))">Subtotal</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Iva"))">Iva</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Total"))">Total</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("EsMacromedidor"))">EsMacromedidor</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("EsDraef"))">EsDraef</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("EsAltoconsumidor"))">EsAltoconsumidor</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Id_Medidor"))">Id_Medidor</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Diametro"))">Diametro</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Tipotoma"))">Tipotoma</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("MesFacturado"))">MesFacturado</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("FechaAlta"))">FechaAlta</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("AltaFactura"))">AltaFactura</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("FechaLecturaAct"))">FechaLecturaAct</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("FechaFacturaAct"))">FechaFacturaAct</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("FechaVencimiento"))">FechaVencimiento</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Latitude"))">Latitude</div>
+    <div class="button prop" @onclick="@(e=>HandlePropertieClick("Longitude"))">Longitude</div>
+</div>
+
+@code
+{
+    [Parameter]
+    public EventCallback<string> OnPropClick {get;set;}
+
+    private async Task HandlePropertieClick(string propName)
+    {
+        await OnPropClick.InvokeAsync(propName);
+    }
+
+}

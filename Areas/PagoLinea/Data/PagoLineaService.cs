@@ -28,10 +28,10 @@ namespace Sicem_Blazor.PagoLinea.Data
             this.logger = l;
         }
 
-        public ResumeOffice ObtenerResumen(IEnlace enlace, DateRange dateRange)
+        public ResumeOfficeOld ObtenerResumen(IEnlace enlace, DateRange dateRange)
         {
             
-            var response = new ResumeOffice(enlace)
+            var response = new ResumeOfficeOld(enlace)
             {
                 Estatus = ResumenOficinaEstatus.Pendiente
             };

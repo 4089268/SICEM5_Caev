@@ -3,18 +3,16 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using Microsoft.JSInterop;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Syncfusion.Blazor.Grids;
 using Syncfusion.Blazor.Charts;
 using MatBlazor;
-using Sicem_Blazor.Data;
-using Sicem_Blazor.Data.Contracts;
-using Sicem_Blazor.Models;
 using Sicem_Blazor.Services;
-using Sicem_Blazor.PagoLinea.Models;
-using Sicem_Blazor.PagoLinea.Data;
+using Sicem_Blazor.Services.PagoLinea;
+using Sicem_Blazor.Models;
+using Sicem_Blazor.Models.PagoLinea;
+using System.Globalization;
 
 namespace Sicem_Blazor.PagoLinea.Views
 {
@@ -28,7 +26,7 @@ namespace Sicem_Blazor.PagoLinea.Views
         public IMatToaster Toaster {get;set;} = default!;
         
         [Inject]
-        public PagoLineaService PagoLineaService {get;set;} = default!;
+        public HttpPagoLineaService PagoLineaService {get;set;} = default!;
         
         [Inject]
         public SicemService SicemService {get;set;} = default!;
@@ -38,143 +36,58 @@ namespace Sicem_Blazor.PagoLinea.Views
 
 
         private SfGrid<ResumeOffice> DataGrid {get;set;}
-        private SfChart GraficaIngresos {get;set;}
-        private SfChart GraficaUsuarios {get;set;}
+        private SfChart GraficaIngresos { get; set; }
         private DetallePagosVtn detallePagosVtn;
 
         private bool busyDialog = false;
         private DateTime f1, f2;
         private int Subsistema, Sector;
-        private List<ResumeOffice> DatosRecaudacion {get;set;}
+        private ResumeMonth resumeIncomeMonth = null;
+        private List<ResumeOffice> DataOffices {get;set;}
+        private List<ChartItem> DatosGraficaImporte { get; set; }
 
-        protected override void OnInitialized()
+        private CultureInfo currentCultueInfo = new("es-MX");
+
+        protected override async Task OnInitializedAsync()
         {
-            var _now = DateTime.Now;
+            var _now = DateTime.Now.AddMonths(-1);
             this.f1 = new DateTime(_now.Year, _now.Month, 1);
             this.f2 = new DateTime(_now.Year, _now.Month, DateTime.DaysInMonth(_now.Year, _now.Month));
             this.Subsistema = 0;
             this.Sector = 0;
+
+            await Procesar(new SeleccionarFechaEventArgs {
+                Fecha1 = f1,
+                Fecha2 = f2,
+            });
         }
 
-        public void Procesar(SeleccionarFechaEventArgs e)
+        public async Task Procesar(SeleccionarFechaEventArgs e)
         {
+            this.busyDialog = true;
+            await Task.Delay(100);
+
             this.f1 = e.Fecha1;
             this.f2 = e.Fecha2;
             this.Subsistema = e.Subsistema;
             this.Sector = e.Sector;
 
-            IEnlace[] enlaces = SicemService.ObtenerOficinasDelUsuario().ToArray();
+            resumeIncomeMonth = await this.PagoLineaService.GetResumeMonth(f1.Year, f1.Month);
+            this.DataOffices = resumeIncomeMonth.Offices.OrderBy(item => item.OfficeName).ToList();
 
-            // * Preparar filas
-            DatosRecaudacion = new List<ResumeOffice>();
-            
-            var Tareas = new List<Task>();
 
-            // * Prepara Filas
-            foreach (var enlace in enlaces)
-            {
-                var oficinaModel = new ResumeOffice (enlace);
-                DatosRecaudacion.Add(oficinaModel);
+            // * generate the chart data
+            DatosGraficaImporte = this.DataOffices.Select(item => new ChartItem {
+                Id = item.OfficeId,
+                Descripcion = item.OfficeName,
+                Valor1 = item.TotalIncome
+            }).OrderBy( item => item.Valor1).ToList();
+            await GraficaIngresos.RefreshAsync();
 
-                // * Agregar tarea
-                Tareas.Add( Task.Run(() => ConsultarOficina(enlace)) );
-            }
-
-            // * Agregar fila total
-            if (enlaces.Length > 1) {
-                var enlaceTotal = new Ruta {
-                    Id = 999,
-                    Oficina =" TOTAL"
-                };
-                var oficinaModel = new ResumeOffice(enlaceTotal){
-                    Estatus = ResumenOficinaEstatus.Completado
-                };
-                DatosRecaudacion.Add(oficinaModel);
-            }
-
-            // * Iniciar tareas
-            foreach (var tarea in Tareas) {
-                tarea.Start();
-            }
-
+            this.busyDialog = false;
+            StateHasChanged();
         }
-
-        private void ConsultarOficina(IEnlace enlace)
-        {
-            // * Realizar consulta
-            var dateRange = new DateRange(f1, f2, Subsistema, Sector);
-            ResumeOffice tmpDatos = PagoLineaService.ObtenerResumen(enlace, dateRange);
-            
-            var _random = new Random();
-            var sleep = _random.Next(3000);
-            System.Threading.Thread.Sleep(sleep);
-
-            // * Refrescar datos grid
-            lock(DatosRecaudacion)
-            {
-                // * Actualizar fila grid
-                ResumeOffice item = DatosRecaudacion.Where(item => item.Id == enlace.Id).FirstOrDefault();
-                if (item != null) {
-                    if (tmpDatos.Estatus == ResumenOficinaEstatus.Completado) {
-                        item.Estatus = ResumenOficinaEstatus.Completado;
-                        item.UsuariosPropios = tmpDatos.UsuariosPropios;
-                        item.ImportePropio = tmpDatos.ImportePropio;
-                        item.UsuariosOtros = tmpDatos.UsuariosOtros;
-                        item.ImporteOtros = tmpDatos.ImporteOtros;
-                        item.Importe = tmpDatos.Importe;
-                        item.Cobrado = tmpDatos.Cobrado;
-                        item.Usuarios = tmpDatos.Usuarios;
-                    }
-                    else {
-                        item.Estatus = ResumenOficinaEstatus.Error;
-                    }
-                }
-                RecalcularFilaTotal();
-                DataGrid.Refresh();
-            }
-
-            // * Actualizar grafica ingresos
-            // lock(DatosGrafica_Ingresos){
-            //     try{
-            //         var itemGraf1 = DatosGrafica_Ingresos.Where(item => item.Id == enlace.Id).FirstOrDefault();
-            //         if(itemGraf1 != null) {
-            //             itemGraf1.Valor1 = tmpDatos.Ingresos_Propios;
-            //             itemGraf1.Valor2 = tmpDatos.Ingresos_Otros;
-            //         }
-            //         graficaIngresos.RefreshAsync();
-            //     }catch(Exception){ }
-            // }
-
-            // * Actualizar grafica usuarios
-            // lock(DatosGrafica_Usuarios){
-            //     try{
-            //         var itemGraf2 = DatosGrafica_Usuarios.Where(item => item.Id == enlace.Id).FirstOrDefault();
-            //         if (itemGraf2 != null) {
-            //             itemGraf2.Valor1 = tmpDatos.Usuarios_Propios;
-            //             itemGraf2.Valor2 = tmpDatos.Usuarios_Otros;
-            //         }
-            //         graficaUsuarios.RefreshAsync();
-            //     }catch(Exception){ }
-            // }
-        }
-
-        private void RecalcularFilaTotal()
-        {
-            // * recalcular fila total
-            var itemTotal = DatosRecaudacion.Where(item => item.Id == 999).FirstOrDefault();
-            if (itemTotal != null)
-            {
-                var _tmpData = DatosRecaudacion.Where(item => item.Id != 999).ToList();
-                itemTotal.UsuariosPropios = _tmpData.Sum(item => item.UsuariosPropios);
-                itemTotal.ImportePropio = _tmpData.Sum(item => item.ImportePropio);
-                itemTotal.UsuariosOtros = _tmpData.Sum(item => item.UsuariosOtros);
-                itemTotal.ImporteOtros = _tmpData.Sum(item => item.ImporteOtros);
-                itemTotal.Importe = _tmpData.Sum(item => item.Importe);
-                itemTotal.Cobrado = _tmpData.Sum(item => item.Cobrado);
-                itemTotal.Usuarios = _tmpData.Sum(item => item.Usuarios);
-            }
-        }
-
+        
         private async Task ExportarExcel_Click(){
             var _options = new ExcelExportProperties()
             {
@@ -185,39 +98,40 @@ namespace Sicem_Blazor.PagoLinea.Views
 
         private async Task HandleShowDetails(ResumeOffice office)
         {
-            this.busyDialog = true;
-            await Task.Delay(100);
+            throw new NotImplementedException("");
+            // this.busyDialog = true;
+            // await Task.Delay(100);
 
-            IEnumerable<OprVenta> data = [];
-            try
-            {
-                data = this.PagoLineaService.ObtenerDetallePagos(office.Enlace, new DateRange(f1,f2));
-                if (!data.Any())
-                {
-                    throw new KeyNotFoundException("No hay datos disponibles");
-                }
-            }
-            catch (KeyNotFoundException)
-            {
-                Toaster.Add("No hay datos disponibles para este periodo", MatToastType.Info);
-                this.busyDialog = false;
-                return;
-            }
-            catch (System.Exception)
-            {
-                Toaster.Add("Erro al obtener el detalle", MatToastType.Danger);
-                this.busyDialog = false;
-                return;
-            }
+            // IEnumerable<OprVenta> data = [];
+            // try
+            // {
+            //     data = this.PagoLineaService.ObtenerDetallePagos(office.Enlace, new DateRange(f1,f2));
+            //     if (!data.Any())
+            //     {
+            //         throw new KeyNotFoundException("No hay datos disponibles");
+            //     }
+            // }
+            // catch (KeyNotFoundException)
+            // {
+            //     Toaster.Add("No hay datos disponibles para este periodo", MatToastType.Info);
+            //     this.busyDialog = false;
+            //     return;
+            // }
+            // catch (System.Exception)
+            // {
+            //     Toaster.Add("Erro al obtener el detalle", MatToastType.Danger);
+            //     this.busyDialog = false;
+            //     return;
+            // }
 
 
-            if(detallePagosVtn != null)
-            {
-                var titulo = string.Format("Detalle de pagos del {0} al {1}, {2}", f1.ToShortDateString(), f2.ToShortDateString(), office.Enlace.Nombre);
-                detallePagosVtn.Show(office.Enlace, data, titulo);
-            }
+            // if(detallePagosVtn != null)
+            // {
+            //     var titulo = string.Format("Detalle de pagos del {0} al {1}, {2}", f1.ToShortDateString(), f2.ToShortDateString(), office.Enlace.Nombre);
+            //     detallePagosVtn.Show(office.Enlace, data, titulo);
+            // }
 
-            this.busyDialog = false;
+            // this.busyDialog = false;
         }
 
         private async Task HandleClosedDetallePagos(object e)

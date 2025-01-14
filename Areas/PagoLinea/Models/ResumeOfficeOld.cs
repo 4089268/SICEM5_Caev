@@ -5,7 +5,7 @@ using Sicem_Blazor.Data.Contracts;
 
 namespace Sicem_Blazor.PagoLinea.Models;
 
-public class ResumeOffice
+public class ResumeOfficeOld
 {
     public IEnlace Enlace {get;set;}
     public int Id {get => Enlace.Id;}
@@ -19,7 +19,7 @@ public class ResumeOffice
     public decimal Cobrado {get;set;}
     public int Usuarios {get;set;}
 
-    public ResumeOffice(IEnlace enlace)
+    public ResumeOfficeOld(IEnlace enlace)
     {
         this.Enlace = enlace;
     }

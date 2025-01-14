@@ -23,7 +23,7 @@ public class MessageUtils
     {
         PropertyInfo[] propertiesCatPadron = typeof(CatPadron).GetProperties();
         IEnumerable<string> currencyProperties = new string[]{"Total", "Subtotal", "Iva"};
-        IEnumerable<string> datesProperties = new string[]{"FechaVencimientoDate"};
+        IEnumerable<string> datesProperties = new string[]{"FechaVencimientoDate", "FechaVencimiento"};
 
         var mensajeResult = mensajeTemplate;
         foreach(var prop in propertiesCatPadron)
@@ -60,7 +60,7 @@ public class MessageUtils
                 // TODO: Handle exception
             }
         }
-        return mensajeResult;
+        return mensajeResult.Replace("<br/>", "\n").Replace("<br>", "\n");
     }
 
     /// <summary>

@@ -13,9 +13,9 @@ namespace Sicem_Blazor.Helpers;
 
 public class AppendTextToImage
 {
-    public float TextPadding {get;set;} = 80f;
+    public float TextPadding {get;set;} = 60f;
     public string TextFont {get;set;} = "Arial";
-    public float TextFontSize {get;set;} = 44f;
+    public float TextFontSize {get;set;} = 30f;
     public string TextColorHex {get;set;} = "#342222FF";
     private Font font;
 
@@ -62,11 +62,11 @@ public class AppendTextToImage
         var rect = TextMeasurer.MeasureSize(message, options);
 
         var richTextOptions = new RichTextOptions(font);
-        richTextOptions.Origin = new PointF(TextPadding, TextPadding * 3f);
+        richTextOptions.Origin = new PointF(TextPadding, TextPadding * 4f);
         richTextOptions.TextAlignment = TextAlignment.Center;
         richTextOptions.TextJustification = TextJustification.None;
         richTextOptions.WrappingLength = image.Width - (TextPadding * 1.9f);
-        richTextOptions.LineSpacing = 1.4f;
+        richTextOptions.LineSpacing = 1.25f;
 
         // * draw the text into the image
         var pointF = new PointF(TextPadding, TextPadding + 10);

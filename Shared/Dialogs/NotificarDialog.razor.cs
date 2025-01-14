@@ -155,7 +155,8 @@ public partial class NotificarDialog
 
     private async Task<string> MakeImageNotification(string message)
     {
-        var originalImage = Path.Join(AppContext.BaseDirectory, "Resources/Templates/banner-caev.png");
+        // var originalImage = Path.Join(AppContext.BaseDirectory, "Resources/Templates/banner-caev.png");
+        var originalImage = Path.Join(AppContext.BaseDirectory, "Resources/Templates/banner-caev2.jpeg");
         var destinationImagen = Path.Join(this.Configuration["TempFolder"], Guid.NewGuid().ToString(), "notifica.jpg");
         // * ensure the directory exists
         string directoryPath = Path.GetDirectoryName(destinationImagen);

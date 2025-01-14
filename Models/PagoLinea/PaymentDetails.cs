@@ -56,6 +56,19 @@ namespace Sicem_Blazor.Models.PagoLinea
         public string TotalImporteCurrency { get => TotalImporte.ToString("c2", new CultureInfo("es-MX")); }
         public string TotalCobradoCurrency { get => TotalCobrado.ToString("c2", new CultureInfo("es-MX")); }
 
+        public string Periodo
+        {
+            get
+            {
+                try
+                {
+                    return new DateTime(Af, Mf, 1).ToString("MMMM yyyy").ToUpper();
+                }catch(Exception)
+                {
+                    return String.Empty;
+                }
+            }
+        }
     }
 
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Data;
 using System.Data.SqlClient;
@@ -346,7 +347,12 @@ namespace Sicem_Blazor {
                             _newItem.Tipotuberia = reader["_tipotuberia"].ToString();
                             _newItem.Tipofactible = reader["_tipofactible"].ToString();
                             _newItem.MesFacturado = reader["_MesFacturado"].ToString();
-                            _newItem.FechaAlta = Convert.ToDateTime(reader["_fecha_alta"].ToString());
+                            try
+                            {
+                                _newItem.FechaAlta = DateTime.ParseExact( reader["_fecha_alta"].ToString(), "dd/MMM/yyyy HH:mm:ss", new CultureInfo("es-MX") ).Date;
+                            }catch(Exception){
+                                //
+                            }
                             _newItem.AltaFactura = reader["_alta_factura"].ToString();
                             _newItem.FechaLecturaAnt = reader["_fecha_lectura_ant"].ToString();
                             _newItem.FechaLecturaAct = reader["_fecha_lectura_act"].ToString();

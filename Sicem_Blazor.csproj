@@ -35,4 +35,9 @@
   <ItemGroup>
     <Folder Include="Models\Entities\Arquos\" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\Template\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

@@ -38,6 +38,7 @@ namespace Sicem_Blazor.PagoLinea.Views
         private SfGrid<ResumeOffice> DataGrid {get;set;}
         private SfChart GraficaIngresos { get; set; }
         private DetallePagosVtn detallePagosVtn;
+        private DetalleOficinaVtn detalleOficinaVtn;
 
         private bool busyDialog = false;
         private DateTime f1, f2;
@@ -98,6 +99,7 @@ namespace Sicem_Blazor.PagoLinea.Views
 
         private async Task HandleShowDetails(ResumeOffice office)
         {
+            await Task.CompletedTask;
             throw new NotImplementedException("");
             // this.busyDialog = true;
             // await Task.Delay(100);
@@ -137,6 +139,51 @@ namespace Sicem_Blazor.PagoLinea.Views
         private async Task HandleClosedDetallePagos(object e)
         {
             this.Logger.LogDebug("Detalle Pagos vtn closed");
+            await Task.CompletedTask;
+        }
+
+        private async Task HandleShowDetailsOffice(ResumeOffice office)
+        {
+            this.busyDialog = true;
+            await Task.Delay(100);
+
+            try
+            {
+                var dataMovements = await this.PagoLineaService.GetMovements(f1, f2, office.OfficeId);
+                var dataMovementsDays = await this.PagoLineaService.GetMovementsByDays(f1.Year, f2.Month, office.OfficeId);
+
+                if(!dataMovements.Any())
+                {
+                    throw new KeyNotFoundException("No hay datos disponibles");
+                }
+
+                if(detalleOficinaVtn != null)
+                {
+                    var titulo = string.Format("{0}, Pagos realizados {1}", office.OfficeName, f1.ToString("MMM yyyy"));
+                    detalleOficinaVtn.Show(office, dataMovements, dataMovementsDays, titulo);
+                }
+
+                this.busyDialog = false;
+
+            }
+            catch (KeyNotFoundException)
+            {
+                Toaster.Add("No hay datos disponibles para este periodo", MatToastType.Info);
+                this.busyDialog = false;
+                return;
+            }
+            catch(Exception err)
+            {
+                Toaster.Add("Erro al obtener los datos de la oficina.", MatToastType.Danger);
+                this.busyDialog = false;
+                return;
+            }
+
+        }
+
+        private async Task HandleClosedDetalleOficina(object e)
+        {
+            this.Logger.LogDebug("Detalle Oficina vtn closed");
             await Task.CompletedTask;
         }
 

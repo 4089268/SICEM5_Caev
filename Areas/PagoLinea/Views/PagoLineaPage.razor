@@ -80,7 +80,7 @@
 
     @* ****** Chart ****** *@
     <div class="border rounded bg-white p-1" style="grid-area: 4/1/5/2;">
-        <SfChart @ref="GraficaIngresos" Title="Importe cobrado por Oficina">
+        <SfChart @ref="GraficaIngresos">
             <ChartPrimaryXAxis Interval="1" ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
             <ChartPrimaryYAxis Visible="true" LabelFormat="c2" />
             <ChartTooltipSettings Enable="true" Header="Importe" Format="<b>${point.x}</b> : ${point.y}" Shared="true"></ChartTooltipSettings>
@@ -108,7 +108,7 @@
                             var data = (context as ResumeOffice);
                             if (data.OfficeId > 0 && data.OfficeId < 90) {
                                 <div class="d-flex align-items-center">
-                                    <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Detalle" @onclick="@(e => HandleShowDetails(data))">
+                                    <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Detalle" @onclick="@(e => HandleShowDetailsOffice(data))">
                                         <i class="fa fa-table" aria-hidden="true"></i>
                                     </button>
                                 </div>
@@ -128,6 +128,8 @@
 <BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
 
 <DetallePagosVtn @ref="detallePagosVtn" CerrarModal="HandleClosedDetallePagos" />
+
+<DetalleOficinaVtn @ref="detalleOficinaVtn" CerrarModal="HandleClosedDetalleOficina" />
 
 <style>
     .layoutPage

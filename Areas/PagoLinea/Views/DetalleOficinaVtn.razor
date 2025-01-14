@@ -1,0 +1,47 @@
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.Models.PagoLinea
+@namespace Sicem_Blazor.PagoLinea.Views
+
+@if (mostrarVentana) {
+    <VentanaSecundaria Titulo="@titulo.ToUpper()" CerrarVentana="@HandleCloseModal" Filas="@(new double[] { 50, .4, .4 })" Columnas="@(new double[]{.9})">
+        <Content>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-area: 1/1/2/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@ExportData">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-area: 2/1/3/2;">
+                <SfGrid @ref="DataGrid" DataSource="@Datos" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(PaymentDetails.Id)" HeaderText="ID" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(PaymentDetails.IdPadron)" HeaderText="Id Padron" TextAlign="TextAlign.Center" Width="150"/>
+                        <GridColumn Field="@nameof(PaymentDetails.RazonSocial)" HeaderText="Razon Social" TextAlign="TextAlign.Left" Width="220"/>
+                        <GridColumn Field="@nameof(PaymentDetails.Periodo)" HeaderText="Periodo Factura" TextAlign="TextAlign.Center" Width="210" />
+                        <GridColumn Field="@nameof(PaymentDetails.Fecha)" HeaderText="Fecha de Pago" TextAlign="TextAlign.Center" Width="180" Format="d" />
+                        <GridColumn Field="@nameof(PaymentDetails.TotalImporte)" HeaderText="Total Importe" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn Field="@nameof(PaymentDetails.TotalCobrado)" HeaderText="Total Cobrado" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn Field="@nameof(PaymentDetails.Estado)" HeaderText="Estado" TextAlign="TextAlign.Center" Width="140" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+            <div class="border rounded bg-white p-1" style="grid-area: 3/1/4/2;">
+                <SfChart Title="Pagos realizados por dia">
+                    <ChartPrimaryXAxis Interval="1" ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+                    <ChartPrimaryYAxis Visible="true" LabelFormat="n0" />
+                    <ChartTooltipSettings Enable="true" Header="" Format="<b>${point.x}</b> : ${point.y} pagos" Shared="true"></ChartTooltipSettings>
+                    <ChartSeriesCollection>
+                        <ChartSeries DataSource="@IncomeDays" Name="Pagos realizados" XName="DayFormat" YName="TotalMovements" Type="ChartSeriesType.Line" Fill="#440412">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Outer" />
+                            </ChartMarker>
+                        </ChartSeries>
+                    </ChartSeriesCollection>
+                </SfChart>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+}

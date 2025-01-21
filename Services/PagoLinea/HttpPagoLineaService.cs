@@ -34,7 +34,7 @@ public class HttpPagoLineaService : HttpClient
             Method = HttpMethod.Get,
             RequestUri = new Uri( _client.BaseAddress, $"/api/invoice/resume?year={year}&month={month}")
         };
-        requestHttp.Headers.Add("x-token", _settings.Token);
+        requestHttp.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _settings.Token);
 
         try
         {
@@ -63,7 +63,7 @@ public class HttpPagoLineaService : HttpClient
             Method = HttpMethod.Get,
             RequestUri = new Uri( _client.BaseAddress, $"/api/invoice/movement?from={from.ToString("yyyy-MM-dd")}&to={to.ToString("yyyy-MM-dd")}&officeId={officeId}")
         };
-        requestHttp.Headers.Add("x-token", _settings.Token);
+        requestHttp.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _settings.Token);
 
         try
         {
@@ -92,7 +92,7 @@ public class HttpPagoLineaService : HttpClient
             Method = HttpMethod.Get,
             RequestUri = new Uri( _client.BaseAddress, $"/api/invoice/movement/days?year={year}&month={month}&officeId={officeId}")
         };
-        requestHttp.Headers.Add("x-token", _settings.Token);
+        requestHttp.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _settings.Token);
 
         try
         {

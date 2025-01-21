@@ -51,7 +51,7 @@ namespace Sicem_Blazor.PagoLinea.Views
 
         protected override async Task OnInitializedAsync()
         {
-            var _now = DateTime.Now.AddMonths(-1);
+            var _now = DateTime.Now;
             this.f1 = new DateTime(_now.Year, _now.Month, 1);
             this.f2 = new DateTime(_now.Year, _now.Month, DateTime.DaysInMonth(_now.Year, _now.Month));
             this.Subsistema = 0;

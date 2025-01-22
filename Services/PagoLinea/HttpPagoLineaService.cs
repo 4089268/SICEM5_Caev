@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Sicem_Blazor.Data;
 using Sicem_Blazor.Models.PagoLinea;
 
@@ -112,4 +113,39 @@ public class HttpPagoLineaService : HttpClient
         }
     }
 
+    public async Task<IEnumerable<long>> StorePaymentsRecords(IEnumerable<StorePaymentRequest> payments)
+    {
+        _logger.LogInformation("Attempt to store the accounts");
+
+        // * prepare the content
+        var contetJson = JsonConvert.SerializeObject(payments);
+        this._logger.LogDebug("Payload: {payload}", contetJson);
+        var content = new StringContent(JsonConvert.SerializeObject(payments), Encoding.UTF8, "application/json");
+
+        // * prepare request
+        var requestHttp = new HttpRequestMessage(){
+            Method = HttpMethod.Post,
+            RequestUri = new Uri( _client.BaseAddress, $"/api/payments/uploadPayments"),
+            Content = content
+        };
+        requestHttp.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _settings.Token);
+
+        try
+        {
+            // * send the request
+            var response = await _client.SendAsync(requestHttp);
+            
+            // * prosesar respuesta
+            response.EnsureSuccessStatusCode();
+
+            var responseDeserialized = await response.Content.ReadFromJsonAsync<StorePaymentResponse>();
+            
+            return responseDeserialized.Data;
+        }
+        catch(Exception ex)
+        {
+            this._logger.LogError(ex, "Fail at store the accounts: {message}", ex.Message);
+            return null;
+        }
+    }
 }

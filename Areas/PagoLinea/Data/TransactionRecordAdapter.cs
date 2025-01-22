@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using Sicem_Blazor.PagoLinea.Models;
+using Sicem_Blazor.Models.PagoLinea;
 
 namespace Sicem_Blazor.PagoLinea.Data;
 
@@ -44,6 +45,45 @@ public static class TransactionRecordAdapter
             Plataforma = csvRow[30],
             EstatusReclamacion = csvRow.Length > 31 ? csvRow[31] : null, // Handles empty columns
             FileName = fileName
+        };
+    }
+
+    public static StorePaymentRequest AdaptToStorePaymentRequest(TransactionRecord record)
+    {
+        return new StorePaymentRequest
+        {
+            Id = record.ID,
+            Fecha = record.Fecha,
+            FechaDeDispersion = record.FechaDispersion,
+            Comercio = record.Comercio,
+            Unidad = record.Unidad,
+            Concepto = record.Concepto,
+            ReferenciaComercio = record.ReferenciaComercio,
+            Orden = record.Orden,
+            Tipo = record.Tipo,
+            MedioDePago = record.MedioDePago,
+            Titular = record.Titular,
+            Banco = record.Banco,
+            ReferenciaTarjeta = record.ReferenciaTarjeta,
+            TipoTarjeta = record.TipoTarjeta,
+            Autorizacion = record.Autorizacion,
+            Mensajeria = record.Mensajeria,
+            IvaMensajeria = record.IvaMensajeria,
+            Servicio = record.Servicio,
+            IvaServicio = record.IvaServicio,
+            ComisionComercio = record.ComisionComercio,
+            ComisionUsuario = record.ComisionUsuario,
+            IvaComision = record.IvaComision,
+            TotalImporte = record.TotalImporte,
+            TotalCobrado = record.TotalCobrado,
+            Promocion = record.Promocion,
+            Estado = record.Estado,
+            Contrato = record.Contrato.ToString(),
+            MensajeMedioDePago = record.MensajeMedioDePago,
+            Email = record.Email,
+            Telefono = record.Telefono,
+            Plataforma = record.Plataforma,
+            EstatusReclamacion = record.EstatusReclamacion
         };
     }
 

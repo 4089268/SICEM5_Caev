@@ -19,6 +19,8 @@ using Sicem_Blazor.Services;
 using Sicem_Blazor.Helpers;
 using Sicem_Blazor.PagoLinea.Models;
 using Sicem_Blazor.PagoLinea.Data;
+using Sicem_Blazor.Services.PagoLinea;
+using Sicem_Blazor.Models.PagoLinea;
 
 namespace Sicem_Blazor.PagoLinea.Views
 {
@@ -33,6 +35,9 @@ namespace Sicem_Blazor.PagoLinea.Views
         
         [Inject]
         public PagoLineaService PagoLineaService {get;set;} = default!;
+        
+        [Inject]
+        public HttpPagoLineaService HPagoLineaService {get;set;} = default!;
         
         [Inject]
         public SicemService SicemService {get;set;} = default!;
@@ -59,15 +64,10 @@ namespace Sicem_Blazor.PagoLinea.Views
         }
 
         private bool busyDialog = false;
-        private DateTime f1, f2;
-        private int Subsistema, Sector;
-
+        
         private List<RecordsFile> recordsFiles = new();
         private int tabIndex = 0;
         private MatTabBar mattabbar;
-
-        private DateTime fecha1 = DateTime.Now;
-        private DateTime fecha2 = DateTime.Now;
 
         private bool _chbOnlyPaided = false;
         public bool ChboOnlyPaided
@@ -80,15 +80,6 @@ namespace Sicem_Blazor.PagoLinea.Views
             }
         }
 
-
-        protected override void OnInitialized()
-        {
-            var _now = DateTime.Now;
-            this.f1 = new DateTime(_now.Year, _now.Month, 1);
-            this.f2 = new DateTime(_now.Year, _now.Month, DateTime.DaysInMonth(_now.Year, _now.Month));
-            this.Subsistema = 0;
-            this.Sector = 0;
-        }
 
         private async Task HandleUploadFile(InputFileChangeEventArgs e)
         {
@@ -107,58 +98,55 @@ namespace Sicem_Blazor.PagoLinea.Views
                 return;
             }
 
+
             this.busyDialog = true;
             await Task.Delay(100);
 
-            var recordsFile = new RecordsFile
-            {
-                Name = e.File.Name
-            };
-
-            //* get a temporary path to store the file
-            var filePath = Path.Combine(Environment.ContentRootPath, "Temp", e.File.Name);
 
             // * save the file temporarily
-            Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-            using(var fileStream = new FileStream(filePath, FileMode.OpenOrCreate))
-            {
-                using var readStream = e.File.OpenReadStream();
-                await readStream.CopyToAsync(fileStream);
-            }
-            Logger.LogDebug("File save at {tempPath}", filePath);
+            var filePath = await SaveFileTemporally(e.File);
+
 
             // * process the CSV file
             var tmpRecords = await ProcessTheFileCsvAsync(filePath);
-            if(!tmpRecords.Any()){
-                Toaster.Add("Error al procesar el archivo", MatToastType.Danger);
+            if(!tmpRecords.Any())
+            {
+                Toaster.Add("Error al procesar el archivo, no contiene datos validos.", MatToastType.Danger);
                 this.busyDialog = false;
                 StateHasChanged();
             }
 
-            // * get the satus of the payments
-            Records.AddRange( await PagoLineaService.CalulateStatusPayment(tmpRecords));
 
-            Logger.LogDebug("Total records {total}", tmpRecords.Count());
+            // * upload the records
+            IEnumerable<StorePaymentRequest> uploadRequest = tmpRecords.Select(item => TransactionRecordAdapter.AdaptToStorePaymentRequest(item)).ToArray();
+            var storedRecordsId = await HPagoLineaService.StorePaymentsRecords(uploadRequest);
+
+
+            // * process the response and update the records stored successfully
+            foreach(var record in tmpRecords)
+            {
+                if(storedRecordsId.Contains(record.ID))
+                {
+                    record.Status = TransactionRecord.ProcessFileStatues.Paided;
+                }
+            }
+            Records.AddRange(tmpRecords);
+
 
             // * save the file data
-            recordsFile.TotalRecords = tmpRecords.Count();
-            recordsFile.From = tmpRecords.OrderBy(item => item.Fecha).First().Fecha;
-            recordsFile.To = tmpRecords.OrderByDescending(item => item.Fecha).First().Fecha;
-            this.recordsFiles.Add(recordsFile);
-            
-            // * clean up the temporary filea
-            try
-            {
-                File.Delete(filePath);
-                Logger.LogDebug("Archivo eliminado");
-            }
-            catch (System.Exception err)
-            {
-                Logger.LogInformation("Cant delete the file {file}: {message}", filePath, err.Message);
-            }
+            this.recordsFiles.Add(new RecordsFile
+                {
+                    Name = e.File.Name,
+                    TotalRecords = tmpRecords.Count(),
+                    From = tmpRecords.OrderBy(item => item.Fecha).First().Fecha,
+                    To = tmpRecords.OrderByDescending(item => item.Fecha).First().Fecha
+                }
+            );
 
-            // * update date ranges
-            UpdateDateRanges();
+
+            // * clean up the temporary filea
+            ClearTemporallyFile(filePath);
+
 
             // * refresh UI
             this.busyDialog = false;
@@ -209,14 +197,6 @@ namespace Sicem_Blazor.PagoLinea.Views
             this.busyDialog = false;
         }
 
-        private void UpdateDateRanges()
-        {
-            var from = this.recordsFiles.Select( item => item.From).OrderBy( item => item).First();
-            var to = this.recordsFiles.Select( item => item.To).OrderByDescending( item => item).First().AddDays(1);
-            this.fecha1 = from;
-            this.fecha2 = to;
-        }
-
         private async Task MatTabBarActiveChanged(BaseMatTabLabel label)
         {
             tabIndex = label.Id switch {
@@ -231,6 +211,35 @@ namespace Sicem_Blazor.PagoLinea.Views
         private async Task DownloadExcel()
         {
             await DataGrid.ExportToExcelAsync();
+        }
+    
+        private async Task<string> SaveFileTemporally(IBrowserFile file)
+        {
+            //* get a temporary path to store the file
+            var filePath = Path.Combine(Environment.ContentRootPath, "Temp", file.Name);
+
+            // * save the file temporarily
+            Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+            using(var fileStream = new FileStream(filePath, FileMode.OpenOrCreate))
+            {
+                using var readStream = file.OpenReadStream();
+                await readStream.CopyToAsync(fileStream);
+            }
+            Logger.LogDebug("File save at {tempPath}", filePath);
+            return filePath;
+        }
+
+        private void ClearTemporallyFile(string filePath)
+        {
+            try
+            {
+                File.Delete(filePath);
+                Logger.LogDebug("Archivo eliminado");
+            }
+            catch (System.Exception err)
+            {
+                Logger.LogInformation("Cant delete the file {file}: {message}", filePath, err.Message);
+            }
         }
     }
 }

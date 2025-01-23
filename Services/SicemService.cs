@@ -24,7 +24,6 @@ namespace Sicem_Blazor.Services {
 
         const string secret = "*SICEM*";
 
-
         public SicemService(SicemContext context, IConfiguration c, SessionService s, ILogger<SicemService> logger) {
             this.sicemContext = context;
             appSettings = c;
@@ -514,7 +513,6 @@ namespace Sicem_Blazor.Services {
             _result.Add(51, "CONGELADO");
             return _result;
         }
-       
 
         //****** Historial Modificaciones *******//
         public List<HistorialModificacion> ObtenerHistorialModificaciones(DateTime fecha1, DateTime fecha2 ){
@@ -566,6 +564,38 @@ namespace Sicem_Blazor.Services {
             return _xmlBuilder.ToString();
         }
         
+
+        public bool CheckOfficeConnected(IEnlace enlace)
+        {
+            var connected = false;
+            try {
+                var task = Task.Run(() => {
+                    using(var sqlConnection = new SqlConnection(enlace.GetConnectionString()))
+                    {
+                        sqlConnection.Open();
+                        var command = new SqlCommand("SELECT VALOR from [Global].[Cfg_Parametros] where parametro='REDONDEAR'", sqlConnection);
+                        command.CommandTimeout = TimeSpan.FromSeconds(2).Seconds;
+                        command.CommandType = System.Data.CommandType.Text;
+                        var result = command.ExecuteScalar();
+                        if(result != null)
+                        {
+                            connected = true;
+                        }
+                        sqlConnection.Close();
+                    }
+                });
+                if (!task.Wait(TimeSpan.FromSeconds(3)))
+                {
+                    this.logger.LogInformation("Timeout al verificar la conexion con la oficina {Nombre}", enlace.Nombre);
+                }
+            }
+            catch(Exception err)
+            {
+                this.logger.LogInformation("Error al verificar la conexion con la oficina {Nombre}: {Message}", enlace.Nombre, err.Message);
+            }
+            return connected;
+        }
+    
     }
 
 }

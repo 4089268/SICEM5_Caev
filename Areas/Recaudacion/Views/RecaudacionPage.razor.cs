@@ -108,41 +108,63 @@ public partial class RecaudacionPage
 
     }
 
-    private void ConsultarOficina(IEnlace enlace) {
-
-        //*** Realizar consulta
-        var dateRange = new DateRange(f1, f2, Subsistema, Sector);
-        Recaudacion_Resumen tmpDatos = recaudacionService.ObtenerResumen(enlace, dateRange);
-        
-        var _random = new Random();
-        var sleep = _random.Next(3000);
-        System.Threading.Thread.Sleep(sleep);
-
-        //*** Refrescar datos grid
-        lock(datosRecaudacion){
-
-            //*** Actualizar fila grid
-            Recaudacion_Resumen item = datosRecaudacion.Where(item => item.Id == enlace.Id).FirstOrDefault();
-            
-            if (item != null) {
-                if (tmpDatos.Estatus == ResumenOficinaEstatus.Completado) {
-                    item.Estatus = ResumenOficinaEstatus.Completado;
-                    item.Usuarios_Propios = tmpDatos.Usuarios_Propios;
-                    item.Ingresos_Propios = tmpDatos.Ingresos_Propios;
-                    item.Usuarios_Otros = tmpDatos.Usuarios_Otros;
-                    item.Ingresos_Otros = tmpDatos.Ingresos_Otros;
-                    item.Iva = tmpDatos.Iva;
-                    item.Importe_Total = tmpDatos.Importe_Total;
-                    item.Cobrado = tmpDatos.Cobrado;
-                    item.Usuarios_Total = tmpDatos.Usuarios_Total;
-                }
-                else {
-                    item.Estatus = ResumenOficinaEstatus.Error;
-                }
+    private void ConsultarOficina(IEnlace enlace)
+    {
+        try
+        {
+            // * verify if the office is On
+            if(!this.sicemService.CheckOfficeConnected(enlace))
+            {
+                throw new Exception($"The office {enlace.Nombre} is not connected");
             }
 
-            RecalcularFilaTotal();
-            dataGrid.Refresh();
+            // * Realizar consulta
+            var dateRange = new DateRange(f1, f2, Subsistema, Sector);
+            Recaudacion_Resumen tmpDatos = recaudacionService.ObtenerResumen(enlace, dateRange);
+            
+            var _random = new Random();
+            var sleep = _random.Next(3000);
+            System.Threading.Thread.Sleep(sleep);
+
+            // * Refrescar datos grid
+            lock(datosRecaudacion)
+            {
+                // * Actualizar fila grid
+                Recaudacion_Resumen item = datosRecaudacion.Where(item => item.Id == enlace.Id).FirstOrDefault();
+                if (item != null)
+                {
+                    if (tmpDatos.Estatus == ResumenOficinaEstatus.Completado)
+                    {
+                        item.Estatus = ResumenOficinaEstatus.Completado;
+                        item.Usuarios_Propios = tmpDatos.Usuarios_Propios;
+                        item.Ingresos_Propios = tmpDatos.Ingresos_Propios;
+                        item.Usuarios_Otros = tmpDatos.Usuarios_Otros;
+                        item.Ingresos_Otros = tmpDatos.Ingresos_Otros;
+                        item.Iva = tmpDatos.Iva;
+                        item.Importe_Total = tmpDatos.Importe_Total;
+                        item.Cobrado = tmpDatos.Cobrado;
+                        item.Usuarios_Total = tmpDatos.Usuarios_Total;
+                    }
+                    else
+                    {
+                        item.Estatus = ResumenOficinaEstatus.Error;
+                    }
+                }
+
+                RecalcularFilaTotal();
+                dataGrid.Refresh();
+            }
+        }
+        catch(Exception)
+        {
+            lock(datosRecaudacion){
+                var item = datosRecaudacion.Where(item => item.Enlace.Id == enlace.Id).FirstOrDefault();
+                if(item != null){
+                    item.Estatus = ResumenOficinaEstatus.Error;
+                }
+                RecalcularFilaTotal();
+                dataGrid.Refresh();
+            }
         }
     }
 

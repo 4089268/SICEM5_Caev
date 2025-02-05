@@ -28,6 +28,7 @@ using Sicem_Blazor.Helpers;
 using Sicem_Blazor.Services.Whatsapp;
 using Sicem_Blazor.Services.PagoLinea;
 using Sicem_Blazor.PonteAlCorriente.Data;
+using Sicem_Blazor.SeguimientoCobros.Data;
 
 
 namespace Sicem_Blazor {
@@ -78,6 +79,7 @@ namespace Sicem_Blazor {
             services.AddScoped<PonteAlCorrienteService>();
             services.AddWhatsappService(Configuration);
             services.AddPagoLineaServices(Configuration);
+            services.AddSeguimientoCobroServices(Configuration);
 
             services.AddHttpClient<UbitomaHttpClient>("ubitoma", client => {
                 string url = Configuration.GetSection("AppSettings").GetValue<string>("Ubitoma_Api");

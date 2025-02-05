@@ -1,7 +1,10 @@
 using System;
+using Sicem_Blazor.Data.Contracts;
 
-namespace Sicem_Blazor.Models {
-    public class MapMark {
+namespace Sicem_Blazor.Models
+{
+    public class MapMark : IMapPoint
+    {
         public double Latitude {get;set;} = 20.213382;
         public double Longitude {get;set;} = -87.436819;
         public string Descripcion {get;set;} = "";

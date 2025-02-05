@@ -33,6 +33,8 @@ namespace Sicem_Blazor.Models
         IEnumerable<IEnlace> IUsuario.Enlaces { get => _enlaces; }
         IEnumerable<IOpcionSistema> IUsuario.OpcionSistemas => _opciones;
 
+        public bool ModificarOficinas => CfgOfi == true;
+
         public void SetEnlaces(IEnumerable<IEnlace> enlaces){
             _enlaces = enlaces;
         }

@@ -9,6 +9,7 @@ namespace Sicem_Blazor.Data {
         public IEnumerable<IEnlace> Enlaces { get; }
         public IEnumerable<IOpcionSistema> OpcionSistemas { get; }
         public bool Administrador { get; }
+        public bool ModificarOficinas { get; }
 
         public void SetEnlaces(IEnumerable<IEnlace> enlaces);
         public void SetOpciones(IEnumerable<IOpcionSistema> opciones);

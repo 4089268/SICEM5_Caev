@@ -56,7 +56,7 @@
             </div>
 
             @if (sicemService.Usuario != null) {
-                if (sicemService.Usuario.Administrador == true) {
+                if (sicemService.Usuario.Administrador == true || sicemService.Usuario.ModificarOficinas == true) {
                     <div class="link-btn mr-4" @onclick="ConfigurarOficinas_Click">Configurar Oficinas</div>
                 }
                 @*

@@ -23,6 +23,8 @@ namespace Sicem_Blazor.Models {
 
         public IEnumerable<IOpcionSistema> OpcionSistemas => _opciones;
 
+        public bool ModificarOficinas => false;
+
         public UsuarioExterno(){
             Id = "";
             Nombre = "";

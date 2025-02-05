@@ -38,6 +38,7 @@ namespace Sicem_Blazor.Models
         public virtual DbSet<FacElectronica> FacElectronicas { get; set; }
         public virtual DbSet<HistTarifa> HistTarifas { get; set; }
         public virtual DbSet<Imagene> Imagenes { get; set; }
+        public virtual DbSet<LocalizacionRutum> LocalizacionRuta { get; set; }
         public virtual DbSet<Location> Locations { get; set; }
         public virtual DbSet<ModsOficina> ModsOficinas { get; set; }
         public virtual DbSet<OprActualizacion> OprActualizacions { get; set; }
@@ -857,6 +858,28 @@ namespace Sicem_Blazor.Models
                     .HasMaxLength(20)
                     .IsUnicode(false)
                     .HasColumnName("opcion");
+            });
+
+            modelBuilder.Entity<LocalizacionRutum>(entity =>
+            {
+                entity.ToTable("LocalizacionRuta", "Global");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+
+                entity.Property(e => e.Latitud)
+                    .HasColumnType("numeric(18, 15)")
+                    .HasColumnName("latitud");
+
+                entity.Property(e => e.Longitud)
+                    .HasColumnType("numeric(18, 15)")
+                    .HasColumnName("longitud");
+
+                entity.Property(e => e.RutaId).HasColumnName("rutaId");
+
+                entity.HasOne(d => d.Ruta)
+                    .WithMany(p => p.LocalizacionRuta)
+                    .HasForeignKey(d => d.RutaId)
+                    .HasConstraintName("FK_LocalizacionRuta");
             });
 
             modelBuilder.Entity<Location>(entity =>

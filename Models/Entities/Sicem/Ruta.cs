@@ -9,6 +9,7 @@ namespace Sicem_Blazor.Models
         public Ruta()
         {
             HistTarifas = new HashSet<HistTarifa>();
+            LocalizacionRuta = new HashSet<LocalizacionRutum>();
             ModsOficinas = new HashSet<ModsOficina>();
         }
 
@@ -27,8 +28,8 @@ namespace Sicem_Blazor.Models
         public string Alias { get; set; }
 
         public virtual ICollection<HistTarifa> HistTarifas { get; set; }
+        public virtual ICollection<LocalizacionRutum> LocalizacionRuta { get; set; }
         public virtual ICollection<ModsOficina> ModsOficinas { get; set; }
-
         public string StringConection {
             get {
                 var _connectionBuilder = new System.Data.SqlClient.SqlConnectionStringBuilder() {

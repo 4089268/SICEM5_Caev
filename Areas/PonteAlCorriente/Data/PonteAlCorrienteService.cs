@@ -40,9 +40,9 @@ namespace Sicem_Blazor.PonteAlCorriente.Data
                     connection.Open();
                     string sqlCommandText = @"
                         SELECT
-                            Count(a.id) as num_desctos,
-                            Sum(Isnull(a.total,0)) as imp_descontado,
-                            Sum(Isnull(p.cobrado,0)) as imp_cobrado
+                            IsNull(Count(a.id),0) as num_desctos,
+                            IsNull(Sum(Isnull(a.total,0)),0) as imp_descontado,
+                            IsNull(Sum(Isnull(p.cobrado,0)),0) as imp_cobrado
                         FROM Facturacion.Opr_DetDescuentos d with(nolock)
                         INNER JOIN Facturacion.Opr_Abonos a with(nolock) on a.id_abono=d.id_abono
                         OUTER APPLY

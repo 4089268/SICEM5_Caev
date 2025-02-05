@@ -574,7 +574,7 @@ namespace Sicem_Blazor.Services {
                     {
                         sqlConnection.Open();
                         var command = new SqlCommand("SELECT VALOR from [Global].[Cfg_Parametros] where parametro='REDONDEAR'", sqlConnection);
-                        command.CommandTimeout = TimeSpan.FromSeconds(2).Seconds;
+                        command.CommandTimeout = TimeSpan.FromSeconds(8).Seconds;
                         command.CommandType = System.Data.CommandType.Text;
                         var result = command.ExecuteScalar();
                         if(result != null)
@@ -584,7 +584,7 @@ namespace Sicem_Blazor.Services {
                         sqlConnection.Close();
                     }
                 });
-                if (!task.Wait(TimeSpan.FromSeconds(3)))
+                if (!task.Wait(TimeSpan.FromSeconds(6)))
                 {
                     this.logger.LogInformation("Timeout al verificar la conexion con la oficina {Nombre}", enlace.Nombre);
                 }

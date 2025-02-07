@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Sicem_Blazor.Data;
 using Sicem_Blazor.SeguimientoCobros.Models;
 using Sicem_Blazor.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Sicem_Blazor.SeguimientoCobros.Data
 {
@@ -25,33 +26,17 @@ namespace Sicem_Blazor.SeguimientoCobros.Data
 
         public IEnumerable<OfficePushpinMap> GetOffices()
         {
-            
-            throw new NotImplementedException();
-            
-            // var results = new List<OfficePushpinMap>();
-            // using(var sqlConnection = new SqlConnection(cadConexion))
-            // {
-            //     sqlConnection.Open();
-            //     var command = new SqlCommand(StoreProceduresIncomeOffice.COBROS_VIVO, sqlConnection);
-            //     command.CommandType = CommandType.StoredProcedure;
-            //     using(SqlDataReader reader = command.ExecuteReader())
-            //     {
-            //         while(reader.Read())
-            //         {
-            //             var id = ConvertUtils.ParseInteger( reader["id_sucursal"].ToString() );
-            //             var oficina = reader["sucursal"].ToString();
-            //             results.Add( new OfficePushpinMap(id, oficina)
-            //             {
-            //                 Lat = reader["latitud"].ToString(),
-            //                 Lon = reader["longitud"].ToString(),
-            //                 Bills = ConvertUtils.ParseInteger( reader["recibos"].ToString() ),
-            //                 Income = ConvertUtils.ParseDecimal( reader["cobrado"].ToString() ),
-            //             });
-            //         }
-            //     }
-            //     sqlConnection.Close();
-            // }
-            // return results;
+            var offices = this.sicemContext.Rutas
+                .Include(item => item.LocalizacionRuta)
+                .Where(item => item.Inactivo != true && item.LocalizacionRuta != null && item.LocalizacionRuta.Any())
+                .Select( item => new OfficePushpinMap(item.Id, item.Oficina)
+                    {
+                        Lat = item.LocalizacionRuta.First().Latitud.ToString(),
+                        Lon = item.LocalizacionRuta.First().Longitud.ToString()
+                    }
+                )
+                .ToList();
+            return offices;
         }
     }
 }

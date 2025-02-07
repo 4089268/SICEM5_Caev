@@ -41,7 +41,8 @@ public partial class Index : IAsyncDisposable
     protected override void OnInitialized()
     {
         objRef = DotNetObjectReference.Create(this);
-        // incomeData = incomeOfficeService.GetIncomes().ToList();
+        // * load offices with coordenates
+        incomeData = SeguimientoCobroService1.GetOffices().ToList();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -51,6 +52,19 @@ public partial class Index : IAsyncDisposable
             await MapJsInterop.InitializedMapAsync(objRef, "map", new MapMark() );
             // await Task.Delay(8000);
             // fetchTimer = new Timer(FetchData, null, 0, 6000);
+
+            var marks = this.incomeData.Select( item => new MapMark()
+            {
+                IdOficina = item.Id,
+                Descripcion = item.Office,
+                Latitude = double.Parse(item.Lat),
+                Longitude = double.Parse(item.Lon)
+                
+            }).ToList();
+
+            await MapJsInterop.UpdateMarks(objRef, marks);
+
+
         }
     }
 
@@ -71,7 +85,6 @@ public partial class Index : IAsyncDisposable
 
     private void refreIncomesData(List<OfficePushpinMap> data)
     {
-        throw new NotImplementedException();
         // try
         // {
         //     foreach(var newData in data)
@@ -103,5 +116,11 @@ public partial class Index : IAsyncDisposable
             //
         }
         await Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public void MapLoaded()
+    {
+        //Logger.LogInformation("Mapa cargado");
     }
 }

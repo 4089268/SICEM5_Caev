@@ -163,6 +163,8 @@ namespace Sicem_Blazor.PonteAlCorriente.Data
                         SELECT ISNULL(COUNT(cobrado),0) as recibos, ISNULL(SUM(cobrado),0) as cobrado FROM xTarjeta";
 
                     var command = new SqlCommand(query, sqlConnection);
+                    command.Parameters.AddWithValue("@cFec1", dateRange.Desde_ISO);
+                    command.Parameters.AddWithValue("@cFec2", dateRange.Hasta_ISO);
                     using(SqlDataReader dataReader = command.ExecuteReader())
                     {
                         if(dataReader.Read())

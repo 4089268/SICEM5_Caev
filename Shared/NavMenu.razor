@@ -25,6 +25,12 @@
         </MatNavItem>
         }
 
+        @if(OpcionesDisponibles.Contains(17)){
+        <MatNavItem Title="Recaudacion TPV" Href="/ptv">
+            <MatIcon Icon="mobile_friendly"/>&nbsp;Recaudacion TPV
+        </MatNavItem>
+        }
+
         @if(OpcionesDisponibles.Contains(15)){
         <MatNavSubMenu>
             <MatNavSubMenuHeader Title="Pago En Linea">
@@ -95,12 +101,6 @@
         @if(OpcionesDisponibles.Contains(17)){
         <MatNavItem Title="Ponte Al Corriente" Href="/ponteAlCorriente">
             <MatIcon Icon="label_important"/>&nbsp;Ponte Al Corriente
-        </MatNavItem>
-        }
-
-        @if(OpcionesDisponibles.Contains(17)){
-        <MatNavItem Title="TPV" Href="/ptv">
-            <MatIcon Icon="label_important"/>&nbsp;TPV
         </MatNavItem>
         }
 

@@ -124,5 +124,59 @@ namespace Sicem_Blazor.PonteAlCorriente.Data
             return response;
         }
 
+        public async Task<IEnumerable<TPVData>> GetTPV(IEnlace enlace, DateRange dateRange)
+        {
+            var responseList = new List<TPVData>();
+            try
+            {
+                using(var sqlConnection = new SqlConnection(enlace.GetConnectionString()))
+                {
+                    await sqlConnection.OpenAsync();
+                    var query = @"
+                        ;With xTarjeta as
+                        (
+                            SELECT
+                                a.cobrado as cobrado
+                            FROM [Facturacion].[Opr_Abonos] a With(NoLock)
+                            LEFT JOIN [ventanillas].[Cfg_ArchivosXLS] c ON a.id_caja = c.id_caja AND c.descripcion='LAYOUT BBVA'
+                            WHERE
+                                Convert(Varchar(8),a.fecha,112) BetWeen @cFec1 And @cFec2
+                                And a.id_tipomovto = 6
+                                And a.id_estatus != 31
+                                And a.id_formapago=4
+                                And c.id_caja IS NULL
+                            UNION
+                            SELECT
+                                v.cobrado as cobrado
+                            FROM Ventanillas.Opr_Ventas v With(NoLock)
+                            LEFT JOIN [ventanillas].[Cfg_ArchivosXLS] c ON v.cve_caja = c.id_caja AND c.descripcion='LAYOUT BBVA'
+                                WHERE
+                                Convert(Varchar(8),v.fecha,112) BetWeen @cFec1 And @cFec2
+                                And v.id_estatus != 44
+                                And c.id_caja IS NULL
+                                And v.id_formapago=4
+                        )
+                        SELECT COUNT(cobrado) as recibos, SUM(cobrado) as cobrado FROM xTarjeta";
+
+                    var command = new SqlCommand(query, sqlConnection);
+                    using(SqlDataReader dataReader = await command.ExecuteReaderAsync())
+                    {
+                        while(await dataReader.ReadAsync())
+                        {
+                            responseList.Add(TPVData.FromDataReader(enlace, dataReader));
+                            // TODO: Implemented cast
+                        }
+                    }
+                    sqlConnection.Close();
+                }
+                return responseList;
+            }
+            catch(Exception err)
+            {
+                this.logger.LogError(err, "Fail at attempt to get ehe TPV data from {enlace}: {message}", enlace.Nombre, err.Message);
+                return Array.Empty<TPVData>();
+            }
+        }
+
     }
 }

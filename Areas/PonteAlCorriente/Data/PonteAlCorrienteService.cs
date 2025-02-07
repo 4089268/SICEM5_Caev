@@ -124,14 +124,18 @@ namespace Sicem_Blazor.PonteAlCorriente.Data
             return response;
         }
 
-        public async Task<IEnumerable<TPVData>> GetTPV(IEnlace enlace, DateRange dateRange)
+        public TPVData GetTPV(IEnlace enlace, DateRange dateRange)
         {
-            var responseList = new List<TPVData>();
+            var responseData = new TPVData(enlace)
+            {
+                Estatus = ResumenOficinaEstatus.Error
+            };
+
             try
             {
                 using(var sqlConnection = new SqlConnection(enlace.GetConnectionString()))
                 {
-                    await sqlConnection.OpenAsync();
+                    sqlConnection.Open();
                     var query = @"
                         ;With xTarjeta as
                         (
@@ -156,25 +160,25 @@ namespace Sicem_Blazor.PonteAlCorriente.Data
                                 And c.id_caja IS NULL
                                 And v.id_formapago=4
                         )
-                        SELECT COUNT(cobrado) as recibos, SUM(cobrado) as cobrado FROM xTarjeta";
+                        SELECT ISNULL(COUNT(cobrado),0) as recibos, ISNULL(SUM(cobrado),0) as cobrado FROM xTarjeta";
 
                     var command = new SqlCommand(query, sqlConnection);
-                    using(SqlDataReader dataReader = await command.ExecuteReaderAsync())
+                    using(SqlDataReader dataReader = command.ExecuteReader())
                     {
-                        while(await dataReader.ReadAsync())
+                        if(dataReader.Read())
                         {
-                            responseList.Add(TPVData.FromDataReader(enlace, dataReader));
-                            // TODO: Implemented cast
+                            responseData = TPVData.FromDataReader(enlace, dataReader);
                         }
                     }
                     sqlConnection.Close();
                 }
-                return responseList;
+                return responseData;
             }
             catch(Exception err)
             {
                 this.logger.LogError(err, "Fail at attempt to get ehe TPV data from {enlace}: {message}", enlace.Nombre, err.Message);
-                return Array.Empty<TPVData>();
+                responseData.Estatus = ResumenOficinaEstatus.Error;
+                return responseData;
             }
         }
 

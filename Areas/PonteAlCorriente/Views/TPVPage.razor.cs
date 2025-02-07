@@ -19,7 +19,7 @@ using Syncfusion.Blazor.Data;
 
 namespace Sicem_Blazor.PonteAlCorriente.Views
 {
-    public partial class PonteAlCorrientePage
+    public partial class TPVPage
     {
 
         [Inject]
@@ -32,18 +32,17 @@ namespace Sicem_Blazor.PonteAlCorriente.Views
         public PonteAlCorrienteService PonteAlCorrienteService1 {get;set;} = default!;
         
         [Inject]
-        public ILogger<PonteAlCorrientePage> Logger {get;set;} = default!;
+        public ILogger<TPVPage> Logger {get;set;} = default!;
 
 
-        private SfGrid<ResumeOffice> DataGrid {get;set;}
-        private List<ResumeOffice> DataOffices {get;set;}
+        private SfGrid<TPVData> DataGrid {get;set;}
+        private List<TPVData> DataOffices {get;set;}
         private bool busyDialog = false;
         private DateTime f1, f2;
         private int Subsistema, Sector;
-        private DetalleOficinaVtn detalleOficina;
-        private bool detalleOficinaVisible = false;
-        private bool detallePTVVisible = false;
-        
+        private TPVData TotalData;
+        private CultureInfo currentCultureInfo = new CultureInfo("es-MX");
+
         protected override async Task OnInitializedAsync()
         {
             var _now = DateTime.Now;
@@ -66,13 +65,13 @@ namespace Sicem_Blazor.PonteAlCorriente.Views
             IEnlace[] enlaces = SicemService.ObtenerOficinasDelUsuario().ToArray();
 
             //****** Preparar filas
-            DataOffices = new List<ResumeOffice>();
+            DataOffices = new List<TPVData>();
             var Tareas = new List<Task>();
 
             //****** Prepara Filas
             foreach (var enlace in enlaces)
             {
-                var oficinaModel = new ResumeOffice(enlace);
+                var oficinaModel = new TPVData(enlace);
                 DataOffices.Add(oficinaModel);
 
                 //*** Agregar tarea
@@ -80,14 +79,8 @@ namespace Sicem_Blazor.PonteAlCorriente.Views
             }
 
             //*** Agregar fila total
-            if (enlaces.Length > 1)
-            {
-                var oficinaModel = new ResumeOffice( new Ruta() { Oficina = "TOTAL", Id = 999 })
-                {
-                    Estatus = ResumenOficinaEstatus.Completado
-                };
-                DataOffices.Add(oficinaModel);
-            }
+            TotalData = new TPVData( new Ruta() { Oficina = "TOTAL", Id = 999 });
+            
 
             //****** Iniciar tareas
             foreach (var tarea in Tareas)
@@ -110,7 +103,7 @@ namespace Sicem_Blazor.PonteAlCorriente.Views
 
                 // * Realizar consulta
                 var dateRange = new DateRange(f1, f2, Subsistema, Sector);
-                var tmpData = PonteAlCorrienteService1.ObtenerResumen(enlace, dateRange);
+                var tmpData = PonteAlCorrienteService1.GetTPV(enlace, dateRange);
                 
                 var _random = new Random();
                 var sleep = _random.Next(3000);
@@ -126,9 +119,8 @@ namespace Sicem_Blazor.PonteAlCorriente.Views
                         if (tmpData.Estatus == ResumenOficinaEstatus.Completado)
                         {
                             item.Estatus = ResumenOficinaEstatus.Completado;
-                            item.NumDescuentos = tmpData.NumDescuentos;
-                            item.ImporteDescontado = tmpData.ImporteDescontado;
-                            item.ImporteCobrado = tmpData.ImporteCobrado;
+                            item.Recibos = tmpData.Recibos;
+                            item.Cobrado = tmpData.Cobrado;
                         }
                         else
                         {
@@ -158,14 +150,8 @@ namespace Sicem_Blazor.PonteAlCorriente.Views
         private void RecalcularFilaTotal()
         {
             //*** Recalcular fila total
-            var itemTotal = DataOffices.Where(item => item.Id == 999).FirstOrDefault();
-            if (itemTotal != null) {
-                var _tmpData = DataOffices.Where(item => item.Id != 999).ToList();
-
-                itemTotal.NumDescuentos = _tmpData.Sum(item => item.NumDescuentos);
-                itemTotal.ImporteDescontado = _tmpData.Sum(item => item.ImporteDescontado);
-                itemTotal.ImporteCobrado = _tmpData.Sum(item => item.ImporteCobrado);
-            }
+            TotalData.Recibos = DataOffices.Sum(item => item.Recibos);
+            TotalData.Cobrado = DataOffices.Sum(item => item.Cobrado);
             InvokeAsync(() => StateHasChanged());
         }
         
@@ -177,34 +163,6 @@ namespace Sicem_Blazor.PonteAlCorriente.Views
             await this.DataGrid.ExportToExcelAsync(_options);
         }
         
-        private async Task DetalleClick(ResumeOffice data)
-        {
-            if (detalleOficinaVisible) {
-                return;
-            }
-
-            this.busyDialog = true;
-            await Task.Delay(200);
-            var dateRange = new DateRange(f1, f2, Subsistema, Sector);
-            var tmpData = PonteAlCorrienteService1.DetallePonteAlCorriente(data.Enlace, dateRange);
-            if (tmpData == null) {
-                Toaster.Add("Hubo un error al procesar la petición, inténtelo mas tarde.", MatToastType.Warning);
-            }
-            else {
-                if (tmpData.Count() > 0)
-                {
-                    detalleOficinaVisible = true;
-                    var titulo = $"{data.Enlace.Nombre.ToUpper()} - Detalle Cuentas";
-                    detalleOficina.Show(tmpData, titulo);
-                }
-                else
-                {
-                    Toaster.Add("No hay datos disponibles para mostrar.", MatToastType.Info);
-                }
-            }
-            await Task.Delay(200);
-            this.busyDialog = false;
-        }
     }
 
 }

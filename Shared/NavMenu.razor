@@ -98,13 +98,17 @@
         </MatNavItem>
         }
 
-        @if(OpcionesDisponibles.Contains(18)){
-        <MatNavItem Title="Seguimiento Pagos" Href="/seguimientoCobros">
-            <MatIcon Icon="label_important"/>&nbsp;Seguimiento Pagos
+        @if(OpcionesDisponibles.Contains(17)){
+        <MatNavItem Title="TPV" Href="/ptv">
+            <MatIcon Icon="label_important"/>&nbsp;TPV
         </MatNavItem>
         }
 
-        
+        @if(OpcionesDisponibles.Contains(18)){
+        <MatNavItem Title="Seguimiento Pagos" Href="/seguimientoCobros">
+            <MatIcon Icon="map"/>&nbsp;Seguimiento Pagos
+        </MatNavItem>
+        }
         <MatDivider></MatDivider>
 
         @if(sicemService.Usuario.Administrador){

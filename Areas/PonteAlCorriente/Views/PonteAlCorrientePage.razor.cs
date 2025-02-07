@@ -40,6 +40,8 @@ namespace Sicem_Blazor.PonteAlCorriente.Views
         private bool busyDialog = false;
         private DateTime f1, f2;
         private int Subsistema, Sector;
+        private DetalleOficinaVtn detalleOficina;
+        private bool detalleOficinaVisible = false;
         
         protected override async Task OnInitializedAsync()
         {
@@ -173,7 +175,36 @@ namespace Sicem_Blazor.PonteAlCorriente.Views
             };
             await this.DataGrid.ExportToExcelAsync(_options);
         }
+        
+        private async Task DetalleClick(ResumeOffice data)
+        {
+            if (detalleOficinaVisible) {
+                return;
+            }
 
+            this.busyDialog = true;
+            await Task.Delay(200);
+            var dateRange = new DateRange(f1, f2, Subsistema, Sector);
+            var tmpData = PonteAlCorrienteService1.DetallePonteAlCorriente(data.Enlace, dateRange);
+            if (tmpData == null) {
+                Toaster.Add("Hubo un error al procesar la petición, inténtelo mas tarde.", MatToastType.Warning);
+            }
+            else {
+                if (tmpData.Count() > 0)
+                {
+                    detalleOficinaVisible = true;
+                    var titulo = $"{data.Enlace.Nombre.ToUpper()} - Detalle Cuentas";
+                    detalleOficina.Show(tmpData, titulo);
+                }
+                else
+                {
+                    Toaster.Add("No hay datos disponibles para mostrar.", MatToastType.Info);
+                }
+            }
+            await Task.Delay(200);
+            this.busyDialog = false;
+        }
+    
     }
 
 }

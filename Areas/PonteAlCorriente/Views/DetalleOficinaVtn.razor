@@ -1,0 +1,33 @@
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.PonteAlCorriente.Models
+@namespace Sicem_Blazor.PonteAlCorriente.Views
+
+@if (mostrarVentana)
+{
+    <VentanaSecundaria Titulo="@titulo.ToUpper()" CerrarVentana="@HandleCloseModal" Filas="@(new double[] { 50, .7 })" Columnas="@(new double[]{.7})">
+        <Content>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-area: 1/1/2/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@ExportData">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-area: 2/1/3/2;">
+                <SfGrid @ref="DataGrid" DataSource="@Datos" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(DetalleOficina.Localidad)" HeaderText="Localidad" TextAlign="TextAlign.Left" Width="150" />
+                        <GridColumn Field="@nameof(DetalleOficina.Usuario)" HeaderText="Usuario" TextAlign="TextAlign.Left" Width="200"/>
+                        <GridColumn Field="@nameof(DetalleOficina.Cuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="150"/>
+                        <GridColumn Field="@nameof(DetalleOficina.Estatus)" HeaderText="Estatus" TextAlign="TextAlign.Center" Width="110"/>
+                        <GridColumn Field="@nameof(DetalleOficina.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Center" Width="120" />
+                        <GridColumn Field="@nameof(DetalleOficina.Tarifa)" HeaderText="Tarifa" TextAlign="TextAlign.Center" Width="150"/>
+                        <GridColumn Field="@nameof(DetalleOficina.ImporteDescontado)" HeaderText="Importe Descontado" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn Field="@nameof(DetalleOficina.ImportePagado)" HeaderText="Importe Pagado" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+}

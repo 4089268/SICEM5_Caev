@@ -78,5 +78,51 @@ namespace Sicem_Blazor.PonteAlCorriente.Data
             return response;
         }
 
+        public IEnumerable<DetalleOficina> DetallePonteAlCorriente(IEnlace enlace, DateRange dateRange)
+        {
+            var response = new List<DetalleOficina>();
+
+            var query = @"SELECT
+                    Upper(po.descripcion) as localidad,
+                    Upper(e.descripcion) as estatus,
+                    a.id_cuenta as cuenta,
+                    a.fecha as fecha,
+                    p.razon_social as usuario,
+                    Upper(t.descripcion) as tarifa,
+                    IsNull(a.total,0) as importe_descontado,
+                    IsNull(pp.cobrado,0) as importe_pago
+                FROM Facturacion.Opr_DetDescuentos d with(nolock)
+                INNER JOIN Facturacion.Opr_Abonos a with(nolock) on a.id_abono=d.id_abono
+                INNER JOIN Padron.Cat_TiposUsuario t with(nolock) on t.id_tipousuario=a.id_tarifa
+                INNER JOIN Padron.Cat_Padron p with(nolock) on p.id_padron=a.id_padron
+                INNER JOIN Padron.Cat_Poblaciones po with(nolock) on po.id_poblacion=p.id_localidad
+                INNER JOIN Global.Cat_Estatus e with(nolock) on e.id_estatus=p.id_estatus
+                Outer Apply
+                (
+                    SELECT Sum(Isnull(cobrado,0)) as cobrado
+                    FROM Facturacion.Opr_Abonos with(nolock)
+                    WHERE id_padron=a.id_padron and id_tipomovto=6 and fecha_amd=a.fecha_amd and id_estatus!=31
+                ) pp
+                WHERE d.cve_descuento='RB10' And a.fecha_amd BetWeen @Fecha1 and @Fecha2
+                ORDER BY fecha desc";
+
+            using(var connection = new SqlConnection(enlace.GetConnectionString()))
+            {
+                connection.Open();
+                var command = new SqlCommand(query, connection);
+                command.Parameters.AddWithValue("@Fecha1", dateRange.Desde_ISO);
+                command.Parameters.AddWithValue("@Fecha2", dateRange.Hasta_ISO);
+                using(var dataReader = command.ExecuteReader())
+                {
+                    while(dataReader.Read())
+                    {
+                        response.Add(DetalleOficina.FromDataReader(dataReader));
+                    }
+                }
+                connection.Close();
+            }
+            return response;
+        }
+
     }
 }

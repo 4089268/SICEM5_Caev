@@ -43,15 +43,15 @@
                 <GridColumn Field="@nameof(ResumeOffice.NumDescuentos)" HeaderText="Numero de Descuentos" TextAlign="TextAlign.Right" Width="120" Format="n0" />
                 <GridColumn Field="@nameof(ResumeOffice.ImporteDescontado)" HeaderText="Importe Descontado" TextAlign="TextAlign.Right" Width="125" Format="c2" />
                 <GridColumn Field="@nameof(ResumeOffice.ImporteCobrado)" HeaderText="Importe cobrado" TextAlign="TextAlign.Right" Width="125" Format="c2" />
-                <GridColumn HeaderText="Acciones" TextAlign="TextAlign.Center" Width="70">
+                <GridColumn HeaderText="Acciones" TextAlign="TextAlign.Center" Width="40">
                     <Template>
                         @{
                             var data = (context as ResumeOffice);
                             if (data.Id > 0 && data.Id < 90) {
-                                <div class="d-flex align-items-center">
-                                    @* <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Detalle" @onclick="@(e => HandleShowDetailsOffice(data))">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Detalle" disabled="@(data.Estatus != ResumenOficinaEstatus.Completado )" @onclick="@(e => DetalleClick(data))">
                                         <i class="fa fa-table" aria-hidden="true"></i>
-                                    </button> *@
+                                    </button>
                                 </div>
                             }
                         }
@@ -65,6 +65,7 @@
 
 @* ****** Dialogos y ventanas secundarias ****** *@
 <BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+<DetalleOficinaVtn @ref="detalleOficina" CerrarModal="@(e => detalleOficinaVisible = false)" />
 
 <style>
     .layoutPage

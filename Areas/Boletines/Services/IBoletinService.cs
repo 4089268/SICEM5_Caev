@@ -7,13 +7,17 @@ namespace Sicem_Blazor.Boletines.Services;
 
 public interface IBoletinService
 {
-    Task<Boletin> GetBoletines();
-
-    Task<BoletinMensaje> GetMensajeBoletin(Guid boletinId);
+    Task<ICollection<IBoletin>> GetBoletines();
+    Task<ICollection<IBoletinMensaje>> GetMensajesBoletin(Guid boletinId);
+    Task<ICollection<IBoletinDestinatario>> GetDestinatariosBoletin(Guid boletinId);
+    Task<Guid> AlmacenarBoletin(IBoletin boletin);
     
-    Task<ICollection<Destinatario>> GetDestinatariosBoletin(Guid boletinId);
+    Task<Guid> StoreBoletinMensaje(Guid boletinId, IBoletinMensaje mensaje);
+    Task ActualizarMensaje(Guid mensajeId, IBoletinMensaje mensaje);
+    Task RemoverMensaje(IBoletinMensaje mensaje);
+    
+    Task<Guid> StoreBoletinDestinatatio(Guid boletinId, IBoletinDestinatario destinatario);
+    Task ActualizarDestinatario(Guid destinatarioId, IBoletinDestinatario destinatario);
+    Task RemoverDestinatario(IBoletinDestinatario destinatario);
 
-    Task<Guid> StoreBoletin(Boletin newBoletin);
-
-    Task<Guid> StoreBoletin(Boletin newBoletin);
 }

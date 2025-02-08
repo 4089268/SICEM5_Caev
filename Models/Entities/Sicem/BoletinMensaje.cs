@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using Sicem_Blazor.Boletines.Models;
 
 namespace Sicem_Blazor.Models
 {
-    public partial class BoletinMensaje
+    public partial class BoletinMensaje : IBoletinMensaje
     {
         public Guid Id { get; set; }
         public Guid BoletinId { get; set; }
@@ -15,5 +16,17 @@ namespace Sicem_Blazor.Models
         public DateTime DeletedAt { get; set; }
 
         public virtual OprBoletin Boletin { get; set; }
+
+        // * Implemented interface
+        bool IBoletinMensaje.EsArchivo
+        {
+            get => EsArchivo ?? false;
+            set => EsArchivo = value;
+        }
+        int IBoletinMensaje.FileSize
+        {
+            get => FileSize ?? 0;
+            set => FileSize = value;
+        }
     }
 }

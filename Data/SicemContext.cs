@@ -16,6 +16,7 @@ namespace Sicem_Blazor.Models
         {
         }
 
+        public virtual DbSet<BoletinMensaje> BoletinMensajes { get; set; }
         public virtual DbSet<CatAuxiliare> CatAuxiliares { get; set; }
         public virtual DbSet<CatContable> CatContables { get; set; }
         public virtual DbSet<CatContable1> CatContables1 { get; set; }
@@ -34,6 +35,7 @@ namespace Sicem_Blazor.Models
         public virtual DbSet<CfgParametro1> CfgParametros1 { get; set; }
         public virtual DbSet<CfgPoliza> CfgPolizas { get; set; }
         public virtual DbSet<CfgTarifa> CfgTarifas { get; set; }
+        public virtual DbSet<Destinatario> Destinatarios { get; set; }
         public virtual DbSet<DetModsOficina> DetModsOficinas { get; set; }
         public virtual DbSet<FacElectronica> FacElectronicas { get; set; }
         public virtual DbSet<HistTarifa> HistTarifas { get; set; }
@@ -42,6 +44,7 @@ namespace Sicem_Blazor.Models
         public virtual DbSet<Location> Locations { get; set; }
         public virtual DbSet<ModsOficina> ModsOficinas { get; set; }
         public virtual DbSet<OprActualizacion> OprActualizacions { get; set; }
+        public virtual DbSet<OprBoletin> OprBoletins { get; set; }
         public virtual DbSet<OprDetPoliza> OprDetPolizas { get; set; }
         public virtual DbSet<OprOpcione> OprOpciones { get; set; }
         public virtual DbSet<OprPoliza> OprPolizas { get; set; }
@@ -62,6 +65,46 @@ namespace Sicem_Blazor.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<BoletinMensaje>(entity =>
+            {
+                entity.ToTable("BoletinMensaje", "Boletin");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("id")
+                    .HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.BoletinId).HasColumnName("boletinId");
+
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnName("createdAt")
+                    .HasDefaultValueSql("(getdate())");
+
+                entity.Property(e => e.DeletedAt)
+                    .HasColumnName("deletedAt")
+                    .HasDefaultValueSql("(getdate())");
+
+                entity.Property(e => e.EsArchivo)
+                    .HasColumnName("esArchivo")
+                    .HasDefaultValueSql("((0))");
+
+                entity.Property(e => e.FileSize).HasColumnName("fileSize");
+
+                entity.Property(e => e.Mensaje)
+                    .IsRequired()
+                    .IsUnicode(false)
+                    .HasColumnName("mensaje");
+
+                entity.Property(e => e.MimmeType)
+                    .HasMaxLength(100)
+                    .IsUnicode(false)
+                    .HasColumnName("mimmeType");
+
+                entity.HasOne(d => d.Boletin)
+                    .WithMany(p => p.BoletinMensajes)
+                    .HasForeignKey(d => d.BoletinId)
+                    .HasConstraintName("FK_BoletinMensaje_Boletin");
+            });
+
             modelBuilder.Entity<CatAuxiliare>(entity =>
             {
                 entity.ToTable("Cat_Auxiliares", "Polizas");
@@ -717,6 +760,46 @@ namespace Sicem_Blazor.Models
                 entity.Property(e => e.Inactivo).HasColumnName("inactivo");
             });
 
+            modelBuilder.Entity<Destinatario>(entity =>
+            {
+                entity.ToTable("Destinatario", "Boletin");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("id")
+                    .HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.BoletinId).HasColumnName("boletinId");
+
+                entity.Property(e => e.EnvioMetadata)
+                    .IsUnicode(false)
+                    .HasColumnName("envioMetadata");
+
+                entity.Property(e => e.Error).HasColumnName("error");
+
+                entity.Property(e => e.FechaEnvio).HasColumnName("fechaEnvio");
+
+                entity.Property(e => e.Lada)
+                    .HasMaxLength(5)
+                    .IsUnicode(false)
+                    .HasColumnName("lada");
+
+                entity.Property(e => e.Resultado)
+                    .IsUnicode(false)
+                    .HasColumnName("resultado");
+
+                entity.Property(e => e.Telefono).HasColumnName("telefono");
+
+                entity.Property(e => e.Titulo)
+                    .HasMaxLength(150)
+                    .IsUnicode(false)
+                    .HasColumnName("titulo");
+
+                entity.HasOne(d => d.Boletin)
+                    .WithMany(p => p.Destinatarios)
+                    .HasForeignKey(d => d.BoletinId)
+                    .HasConstraintName("FK_Destinatario_Boletin");
+            });
+
             modelBuilder.Entity<DetModsOficina>(entity =>
             {
                 entity.ToTable("Det_ModsOficina");
@@ -1049,6 +1132,29 @@ namespace Sicem_Blazor.Models
                     .HasMaxLength(100)
                     .IsUnicode(false)
                     .HasColumnName("tarifa");
+            });
+
+            modelBuilder.Entity<OprBoletin>(entity =>
+            {
+                entity.ToTable("OprBoletin", "Boletin");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("id")
+                    .HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnName("createdAt")
+                    .HasDefaultValueSql("(getdate())");
+
+                entity.Property(e => e.FinishedAt)
+                    .HasColumnName("finishedAt")
+                    .HasDefaultValueSql("(getdate())");
+
+                entity.Property(e => e.Titulo)
+                    .IsRequired()
+                    .HasMaxLength(250)
+                    .IsUnicode(false)
+                    .HasColumnName("titulo");
             });
 
             modelBuilder.Entity<OprDetPoliza>(entity =>

@@ -22,6 +22,13 @@ public class PagoLineaResumenDia
     public int TotalPagosPorAplicar {get;set;}
     public decimal ImportePagosPorAplicar {get;set;}
 
+    public DateTime Fecha
+    {
+        get {
+            return DateTime.ParseExact(FechaInt.ToString(), "yyyyMMdd", null);
+        }
+    }
+
     public PagoLineaResumenDia(IEnlace enlace)
     {
         this.Enlace = enlace;

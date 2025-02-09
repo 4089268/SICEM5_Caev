@@ -23,23 +23,26 @@
                         <GridColumn Field="@nameof(PagoLineaResumenDia.TotalPagosPorAplicar)" HeaderText="Pagos por aplicar" TextAlign="TextAlign.Right" Width="120" Format="n0" />
                         <GridColumn Field="@nameof(PagoLineaResumenDia.ImportePagosPorAplicar)" HeaderText="Importe por aplicar" TextAlign="TextAlign.Right" Width="125" Format="c2" />
                         <GridColumn HeaderText="Acciones" TextAlign="TextAlign.Center" Width="40">
-                        <Template>
-                            @{
-                                var data = (context as PagoLineaResumenDia);
-                                if (data.Id > 0 && data.Id < 90) {
-                                    <div class="d-flex align-items-center justify-content-center">
-                                        <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Detalle">
-                                            <i class="fa fa-table" aria-hidden="true"></i>
-                                        </button>
-                                    </div>
+                            <Template>
+                                @{
+                                    var data = (context as PagoLineaResumenDia);
+                                    if (data.Id > 0 && data.Id < 90) {
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Detalle" @onclick="@(e => DetalleClick(data))">
+                                                <i class="fa fa-table" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                    }
                                 }
-                            }
-                        </Template>
-                    </GridColumn>
+                            </Template>
+                        </GridColumn>
                     </GridColumns>
                 </SfGrid>
             </div>
 
         </Content>
     </VentanaSecundaria>
+    
+    <BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+    <PagoLineaDetalleVtn @ref="pagoLineaDetalleVtn" CerrarModal="@(e => detalleVtnVisible = false)"/>
 }

@@ -15,7 +15,7 @@ using Sicem_Blazor.Models;
 using Sicem_Blazor.Services;
 using Sicem_Blazor.PagoLinea.Models;
 using Sicem_Blazor.PagoLinea.Data;
-using Sicem_Blazor.Models.PagoLinea;
+
 
 namespace Sicem_Blazor.PagoLinea.Views;
 public partial class ResumenDiasVtn
@@ -24,7 +24,7 @@ public partial class ResumenDiasVtn
     public IMatToaster Toaster {get;set;} = default!;
     
     [Inject]
-    public PagoLineaService PagoLineaService {get;set;} = default!;
+    public PagoLineaService PagoLineaService1 {get;set;} = default!;
     
     [Inject]
     public ILogger<ResumenDiasVtn> Logger {get;set;} = default!;
@@ -33,12 +33,15 @@ public partial class ResumenDiasVtn
     public EventCallback CerrarModal { get; set; }
 
     public bool mostrarVentana = false;
-    
-    private ResumeOffice resumeOffice1;
+
     public string titulo = "Pagos realizados";
     private SfGrid<PagoLineaResumenDia> DataGrid {get;set;}
     public List<PagoLineaResumenDia> Datos {get;set;}
-    
+    private bool busyDialog = false;
+
+    private PagoLineaDetalleVtn pagoLineaDetalleVtn;
+    private bool detalleVtnVisible = false;
+
     public void Show(IEnumerable<PagoLineaResumenDia> datos, string titulo = "")
     {
         this.Datos = datos.ToList();
@@ -56,11 +59,43 @@ public partial class ResumenDiasVtn
         StateHasChanged();
         await CerrarModal.InvokeAsync("");
     }
+
     private async Task ExportData()
     {
         await this.DataGrid.ExcelExport(new ExcelExportProperties {
             FileName = string.Format("sicem_ingresosxConceptos_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
         });
+    }
+
+    private async Task DetalleClick(PagoLineaResumenDia data)
+    {
+        if (detalleVtnVisible) {
+            return;
+        }
+
+        this.busyDialog = true;
+        await Task.Delay(200);
+        var dateRange = new DateRange(data.Fecha, data.Fecha, 0, 0);
+        var tmpData = await PagoLineaService1.ObtenerDetallePagos2(data.Enlace, dateRange);
+        if (tmpData == null)
+        {
+            Toaster.Add("Hubo un error al procesar la petición, inténtelo mas tarde.", MatToastType.Warning);
+        }
+        else
+        {
+            if(tmpData.Any())
+            {
+                detalleVtnVisible = true;
+                var titulo = $"{data.Enlace.Nombre.ToUpper()} - PAGOS DEL DIA {data.FechaString} ";
+                pagoLineaDetalleVtn.Show(data.Enlace, tmpData, titulo);
+            }
+            else
+            {
+                Toaster.Add("No hay datos disponibles para mostrar.", MatToastType.Info);
+            }
+        }
+        await Task.Delay(200);
+        this.busyDialog = false;
     }
 
 }

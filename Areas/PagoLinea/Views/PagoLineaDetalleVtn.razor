@@ -1,0 +1,48 @@
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.PagoLinea.Models;
+@namespace Sicem_Blazor.PagoLinea.Views
+
+@if (mostrarVentana) {
+    <VentanaSecundaria Titulo="@titulo" CerrarVentana="@HandleCloseModal" Filas="@(new double[] { 50, 610 })" Columnas="@(new double[]{.9})">
+        <Content>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
+                <div class="w-100 d-flex align-items-center">
+                    <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@ExportData">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
+                </div>
+            </div>
+
+            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">
+                <SfGrid @ref="DataGrid" DataSource="@Datos" AllowResizing="true" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowPdfExport="true" Height="100%" Width="auto" EnableHover="true">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(PagoLineaDetalle.Id)" HeaderText="ID" TextAlign="TextAlign.Left" Width="120" />
+                        <GridColumn Field="@nameof(PagoLineaDetalle.Fecha)" HeaderText="Fecha de Pago" TextAlign="TextAlign.Center" Width="180" />
+                        <GridColumn Field="@nameof(PagoLineaDetalle.MedioPago)" HeaderText="MedioPago" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(PagoLineaDetalle.Referencia)" HeaderText="Referencia" TextAlign="TextAlign.Left" Width="140"/>
+                        <GridColumn Field="@nameof(PagoLineaDetalle.TipoTarjeta)" HeaderText="Tipo Tarjeta" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(PagoLineaDetalle.Autorizacion)" HeaderText="Autorizacion" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(PagoLineaDetalle.Estado)" HeaderText="Estado" TextAlign="TextAlign.Center" Width="100" />
+                        <GridColumn Field="@nameof(PagoLineaDetalle.Cuenta)" HeaderText="Cuenta" TextAlign="TextAlign.Center" Width="150"/>
+                        <GridColumn Field="@nameof(PagoLineaDetalle.Localidad)" HeaderText="Localidad" TextAlign="TextAlign.Center" Width="150"/>
+                        <GridColumn Field="@nameof(PagoLineaDetalle.Importe)" HeaderText="Importe" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn Field="@nameof(PagoLineaDetalle.Aplicado)" HeaderText="Aplicado" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn Field="@nameof(PagoLineaDetalle.Diferencia)" HeaderText="Diferencia" TextAlign="TextAlign.Right" Width="150" Format="c2" />
+                        <GridColumn HeaderText="Acciones" TextAlign="TextAlign.Center" Width="40">
+                            <Template>
+                                @{
+                                    var data = (context as PagoLineaDetalle);
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Detalle">
+                                            <i class="fa fa-table" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+        </Content>
+    </VentanaSecundaria>
+}

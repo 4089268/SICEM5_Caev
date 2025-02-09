@@ -15,7 +15,7 @@ public class PagoLineaDetalle
     public string Referencia {get;set;}
     public string ReferenciaTarjeta {get;set;}
     public string TipoTarjeta {get;set;}
-    public string Autorizacinon {get;set;}
+    public string Autorizacion {get;set;}
     public string Estado {get;set;}
     public string Email {get;set;}
     public string Telefono {get;set;}
@@ -42,7 +42,7 @@ public class PagoLineaDetalle
             Referencia = reader["referencia"].ToString(),
             ReferenciaTarjeta = reader["referencia_tarjeta"].ToString(),
             TipoTarjeta = reader["tipo_tarjeta"].ToString(),
-            Autorizacinon = reader["autorizacion"].ToString(),
+            Autorizacion = reader["autorizacion"].ToString(),
             Estado = reader["estado"].ToString(),
             Email = reader["email"].ToString(),
             Telefono = reader["telefono"].ToString(),

@@ -46,6 +46,9 @@ namespace Sicem_Blazor.PagoLinea.Views
 
         private ResumenDiasVtn resumenDiasVtn;
         private bool resumenDiasVisible = false;
+
+        private PagoLineaDetalleVtn pagoLineaDetalleVtn;
+        private bool detalleVtnVisible = false;
         
         protected override async Task OnInitializedAsync()
         {
@@ -203,7 +206,37 @@ namespace Sicem_Blazor.PagoLinea.Views
             await Task.Delay(200);
             this.busyDialog = false;
         }
-        
+
+        private async Task DetalleClick(PagoLineaResumen data)
+        {
+            if (detalleVtnVisible) {
+                return;
+            }
+
+            this.busyDialog = true;
+            await Task.Delay(200);
+            var dateRange = new DateRange(f1,f2, 0, 0);
+            var tmpData = await PagoLineaService1.ObtenerDetallePagos2(data.Enlace, dateRange);
+            if (tmpData == null)
+            {
+                Toaster.Add("Hubo un error al procesar la petición, inténtelo mas tarde.", MatToastType.Warning);
+            }
+            else
+            {
+                if(tmpData.Any())
+                {
+                    detalleVtnVisible = true;
+                    var titulo = $"{data.Enlace.Nombre.ToUpper()} - PAGOS DEL MES {f1.ToString("MMMM yyyy").ToUpper()}";
+                    pagoLineaDetalleVtn.Show(data.Enlace, tmpData, titulo);
+                }
+                else
+                {
+                    Toaster.Add("No hay datos disponibles para mostrar.", MatToastType.Info);
+                }
+            }
+            await Task.Delay(200);
+            this.busyDialog = false;
+        }
     }
 
 }

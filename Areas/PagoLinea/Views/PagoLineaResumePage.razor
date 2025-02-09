@@ -101,9 +101,9 @@
                                         <i class="fa fa-calendar" aria-hidden="true"></i>
                                     </button>
 
-                                    @* <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Detalle" disabled="@(data.Estatus != ResumenOficinaEstatus.Completado)">
+                                    <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Detalle" disabled="@(data.Estatus != ResumenOficinaEstatus.Completado)" @onclick="@(e => DetalleClick(data))">
                                         <i class="fa fa-table" aria-hidden="true"></i>
-                                    </button> *@
+                                    </button>
                                 </div>
                             }
                         }
@@ -118,6 +118,7 @@
 @* ****** Dialogos y ventanas secundarias ****** *@
 <BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
 <ResumenDiasVtn @ref="resumenDiasVtn" CerrarModal="@(e => resumenDiasVisible = false)"/>
+<PagoLineaDetalleVtn @ref="pagoLineaDetalleVtn" CerrarModal="@(e => detalleVtnVisible = false)"/>
 
 <style>
     .layoutPage

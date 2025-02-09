@@ -68,4 +68,49 @@ public partial class PagoLineaDetalleVtn
         });
     }
 
+    private async Task AplicarPagoClick(PagoLineaDetalle detallePago)
+    {
+
+        var data = this.Datos.FirstOrDefault( item => item.Id == detallePago.Id);
+        if(data == null) return;
+
+        data.aplicarPagoResult = new AplicarPagoResult
+        {
+            Id = detallePago.Id,
+            Fecha = detallePago.Fecha,
+            Importe = detallePago.Importe,
+            Estatus = ResumenOficinaEstatus.Pendiente
+        };
+        await Task.Delay(100);
+        InvokeAsync(() => StateHasChanged());
+        this.DataGrid.Refresh();
+
+        // * attempt to send the paymeny
+        var response = await this.PagoLineaService1.AplicarPago(this.enlace, detallePago);
+        if(response.Error > 0)
+        {
+            if(response.Mensaje.Contains("->"))
+            {
+                var message = $"Error al aplicar el pago: {response.Mensaje.Split("->").First().Trim()}".ToLower();
+                Toaster.Add(message, MatToastType.Danger, $"Pago {detallePago.Id} {detallePago.Fecha.ToShortDateString()}");
+            }
+            else
+            {
+                var message = $"Error al aplicar el pago: {response.Mensaje}".ToLower();
+                Toaster.Add("Error al aplicar el pago: " + response.Mensaje, MatToastType.Danger, $"Pago {detallePago.Id} {detallePago.Fecha.ToShortDateString()}");
+            }
+        }
+        else
+        {
+            Toaster.Add("Pago aplicado con folio: " + response.FolioPago, MatToastType.Success, $"Pago {detallePago.Id} {detallePago.Fecha.ToShortDateString()}");
+            data.Aplicado = data.Importe;
+            data.Diferencia = 0;
+        }
+
+        // * updated the status on the grid
+        data.aplicarPagoResult.Estatus = response.Estatus;
+        await Task.Delay(100);
+        InvokeAsync(() => StateHasChanged());
+        this.DataGrid.Refresh();
+    }
 }

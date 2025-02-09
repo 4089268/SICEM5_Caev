@@ -31,11 +31,33 @@
                             <Template>
                                 @{
                                     var data = (context as PagoLineaDetalle);
-                                    <div class="d-flex align-items-center justify-content-center">
-                                        <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Detalle">
-                                            <i class="fa fa-table" aria-hidden="true"></i>
-                                        </button>
-                                    </div>
+                                    if(data.Aplicado <= 0)
+                                    {
+                                        if( data.aplicarPagoResult == null)
+                                        {
+                                            <div class="d-flex align-items-center justify-content-center">
+                                                <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Aplicar Pago" @onclick="@(e => AplicarPagoClick(data))">
+                                                    <i class="fa fa-money-check-alt" aria-hidden="true"></i>
+                                                </button>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            @switch (data.aplicarPagoResult.Estatus) {
+                                                case ResumenOficinaEstatus.Completado:
+                                                    <i class="fas fa-check-circle" style="color:green; font-size:1.5rem;"></i>
+                                                    break;
+
+                                                case ResumenOficinaEstatus.Error:
+                                                    <i class="fas fa-exclamation-circle" style="color:red; font-size:1.5rem;"></i>
+                                                    break;
+
+                                                default:
+                                                    <div class="spinner-border p-2" role="status"> </div>
+                                                    break;
+                                            }
+                                        }
+                                    }
                                 }
                             </Template>
                         </GridColumn>

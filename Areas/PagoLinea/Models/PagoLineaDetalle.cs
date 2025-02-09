@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Xml.Linq;
 using Sicem_Blazor.Data;
 using Sicem_Blazor.Data.Contracts;
 
@@ -25,6 +26,9 @@ public class PagoLineaDetalle
     public string Tarifa {get;set;}
     public decimal Aplicado {get;set;}
     public decimal Diferencia {get;set;}
+
+
+    public AplicarPagoResult aplicarPagoResult {get;set;}
 
     public PagoLineaDetalle(IEnlace enlace)
     {
@@ -55,4 +59,31 @@ public class PagoLineaDetalle
         };
         return newItem;
     }
+
+    public string ToXml()
+    {
+        string formattedFecha = Fecha.ToString("yyyy-MM-ddTHH:mm:sszzz");
+
+        XElement xml = new XElement("FILTROS",
+            new XElement("PAGOWEB",
+                new XElement("id_caja", "E0005"),
+                new XElement("id_operador", "CAEV"),
+                new XElement("id_transaccion", Id.ToString().Trim()),
+                new XElement("fecha", formattedFecha),
+                new XElement("referencia_comercio", Referencia?.Trim()),
+                new XElement("medio_de_pago", MedioPago?.Trim()),
+                new XElement("referencia_tarjeta", ReferenciaTarjeta?.Trim()),
+                new XElement("tipo_tarjeta", TipoTarjeta?.Trim()),
+                new XElement("autorizacion", Autorizacion?.Trim()),
+                new XElement("total_cobrado", Importe.ToString("F2")),
+                new XElement("estado", Estado?.Trim()),
+                new XElement("email", Email?.Trim()),
+                new XElement("telefono", Telefono?.Trim()),
+                new XElement("plataforma", Plataforma?.Trim())
+            )
+        );
+
+        return xml.ToString();
+    }
+
 }

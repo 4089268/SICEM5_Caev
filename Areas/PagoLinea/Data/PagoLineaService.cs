@@ -361,5 +361,68 @@ namespace Sicem_Blazor.PagoLinea.Data
             return responseList;
         }
 
+        public async Task<AplicarPagoResult> AplicarPago(IEnlace enlace, PagoLineaDetalle detallePago)
+        {
+            var responseResult = new AplicarPagoResult()
+            {
+                Id = detallePago.Id,
+                Fecha = detallePago.Fecha,
+                Importe = detallePago.Importe,
+                Estatus = ResumenOficinaEstatus.Pendiente
+            };
+
+            try
+            {
+                logger.LogInformation("Aplicando pago oficina:{Oficina}", enlace.Nombre);
+                using(var connection = new SqlConnection(enlace.GetConnectionString()))
+                {
+                    connection.Open();
+                    var sqlCommandText = "EXEC [Ventanillas].[usp_AplicarPagoWEB] @cAlias=N'APLICAR_PAGO',@cIdReferencia=N'', @xmlTables=@cXML";
+                    var command = new SqlCommand()
+                    {
+                        Connection = connection,
+                        CommandText = sqlCommandText
+                    };
+                    command.Parameters.AddWithValue("@cXML", detallePago.ToXml());
+                    this.logger.LogDebug(detallePago.ToXml());
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        // * Check first result set
+                        if (await reader.ReadAsync())
+                        {
+                            responseResult.Estatus = ResumenOficinaEstatus.Error;
+                            responseResult.Fecha = DateTime.Now;
+                            responseResult.Operacion = reader["Operacion"].ToString();
+                            responseResult.Error = reader.GetInt32(reader.GetOrdinal("Error"));
+                            responseResult.Mensaje = reader["Mensaje"].ToString();
+                        }
+                        else
+                        {
+                            // * Move to second result set
+                            if (await reader.NextResultAsync() && await reader.ReadAsync())
+                            {
+                                responseResult.Estatus = ResumenOficinaEstatus.Completado;
+                                responseResult.FolioPago = reader["id_folio"].ToString();
+                            }
+                            else
+                            {
+                                responseResult.Estatus = ResumenOficinaEstatus.Error;
+                                responseResult.Error = 0;
+                                responseResult.Mensaje = "Sin respuesta";
+                            }
+                        }
+
+                    }
+                }
+            }
+            catch(Exception err)
+            {
+                logger.LogError(0, err, "Error al obtener resumen por dias enlace:{Enlace}", enlace.Nombre);
+                responseResult.Estatus = ResumenOficinaEstatus.Error;
+                responseResult.Error = 0;
+                responseResult.Mensaje = err.Message;
+            }
+            return responseResult;
+        }
     }
 }

@@ -39,6 +39,9 @@
                 </MatNavItem>
             </MatNavSubMenuHeader>
             <MatNavSubMenuList>
+                <MatNavItem Title="Pago en Linea" Href="/PagoLineaResume">
+                    <MatIcon Icon="library_books"/>&nbsp;Pago en Linea
+                </MatNavItem>
                 <MatNavItem Title="Resumen Ingresos" Href="/PagoLinea">
                     <MatIcon Icon="library_books"/>&nbsp;Resumen Ingresos
                 </MatNavItem>
@@ -113,14 +116,13 @@
 
         @if(sicemService.Usuario.Administrador){
         <MatNavItem Title="Configuración" Href="/configuracion">
-            <MatIcon Icon="settings"/>&nbsp;Configuración
+            <MatIcon Icon="settings"/>&nbsp;Configuraciójn
         </MatNavItem>
         }
 
     </MatNavMenu>
 
-</div>
-
+</div>j
 @code {
     [Parameter] public EventCallback MenuItemClick {get;set;}
 

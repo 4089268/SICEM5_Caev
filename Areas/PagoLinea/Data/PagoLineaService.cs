@@ -245,5 +245,121 @@ namespace Sicem_Blazor.PagoLinea.Data
                 
             }
         }
+    
+
+        public async Task<PagoLineaResumen> ObtenerRumenPagos(IEnlace enlace, DateRange dateRange)
+        {
+            var response = new PagoLineaResumen(enlace)
+            {
+                Estatus = ResumenOficinaEstatus.Pendiente
+            };
+
+            try
+            {
+                logger.LogInformation("Obteniendo resumen pago en linea oficina:{Oficina} del {FechaInicial} al {FechaFin} ", enlace.Nombre, dateRange.Desde.Date, dateRange.Hasta.Date);
+                using(var connection = new SqlConnection(enlace.GetConnectionString()))
+                {
+                    connection.Open();
+                    var sqlCommandText = "EXEC [Sicem].[Pago_en_Linea] 'RESUMEN', @oficeId, @f1, @f2";
+                    var command = new SqlCommand()
+                    {
+                        Connection = connection,
+                        CommandText = sqlCommandText
+                    };
+                    command.Parameters.AddWithValue("@oficeId", enlace.Id);
+                    command.Parameters.AddWithValue("@f1", dateRange.Desde_ISO);
+                    command.Parameters.AddWithValue("@f2", dateRange.Hasta_ISO);
+                    using(var dataReader = await command.ExecuteReaderAsync())
+                    {
+                        if(dataReader.Read())
+                        {
+                            response.LoadFromReader(dataReader);
+                        }
+                    }
+                    connection.Close();
+                }
+            }
+            catch(Exception err)
+            {
+                logger.LogError(0, err, "Error al obtener resumen recaudacion enlace:{Enlace}", enlace.Nombre );
+                response.Estatus = ResumenOficinaEstatus.Error;
+            }
+            return response;
+        }
+
+        public async Task<IEnumerable<PagoLineaResumenDia>> ObtenerRumenPagosDia(IEnlace enlace, DateRange dateRange)
+        {
+            var responseList = new List<PagoLineaResumenDia>();
+            try
+            {
+                logger.LogInformation("Obteniendo resumen por dias de por pago en linea oficina:{Oficina} del {FechaInicial} al {FechaFin} ", enlace.Nombre, dateRange.Desde.Date, dateRange.Hasta.Date);
+                using(var connection = new SqlConnection(enlace.GetConnectionString()))
+                {
+                    connection.Open();
+                    var sqlCommandText = "EXEC [Sicem].[Pago_en_Linea] 'RESUMEN_X_DIA',@oficeId, @f1, @f2";
+                    var command = new SqlCommand()
+                    {
+                        Connection = connection,
+                        CommandText = sqlCommandText
+                    };
+                    command.Parameters.AddWithValue("@oficeId", enlace.Id);
+                    command.Parameters.AddWithValue("@f1", dateRange.Desde_ISO);
+                    command.Parameters.AddWithValue("@f2", dateRange.Hasta_ISO);
+                    using(var dataReader = await command.ExecuteReaderAsync())
+                    {
+                        while(dataReader.Read())
+                        {
+                            var item = new PagoLineaResumenDia(enlace);
+                            item.LoadFromReader(dataReader);
+                            responseList.Add(item);
+                        }
+                    }
+                    connection.Close();
+                }
+            }
+            catch(Exception err)
+            {
+                logger.LogError(0, err, "Error al obtener resumen por dias enlace:{Enlace}", enlace.Nombre);
+                return null;
+            }
+            return responseList;
+        }
+
+        public async Task<IEnumerable<PagoLineaDetalle>> ObtenerDetallePagos2(IEnlace enlace, DateRange dateRange)
+        {
+            var responseList = new List<PagoLineaDetalle>();
+            try
+            {
+                logger.LogInformation("Obteniendo resumen por dias de por pago en linea oficina:{Oficina} del {FechaInicial} al {FechaFin} ", enlace.Nombre, dateRange.Desde.Date, dateRange.Hasta.Date);
+                using(var connection = new SqlConnection(enlace.GetConnectionString()))
+                {
+                    connection.Open();
+                    var sqlCommandText = "EXEC [Sicem].[Pago_en_Linea] 'DETALLE', @oficeId, @f1, @f2";
+                    var command = new SqlCommand()
+                    {
+                        Connection = connection,
+                        CommandText = sqlCommandText
+                    };
+                    command.Parameters.AddWithValue("@oficeId", enlace.Id);
+                    command.Parameters.AddWithValue("@f1", dateRange.Desde_ISO);
+                    command.Parameters.AddWithValue("@f2", dateRange.Hasta_ISO);
+                    using(var dataReader = await command.ExecuteReaderAsync())
+                    {
+                        while(dataReader.Read())
+                        {
+                            responseList.Add(PagoLineaDetalle.FromDataReader(enlace, dataReader));
+                        }
+                    }
+                    connection.Close();
+                }
+            }
+            catch(Exception err)
+            {
+                logger.LogError(0, err, "Error al obtener resumen por dias enlace:{Enlace}", enlace.Nombre);
+                return null;
+            }
+            return responseList;
+        }
+
     }
 }

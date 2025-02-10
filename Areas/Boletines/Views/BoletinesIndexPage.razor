@@ -2,7 +2,7 @@
 @namespace Sicem_Blazor.Boletines.Views
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Charts
-@using Sicem_Blazor.Models.PagoLinea
+@using Sicem_Blazor.Boletines.Models
 @using Sicem_Blazor.Boletines.Views.Partials
 
 <div class="layoutPage">
@@ -23,9 +23,9 @@
         </div>
 
         <div class="d-flex flex-column h-100 w-100 overflow-auto">
-            @for(int i = 1; i<=33; i++ )
+            @foreach(var boletinInfo in boletinesList)
             {
-                <MessageGroupListItem Title="@($"Boletin {i}")" />
+                <MessageGroupListItem Boletin="@boletinInfo" OnBoletinClick="BoletinInfoClick" />
             }
         </div>
 
@@ -76,7 +76,10 @@
             <div class="pt-4 px-2">
                 <h2>Mensaje</h2>
             </div>
-            <ResumeMessage />
+            @if(messagesList != null)
+            {
+                <ResumeMessage Mensajes="@messagesList" />
+            }
         </div>
 
         <div class="d-flex flex-column bg-white shadow p-4">
@@ -89,39 +92,47 @@
                         <thead>
                             <tr>
                                 <td>Destinatario</td>
-                                <td>Fecha</td>
-                                <td>Hora</td>
+                                <td>Fecha Envio</td>
                                 <td>Estatus</td>
                                 <td></td>
                             </tr>
                         </thead>
-                        <tbody>
-                            @for(int i = 1; i<=5; i++ )
-                            {
+                        @if(destinatarios != null)
+                        {
+                            <tbody>
+                                @foreach(var dest in destinatarios )
+                                {
+                                    <tr>
+                                        <td>@dest.Lada @dest.Telefono</td>
+                                        <td>@dest.FechaEnvio</td>
+                                        <td>
+                                            @if(dest.Error)
+                                            {
+                                                <span class="badge badge-success mx-2">Error al enviar</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-danger mx-2">Enviado</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <button>A1</button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        }
+                        else
+                        {
+                            <tbody>
+                                
                                 <tr>
-                                    <td>+52 8341031313</td>
-                                    <td>2025/02/06</td>
-                                    <td>22:00:58</td>
-                                    <td>
-                                        <span class="badge badge-success mx-2">Enviado</span>
-                                    </td>
-                                    <td>
-                                        <button>A1</button>
+                                    <td colspan="4">
+                                        <div>Sin datos disponibles</div>
                                     </td>
                                 </tr>
-                            }
-                            <tr>
-                                    <td>+52 8343301313</td>
-                                    <td>2025/02/06</td>
-                                    <td>22:02:24</td>
-                                    <td>
-                                        <span class="badge badge-danger mx-2">Fallido</span>
-                                    </td>
-                                    <td>
-                                        <button>A1</button>
-                                    </td>
-                                </tr>
-                        </tbody>
+                            </tbody>
+                        }
                     </table>
                 </div>
             </div>

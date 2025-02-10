@@ -1,14 +1,11 @@
 @namespace Sicem_Blazor.Boletines.Views.Partials
+@using Sicem_Blazor.Boletines.Models;
+
 <div class="w-100 p-4" style="font-size:1.5rem;">
     <div class="message-body" style="max-width:1000px; margin:0 auto;">
-
         <div class="mdc__body mt-2">
             <p>
-                Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt
-                ulabore etdolore magna aliquyam erat, sed diam voluptua. Atvero eos etaccusam justo duo dolores et
-                ea rebum. Stet clita kasd gubergren nosea takimata sanctus est Lorem ipsum dolor amet. Lorem ipsum
-                dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
-                dolore magna aliquyam erat, sed diam voluptua.
+                @MensajeTexto.Mensaje
             </p>
         </div>
 
@@ -18,18 +15,55 @@
             </div>
 
             <div class="d-flex">
-                <div class="mail-attatched__item d-flex flex-column h-100 border rounded p-4">
-                    <figure class="mb-0 px-2">
-                        <div class="mail-attatched__imagemb-3">
-                            <img src="/img/pdf2x.png" alt="attatched Image">
-                        </div>
-                        <figcaption>
-                            <h6 class="file-name">Documento1.pdf</h6>
-                            <span class="file-size">256.5 KB</span>
-                        </figcaption>
-                    </figure>
-                </div>
+                @foreach(var mfile in MensajeArchivos)
+                {
+                    <div class="mail-attatched__item d-flex flex-column h-100 border rounded p-4 mx-2">
+                        <figure class="mb-0 px-2">
+                            <div class="mail-attatched__imagemb-3">
+                                <img src="/img/pdf2x.png" alt="attatched Image">
+                            </div>
+                            <figcaption>
+                                <h6 class="file-name">file name</h6>
+                                <span class="file-size">@GetHumanReadableSize(mfile.FileSize)</span>
+                            </figcaption>
+                        </figure>
+                    </div>
+                }
             </div>
         </div>
     </div>
 </div>
+
+@code
+{
+    [Parameter]
+    public List<IBoletinMensaje> Mensajes { get; set; }
+
+    public IBoletinMensaje MensajeTexto
+    {
+        get {
+            return Mensajes.FirstOrDefault(m => m.EsArchivo == false);
+        }
+    }
+    public List<IBoletinMensaje> MensajeArchivos
+    {
+        get {
+            return Mensajes.Where(m => m.EsArchivo).ToList();
+        }
+    }
+
+    public string GetHumanReadableSize(double fileSize)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+        double len = fileSize;
+        int order = 0;
+
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len /= 1024;
+        }
+
+        return $"{len:0.##} {sizes[order]}";
+    }
+}

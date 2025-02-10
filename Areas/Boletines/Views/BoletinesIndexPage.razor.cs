@@ -3,16 +3,16 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Syncfusion.Blazor.Grids;
 using Syncfusion.Blazor.Charts;
 using MatBlazor;
 using Sicem_Blazor.Services;
-using Sicem_Blazor.Services.PagoLinea;
 using Sicem_Blazor.Models;
-using Sicem_Blazor.Models.PagoLinea;
-using System.Globalization;
+using Sicem_Blazor.Boletines.Services;
+using Sicem_Blazor.Boletines.Models;
 
 namespace Sicem_Blazor.Boletines.Views
 {
@@ -34,65 +34,46 @@ namespace Sicem_Blazor.Boletines.Views
         [Inject]
         public NavigationManager NavigationManager1 {get;set;} = default!;
 
+        [Inject]
+        public IBoletinService BoletinService {get;set;} = default!;
 
-        private SfGrid<ResumeOffice> DataGrid {get;set;}
+
+        // private SfGrid<DataOffices> DataGrid {get;set;}
         
         private bool busyDialog = false;
-        private DateTime f1, f2;
-        private int Subsistema, Sector;
-        private ResumeMonth resumeIncomeMonth = null;
-        private List<ResumeOffice> DataOffices {get;set;}
+        private List<IBoletin> boletinesList {get;set;}
         private CultureInfo currentCultueInfo = new("es-MX");
+        private IBoletin boletinSelected {get;set;}
+        private List<IBoletinMensaje> messagesList {get;set;}
+        private List<IBoletinDestinatario> destinatarios {get;set;}
+
 
         protected override async Task OnInitializedAsync()
         {
-            // var _now = DateTime.Now;
-            // this.f1 = new DateTime(_now.Year, _now.Month, 1);
-            // this.f2 = new DateTime(_now.Year, _now.Month, DateTime.DaysInMonth(_now.Year, _now.Month));
-            // this.Subsistema = 0;
-            // this.Sector = 0;
-
-            // await Procesar(new SeleccionarFechaEventArgs {
-            //     Fecha1 = f1,
-            //     Fecha2 = f2,
-            // });
-
+            await LoadBoletines();
         }
 
-        public async Task Procesar(SeleccionarFechaEventArgs e)
+        private async Task LoadBoletines()
         {
-
-            
-            // this.busyDialog = true;
-            // await Task.Delay(100);
-
-            // this.f1 = e.Fecha1;
-            // this.f2 = e.Fecha2;
-            // this.Subsistema = e.Subsistema;
-            // this.Sector = e.Sector;
-
-            // resumeIncomeMonth = await this.PagoLineaService.GetResumeMonth(f1.Year, f1.Month);
-            // this.DataOffices = resumeIncomeMonth.Offices.OrderBy(item => item.OfficeName).ToList();
-
-
-            // // * generate the chart data
-            // DatosGraficaImporte = this.DataOffices.Select(item => new ChartItem {
-            //     Id = item.OfficeId,
-            //     Descripcion = item.OfficeName,
-            //     Valor1 = item.TotalIncome
-            // }).OrderBy( item => item.Valor1).ToList();
-            // await GraficaIngresos.RefreshAsync();
-
-            // this.busyDialog = false;
-            // StateHasChanged();
+            var boletines = await this.BoletinService.GetBoletines();
         }
-        
-        private async Task ExportarExcel_Click(){
-            // var _options = new ExcelExportProperties()
-            // {
-            //     IncludeHiddenColumn = true
-            // };
-            // await this.DataGrid.ExportToExcelAsync(_options);
+
+        private async Task BoletinInfoClick(IBoletin boletin)
+        {
+            this.busyDialog = true;
+            await Task.Delay(100);
+
+            this.boletinSelected = boletin;
+
+            // * Load messages
+            this.messagesList = (await this.BoletinService.GetMensajesBoletin(boletin.Id)).ToList();
+
+            // * Load contacts
+            this.destinatarios = (await this.BoletinService.GetDestinatariosBoletin(boletin.Id)).ToList();
+
+
+            this.busyDialog = false;
+            await InvokeAsync(StateHasChanged);
         }
 
         private async Task NewMessageClick()

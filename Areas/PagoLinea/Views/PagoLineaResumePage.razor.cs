@@ -99,12 +99,6 @@ namespace Sicem_Blazor.PagoLinea.Views
         {
             try
             {
-                // * verify if the office is On
-                if(!this.SicemService.CheckOfficeConnected(enlace))
-                {
-                    throw new Exception($"The office {enlace.Nombre} is not connected");
-                }
-
                 // * Realizar consulta
                 var dateRange = new DateRange(f1, f2, Subsistema, Sector);
                 var tmpData = await PagoLineaService1.ObtenerRumenPagos(enlace, dateRange);

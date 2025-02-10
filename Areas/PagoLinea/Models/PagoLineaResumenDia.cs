@@ -36,13 +36,13 @@ public class PagoLineaResumenDia
 
     public void LoadFromReader(IDataReader reader)
     {
-        FechaInt = Convert.ToInt32(reader["fecha"]);
+        FechaInt = ConvertUtils.ParseInteger(reader["fecha"]);
         FechaString = reader["fec"].ToString();
-        TotalPagos = Convert.ToInt32(reader["num_pagos"]);
-        TotalPagosAplicados = Convert.ToInt32(reader["aplicados"]);
-        TotalPagosPorAplicar = Convert.ToInt32(reader["dif_pagos"]);
-        ImportePagos = Convert.ToDecimal(reader["imp_pagos"]);
-        ImportePagosAplicados = Convert.ToDecimal(reader["imp_aplicados"]);
-        ImportePagosPorAplicar = Convert.ToDecimal(reader["dif_imp_pagos"]);
+        TotalPagos = ConvertUtils.ParseInteger(reader["num_pagos"]);
+        TotalPagosAplicados = ConvertUtils.ParseInteger(reader["aplicados"]);
+        TotalPagosPorAplicar = ConvertUtils.ParseInteger(reader["dif_pagos"]);
+        ImportePagos = ConvertUtils.ParseDecimal(reader["imp_pagos"]);
+        ImportePagosAplicados = ConvertUtils.ParseDecimal(reader["imp_aplicados"]);
+        ImportePagosPorAplicar = ConvertUtils.ParseDecimal(reader["dif_imp_pagos"]);
     }
 }

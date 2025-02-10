@@ -39,9 +39,9 @@ public class PagoLineaDetalle
     {
         var newItem = new PagoLineaDetalle(enlace)
         {
-            Id = Convert.ToInt32(reader["id"]),
+            Id = ConvertUtils.ParseInteger(reader["id"]),
             Fecha = Convert.ToDateTime(reader["fecha"]),
-            Importe = Convert.ToDecimal(reader["importe"]),
+            Importe = ConvertUtils.ParseDecimal(reader["importe"]),
             MedioPago = reader["medio_pago"].ToString(),
             Referencia = reader["referencia"].ToString(),
             ReferenciaTarjeta = reader["referencia_tarjeta"].ToString(),
@@ -52,10 +52,10 @@ public class PagoLineaDetalle
             Telefono = reader["telefono"].ToString(),
             Plataforma = reader["plataforma"].ToString(),
             Localidad = reader["localidad"].ToString(),
-            Cuenta = Convert.ToInt32(reader["cuenta"]),
+            Cuenta = ConvertUtils.ParseInteger(reader["cuenta"]),
             Tarifa = reader["tarifa"].ToString(),
-            Aplicado = Convert.ToDecimal(reader["aplicado"]),
-            Diferencia = Convert.ToDecimal(reader["dif"])
+            Aplicado = ConvertUtils.ParseDecimal(reader["aplicado"]),
+            Diferencia = ConvertUtils.ParseDecimal(reader["dif"])
         };
         return newItem;
     }

@@ -64,13 +64,12 @@ public partial class PagoLineaDetalleVtn
     {
         await this.DataGrid.ExcelExport(new ExcelExportProperties
         {
-            FileName = string.Format("sicem_ingresosxConceptos_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
+            FileName = string.Format("sicem_detallePagoLinea_{0}.xlsx", Guid.NewGuid().ToString().Replace("-", ""))
         });
     }
 
     private async Task AplicarPagoClick(PagoLineaDetalle detallePago)
     {
-
         var data = this.Datos.FirstOrDefault( item => item.Id == detallePago.Id);
         if(data == null) return;
 
@@ -82,7 +81,7 @@ public partial class PagoLineaDetalleVtn
             Estatus = ResumenOficinaEstatus.Pendiente
         };
         await Task.Delay(100);
-        InvokeAsync(() => StateHasChanged());
+        await InvokeAsync(() => StateHasChanged());
         this.DataGrid.Refresh();
 
         // * attempt to send the paymeny
@@ -110,7 +109,19 @@ public partial class PagoLineaDetalleVtn
         // * updated the status on the grid
         data.aplicarPagoResult.Estatus = response.Estatus;
         await Task.Delay(100);
-        InvokeAsync(() => StateHasChanged());
+        await InvokeAsync(() => StateHasChanged());
         this.DataGrid.Refresh();
+    }
+
+    private async Task AplicarPagosClick()
+    {
+        // * Preparar filas
+        var detallesPorAplicar = this.Datos.Where(item => item.Aplicado <= 0).ToList();
+        var tareas = new List<Task>();
+        foreach (var detalle in detallesPorAplicar)
+        {
+            tareas.Add(Task.Run( async () => await AplicarPagoClick(detalle)));
+        }
+        await Task.CompletedTask;
     }
 }

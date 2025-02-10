@@ -60,14 +60,14 @@ public class PagoLineaDetalle
         return newItem;
     }
 
-    public string ToXml()
+    public string ToXml(string cveCaja)
     {
         string formattedFecha = Fecha.ToString("yyyy-MM-ddTHH:mm:sszzz");
 
         XElement xml = new XElement("FILTROS",
             new XElement("PAGOWEB",
-                new XElement("id_caja", "E0005"),
-                new XElement("id_operador", "CAEV"),
+                new XElement("id_caja", cveCaja),
+                new XElement("id_operador", "PAGOL"),
                 new XElement("id_transaccion", Id.ToString().Trim()),
                 new XElement("fecha", formattedFecha),
                 new XElement("referencia_comercio", Referencia?.Trim()),

@@ -373,6 +373,10 @@ namespace Sicem_Blazor.PagoLinea.Data
 
             try
             {
+
+                // * obtener la cve de la caja
+                var cveCaja = await this.GetCveCaja(enlace);
+
                 logger.LogInformation("Aplicando pago oficina:{Oficina}", enlace.Nombre);
                 using(var connection = new SqlConnection(enlace.GetConnectionString()))
                 {
@@ -383,8 +387,8 @@ namespace Sicem_Blazor.PagoLinea.Data
                         Connection = connection,
                         CommandText = sqlCommandText
                     };
-                    command.Parameters.AddWithValue("@cXML", detallePago.ToXml());
-                    this.logger.LogDebug(detallePago.ToXml());
+                    command.Parameters.AddWithValue("@cXML", detallePago.ToXml(cveCaja));
+                    this.logger.LogDebug(detallePago.ToXml(cveCaja));
                     using (var reader = await command.ExecuteReaderAsync())
                     {
                         // * Check first result set
@@ -423,6 +427,28 @@ namespace Sicem_Blazor.PagoLinea.Data
                 responseResult.Mensaje = err.Message;
             }
             return responseResult;
+        }
+    
+        public async Task<string> GetCveCaja(IEnlace enlace)
+        {
+            string cveCaja = string.Empty;
+            try
+            {
+                using(var connection = new SqlConnection(enlace.GetConnectionString()))
+                {
+                    connection.Open();
+                    var sqlCommandText = "Select id_caja From [Ventanillas].[Cfg_ArchivosXLS] Where Descripcion='LAYOUT BBVA'";
+                    var command = new SqlCommand(sqlCommandText, connection);
+                    cveCaja = (await command.ExecuteScalarAsync()).ToString();
+                    connection.Close();
+                }
+            }
+            catch(Exception err)
+            {
+                logger.LogError(0, err, "Error al obtener resumen por dias enlace:{Enlace}", enlace.Nombre);
+            }
+            return cveCaja;
+            
         }
     }
 }

@@ -6,10 +6,18 @@
     <VentanaSecundaria Titulo="@titulo" CerrarVentana="@HandleCloseModal" Filas="@(new double[] { 50, 610 })" Columnas="@(new double[]{.9})">
         <Content>
 
-            <div class="m-1 p-2 border rounded bg-white" style="grid-row: 1/2; grid-column: 1/2;">
-                <div class="w-100 d-flex align-items-center">
-                    <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@ExportData">Exportar Excel <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i> </MatButton>
-                </div>
+            <div class="m-1 p-2 border rounded bg-white d-flex align-items-center" style="grid-row: 1/2; grid-column: 1/2; font-size:1.2rem;">
+                
+                <MatButton Class="ml-1 mr-2" Raised="true" Style="height:2.5rem;" OnClick="@ExportData">
+                    Exportar Excel
+                    <i class="fa fa-file-excel-o ml-2" aria-hidden="true"></i>
+                </MatButton>
+
+                <MatButton Class="mx-2 bg-info" Raised="true" Style="height:2.5rem;" OnClick="@AplicarPagosClick">
+                    Aplicar Pagos
+                    <i class="fa fa-check-double ml-2" aria-hidden="true"></i>
+                </MatButton>
+
             </div>
 
             <div class="m-1 p-2 border rounded bg-white" style="grid-row: 2/3; grid-column: 1/2;">

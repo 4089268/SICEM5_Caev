@@ -28,8 +28,12 @@ public partial class PagoLineaDetalleVtn
     [Inject]
     public ILogger<DetallePagosVtn> Logger {get;set;} = default!;
     
+    [Inject]
+    private IMatDialogService MatDialogService {get;set;}
+
     [Parameter]
     public EventCallback CerrarModal { get; set; }
+
 
 
     public bool mostrarVentana = false;
@@ -42,6 +46,10 @@ public partial class PagoLineaDetalleVtn
     public List<PagoLineaDetalle> Datos {get;set;}
 
     private bool taskOnProgress = false;
+    private bool showButton
+    {
+        get => this.Datos.Where(item => item.Aplicado <= 0).Any();
+    }
 
     public void Show(IEnlace enlace, IEnumerable<PagoLineaDetalle> datos, string titulo = "")
     {
@@ -119,6 +127,10 @@ public partial class PagoLineaDetalleVtn
     {
         if(taskOnProgress) return;
 
+        // * confirmation modal
+        var result = await MatDialogService.AskAsync("Está por aplicar los pagos pendientes, ¿Desea continuar?", new string[] {"Aplicar Pagos", "Cancelar"});
+        if(result != "Aplicar Pagos") return;
+
 
         // * Preparar filas
         taskOnProgress = true;
@@ -147,5 +159,8 @@ public partial class PagoLineaDetalleVtn
 
         taskOnProgress = false;
         await InvokeAsync( () => StateHasChanged());
+
+
+        await MatDialogService.AlertAsync("Finalizado la aplicación de pagos.");
     }
 }

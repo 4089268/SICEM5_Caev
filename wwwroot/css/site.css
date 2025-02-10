@@ -317,6 +317,15 @@ select.ns-input{
     }
 
 
+.mdc-dialog
+{
+    z-index: 999 !important;
+}
+.mdc-dialog__content
+{
+    font-size: 1.4rem !important;
+}
+
 /********** ESTILOS DE SYNCFUCION  **********/
 .e-rowcell{
     transition:font-size .1s;

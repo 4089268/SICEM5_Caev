@@ -90,13 +90,13 @@ public partial class PagoLineaDetalleVtn
         {
             if(response.Mensaje.Contains("->"))
             {
-                var message = $"Error al aplicar el pago: {response.Mensaje.Split("->").First().Trim()}".ToLower();
-                Toaster.Add(message, MatToastType.Danger, $"Pago {detallePago.Id} {detallePago.Fecha.ToShortDateString()}");
+                var message = $"rror al aplicar el pago: {response.Mensaje.Split("->").First().Trim()}".ToLower();
+                Toaster.Add("E" + message, MatToastType.Danger, $"Pago {detallePago.Id} {detallePago.Fecha.ToShortDateString()}");
             }
             else
             {
-                var message = $"Error al aplicar el pago: {response.Mensaje}".ToLower();
-                Toaster.Add("Error al aplicar el pago: " + response.Mensaje, MatToastType.Danger, $"Pago {detallePago.Id} {detallePago.Fecha.ToShortDateString()}");
+                var message = $"error al aplicar el pago: {response.Mensaje}".ToLower();
+                Toaster.Add("E" + message, MatToastType.Danger, $"Pago {detallePago.Id} {detallePago.Fecha.ToShortDateString()}");
             }
         }
         else

@@ -41,6 +41,7 @@ public partial class PagoLineaDetalleVtn
     private SfGrid<PagoLineaDetalle> DataGrid {get;set;}
     public List<PagoLineaDetalle> Datos {get;set;}
 
+    private bool taskOnProgress = false;
 
     public void Show(IEnlace enlace, IEnumerable<PagoLineaDetalle> datos, string titulo = "")
     {
@@ -60,6 +61,7 @@ public partial class PagoLineaDetalleVtn
         StateHasChanged();
         await CerrarModal.InvokeAsync("");
     }
+    
     private async Task ExportData()
     {
         await this.DataGrid.ExcelExport(new ExcelExportProperties
@@ -115,13 +117,35 @@ public partial class PagoLineaDetalleVtn
 
     private async Task AplicarPagosClick()
     {
+        if(taskOnProgress) return;
+
+
         // * Preparar filas
+        taskOnProgress = true;
         var detallesPorAplicar = this.Datos.Where(item => item.Aplicado <= 0).ToList();
-        var tareas = new List<Task>();
-        foreach (var detalle in detallesPorAplicar)
+        foreach(var detalle in detallesPorAplicar)
         {
-            tareas.Add(Task.Run( async () => await AplicarPagoClick(detalle)));
+            var det = Datos.FirstOrDefault(item => item.Id == detalle.Id);
+            if(det != null)
+            {
+                det.aplicarPagoResult = new AplicarPagoResult
+                {
+                    Id = det.Id,
+                    Fecha = det.Fecha,
+                    Importe = det.Importe,
+                    Estatus = ResumenOficinaEstatus.Pendiente
+                };
+            }
         }
-        await Task.CompletedTask;
+        await InvokeAsync( () => StateHasChanged());
+
+        foreach(var detalle in detallesPorAplicar)
+        {
+            await Task.Run( async() => await AplicarPagoClick(detalle));
+        }
+
+
+        taskOnProgress = false;
+        await InvokeAsync( () => StateHasChanged());
     }
 }

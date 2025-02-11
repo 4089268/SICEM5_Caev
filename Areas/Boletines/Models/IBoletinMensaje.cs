@@ -11,6 +11,7 @@ public interface IBoletinMensaje
     public string Mensaje {get;set;}
     public string MimmeType {get;set;}
     public int FileSize {get;set;}
+    public string FileName {get;set;}
     public DateTime CreatedAt {get;set;}
-    public DateTime DeletedAt {get;set;}
+    public DateTime? DeletedAt {get;set;}
 }

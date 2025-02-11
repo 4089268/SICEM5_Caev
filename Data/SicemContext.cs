@@ -87,6 +87,10 @@ namespace Sicem_Blazor.Models
                     .HasColumnName("esArchivo")
                     .HasDefaultValueSql("((0))");
 
+                entity.Property(e => e.FileName)
+                    .IsUnicode(false)
+                    .HasColumnName("fileName");
+
                 entity.Property(e => e.FileSize).HasColumnName("fileSize");
 
                 entity.Property(e => e.Mensaje)

@@ -12,8 +12,9 @@ namespace Sicem_Blazor.Models
         public string Mensaje { get; set; }
         public string MimmeType { get; set; }
         public int? FileSize { get; set; }
+        public string FileName { get; set; }
         public DateTime CreatedAt { get; set; }
-        public DateTime DeletedAt { get; set; }
+        public DateTime? DeletedAt { get; set; }
 
         public virtual OprBoletin Boletin { get; set; }
 

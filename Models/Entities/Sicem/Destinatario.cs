@@ -9,7 +9,7 @@ namespace Sicem_Blazor.Models
         public Guid Id { get; set; }
         public Guid BoletinId { get; set; }
         public string Titulo { get; set; }
-        public int Telefono { get; set; }
+        public long Telefono { get; set; }
         public string Lada { get; set; }
         public bool? Error { get; set; }
         public string Resultado { get; set; }

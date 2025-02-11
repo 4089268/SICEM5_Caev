@@ -1,0 +1,135 @@
+@namespace Sicem_Blazor.Boletines.Views.Partials
+@using Sicem_Blazor.Boletines.Models
+
+<div class="border rounded bg-white overflow-auto">
+    
+    <div class="d-flex flex-column bg-white shadow p-4">
+        <div class="d-flex align-items-center justify-content-between">
+            <h2>@Boletin.Titulo</h2>
+            <div class="d-flex align-items-start p-2">
+                <span class="date-meta mx-2">@Boletin.CreatedAt.ToString("d MMMM yyyy, h:mm tt")</span>
+            </div>
+        </div>
+        <div class="mdc__head d-flex justify-content-between mt-2" style="font-size:1.2rem">
+            <div class="author-info">
+                <ul class="notification-info">
+                    <li>
+                        <span class="maiw-10l-info__label">Total Destinatarios:</span>
+                        <span class="mail-info__text">
+                            <span class="badge badge-info mx-2" style="font-size: 1rem;">
+                                @Boletin.TotalDestinatarios.ToString("n0") Contactos
+                            </span>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="mail-info__label">Exito:</span>
+                        <span class="mail-info__text">
+                            <span class="badge badge-success mx-2" style="font-size: 1rem;">
+                                @Boletin.Exitos.ToString("n0") Destinatarios
+                            </span>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="mail-info__label">Fallidos:</span>
+                        <span class="mail-info__text">
+                            <span class="badge badge-danger mx-2" style="font-size: 1rem;">
+                                @Boletin.Fallidos.ToString("n0") Destinatarios
+                            </span>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-column bg-white shadow p-4">
+        <div class="pt-4 px-2">
+            <h2>Contenido del Mensaje</h2>
+        </div>
+        @if(MessagesList != null)
+        {
+            <ResumeMessage Mensajes="@MessagesList" />
+        }
+    </div>
+    <div class="d-flex flex-column bg-white shadow p-4">
+        <div class="pt-4 px-2">
+            <h2>Destinatarios</h2>
+        </div>
+        <div class="mt-4">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover" style="font-size:1.2rem;">
+                    <thead>
+                        <tr>
+                            <td>#</td>
+                            <td>Destinatario</td>
+                            <td>Estatus</td>
+                            <td>Fecha Envio</td>
+                            <td>Mensaje Envio</td>
+                        </tr>
+                    </thead>
+                    @if(Destinatarios != null)
+                    {
+                        int c = 1;
+                        <tbody>
+                            @foreach(var dest in Destinatarios )
+                            {
+                                <tr>
+                                    <td>@c</td>
+                                    <td>@dest.Lada @dest.Telefono</td>
+                                    <td>
+                                        @if(dest.Error)
+                                        {
+                                            <span class="badge badge-danger mx-2">Error al enviar</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-success mx-2">Enviado</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if(@dest.FechaEnvio != null)
+                                        {
+                                            @dest.FechaEnvio!.Value.ToString("d MMMM yyyy, h:mm tt")
+                                        }
+                                    </td>
+                                    <td>
+                                        @dest.Resultado
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        c++;
+                    }
+                    else
+                    {
+                        <tbody>
+                            
+                            <tr>
+                                <td colspan="4">
+                                    <div>Sin datos disponibles</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    }
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code
+{
+    [Parameter]
+    public BoletinDTO Boletin {get;set;}
+
+    [Parameter]
+    public List<IBoletinMensaje> MessagesList {get;set;}
+
+    [Parameter]
+    public List<IBoletinDestinatario> Destinatarios {get;set;}
+
+    [Parameter]
+    public EventCallback<BoletinDTO> OnBoletinClick {get;set;}
+
+
+}

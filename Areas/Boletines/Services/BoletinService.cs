@@ -52,7 +52,7 @@ public class BoletinService : IBoletinService
         await this.sicemContext.SaveChangesAsync();
     }
 
-    public async Task<Guid> AlmacenarBoletin(IBoletin boletin)
+    public async Task<Guid> AlmacenarBoletin(BoletinDTO boletin)
     {
         var newBoletin = new OprBoletin
         {
@@ -66,12 +66,27 @@ public class BoletinService : IBoletinService
         return newBoletin.Id;
     }
 
-    public async Task<ICollection<IBoletin>> GetBoletines()
+    public async Task<ICollection<BoletinDTO>> GetBoletines()
     {
         await Task.CompletedTask;
-        return this.sicemContext.OprBoletins
-        .OrderBy(item => item.CreatedAt)
-        .ToList<IBoletin>();
+
+        var boletines = this.sicemContext.OprBoletins.OrderBy(item => item.CreatedAt).ToList();
+
+        var boletinesDTO = boletines.Select( b =>
+        {
+            var data = this.sicemContext.Destinatarios
+                .Where(item => item.BoletinId == b.Id)
+                .ToArray();
+
+            var boletinDTO = BoletinDTO.FromEntity(b);
+
+            boletinDTO.TotalDestinatarios = data.Count();
+            boletinDTO.Exitos = data.Count(item => item.Error != true && item.FechaEnvio != null);
+            boletinDTO.Fallidos = data.Count(item => item.Error == true && item.FechaEnvio != null);
+            return boletinDTO;
+
+        }).ToList();
+        return boletinesDTO;
     }
 
     public async Task<ICollection<IBoletinDestinatario>> GetDestinatariosBoletin(Guid boletinId)

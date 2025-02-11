@@ -13,6 +13,7 @@ using Sicem_Blazor.Services;
 using Sicem_Blazor.Models;
 using Sicem_Blazor.Boletines.Services;
 using Sicem_Blazor.Boletines.Models;
+using SixLabors.Fonts;
 
 namespace Sicem_Blazor.Boletines.Views
 {
@@ -38,15 +39,12 @@ namespace Sicem_Blazor.Boletines.Views
         public IBoletinService BoletinService {get;set;} = default!;
 
 
-        // private SfGrid<DataOffices> DataGrid {get;set;}
-        
         private bool busyDialog = false;
-        private List<IBoletin> boletinesList {get;set;}
+        private List<BoletinDTO> boletinesList {get;set;}
         private CultureInfo currentCultueInfo = new("es-MX");
-        private IBoletin boletinSelected {get;set;}
+        private BoletinDTO boletinSelected {get;set;}
         private List<IBoletinMensaje> messagesList {get;set;}
         private List<IBoletinDestinatario> destinatarios {get;set;}
-
 
         protected override async Task OnInitializedAsync()
         {
@@ -55,10 +53,11 @@ namespace Sicem_Blazor.Boletines.Views
 
         private async Task LoadBoletines()
         {
-            var boletines = await this.BoletinService.GetBoletines();
+            // * get the data
+            this.boletinesList = (await this.BoletinService.GetBoletines()).ToList<BoletinDTO>();
         }
 
-        private async Task BoletinInfoClick(IBoletin boletin)
+        private async Task BoletinInfoClick(BoletinDTO boletin)
         {
             this.busyDialog = true;
             await Task.Delay(100);

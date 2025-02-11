@@ -1,0 +1,57 @@
+@namespace Sicem_Blazor.Boletines.Views.Partials
+@using Sicem_Blazor.Boletines.Models
+
+<div class="border rounded p-2 shadow-sm m-1 bg-white" @onclick="BoletinClick" style="background-color: @(Selected ?"#f5f5f5":"") !important;">
+    <div class="d-flex p-2">
+        <div class="avatar avatar-circle mr-2 me-2">
+            <img src="@($"https://ui-avatars.com/api/?name={ImageTitle}&color=333&rounded=true")" class="rounded-circle wh-46 d-flex bg-opacity-primary" alt="image">
+                <div class="badge-direction-bottom">
+                <span class="chat-badge-dot avatar-online"></span>
+            </div>
+        </div>
+        <div class="d-flex justify-content-between w-100">
+            <div class="users-list-body-title w-100">
+                <h4>@Boletin.Titulo</h4>
+                <div class="text-limit ml-2" data-maxlength="10">
+                    Registrado: @Boletin.CreatedAt.ToString("d MMMM yyyy, h:mm tt")
+                </div>
+                <div class="text-limit ml-2" data-maxlength="10">
+                    Finalizado:
+                    @if(Boletin.FinishedAt != null)
+                    {
+                        <span> @Boletin.FinishedAt.ToString("d MMMM yyyy, h:mm tt")</span>
+                    }
+                </div>
+            </div>
+            <div class="d-flex flex-column align-items-end justify-content-between">
+                <span class="badge badge-info mx-2">@Boletin.TotalDestinatarios D</span>
+                <span class="badge badge-success mx-2">@Boletin.Exitos E</span>
+                <span class="badge badge-danger mx-2">@Boletin.Fallidos F</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code
+{
+    [Parameter]
+    public BoletinDTO Boletin {get;set;}
+
+    [Parameter]
+    public bool Selected {get;set;} = true;
+
+    [Parameter]
+    public EventCallback<BoletinDTO> OnBoletinClick {get;set;}
+
+    public string ImageTitle
+    {
+        get {
+            return Boletin.Titulo.Replace(' ', '+');
+        }
+    }
+    
+    private async Task BoletinClick()
+    {
+        await OnBoletinClick.InvokeAsync(Boletin);
+    }
+}

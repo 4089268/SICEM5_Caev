@@ -7,7 +7,7 @@
 
 <div class="layoutPage">
 
-    <div class="title-page" style="grid-area: 1/1/2/3;">Boletines</div>
+    <div class="title-page text-uppercase" style="grid-area: 1/1/2/3;">Boletines Informativos</div>
 
     @* ****** Acciones ****** *@
     <div class="border rounded bg-white px-2 d-flex align-items-center" style="grid-area: 2/1/3/3;">
@@ -27,7 +27,7 @@
             {
                 foreach(var boletinInfo in boletinesList)
                 {
-                    <MessageGroupListItem Boletin="@boletinInfo" OnBoletinClick="BoletinInfoClick" />
+                    <BoletinListItem Boletin="@boletinInfo" OnBoletinClick="BoletinInfoClick" Selected="@(boletinSelected != null && boletinSelected.Id == boletinInfo.Id)" />
                 }
             }
             else
@@ -42,117 +42,24 @@
     </div>
 
     @* ****** Detalle Mensaje ****** *@
-    <div class="border rounded bg-white overflow-auto" style="grid-area: 3/2/4/3;">
-        <div class="d-flex flex-column bg-white shadow p-4">
-            <div class="d-flex align-items-center justify-content-between">
-                <h2>Titulo del Boletin</h2>
-                <div class="d-flex align-items-start p-2">
-                    <span class="date-meta">Jan 2, 2020, 5:22 PM</span>
-                </div>
+    <div style="grid-area: 3/2/4/3;">
+        @if(boletinSelected != null)
+        {
+            <BoletinPreviewPanel Boletin="@boletinSelected" MessagesList="@messagesList" Destinatarios="@destinatarios" />
+        }
+        else
+        {
+            <div class="border rounded m-4 py-4 bg-light d-flex flex-column align-items-center justify-content-around">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 14 14"><g fill="none" stroke="#666666" stroke-linecap="round" stroke-linejoin="round"><path d="m7.182 3.747l3.857 6.681m-.202-.351l-9.51 2.209L.72 11.23L7.386 4.1"/><path d="m3.396 11.805l.524.906a1.421 1.421 0 1 0 2.455-1.432l-.084-.145m1.153-9.297V.583m4.802 6.057H13.5m-12.111 0h1.253m.519-4.283l.886.887m6.793 0l.886-.887"/></g></svg>
+                <div class="mt-4">Seleccione un elemento</div>
             </div>
-            <div class="mdc__head d-flex justify-content-between mt-2" style="font-size:1.2rem">
-                <div class="mdc__author media d-flex align-items-center">
-                    <div class="author-info">
-                        <div class="notification-info-btn">
-                            <ul class="notification-info">
-                                <li>
-                                    <span class="mail-info__label">Remitente:</span>
-                                    <span class="mail-info__text">8341031313</span>
-                                </li>
-                                <li>
-                                    <span class="mail-info__label">Exito:</span>
-                                    <span class="mail-info__text">
-                                        <span class="badge badge-success mx-2" style="font-size: 1rem;">
-                                            5 Enviados
-                                        </span>
-                                    </span>
-                                </li>
-                                <li>
-                                    <span class="mail-info__label">Fallidos:</span>
-                                    <span class="mail-info__text">
-                                        <span class="badge badge-danger mx-2" style="font-size: 1rem;">
-                                            2 Fallidos
-                                        </span>
-                                    </span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-        <div class="d-flex flex-column bg-white shadow p-4">
-            <div class="pt-4 px-2">
-                <h2>Mensaje</h2>
-            </div>
-            @if(messagesList != null)
-            {
-                <ResumeMessage Mensajes="@messagesList" />
-            }
-        </div>
-
-        <div class="d-flex flex-column bg-white shadow p-4">
-            <div class="pt-4 px-2">
-                <h2>Destinatarios</h2>
-            </div>
-            <div>
-                <div class="table-responsive">
-                    <table class="table table-bordered table-social">
-                        <thead>
-                            <tr>
-                                <td>Destinatario</td>
-                                <td>Fecha Envio</td>
-                                <td>Estatus</td>
-                                <td></td>
-                            </tr>
-                        </thead>
-                        @if(destinatarios != null)
-                        {
-                            <tbody>
-                                @foreach(var dest in destinatarios )
-                                {
-                                    <tr>
-                                        <td>@dest.Lada @dest.Telefono</td>
-                                        <td>@dest.FechaEnvio</td>
-                                        <td>
-                                            @if(dest.Error)
-                                            {
-                                                <span class="badge badge-success mx-2">Error al enviar</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge badge-danger mx-2">Enviado</span>
-                                            }
-                                        </td>
-                                        <td>
-                                            <button>A1</button>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        }
-                        else
-                        {
-                            <tbody>
-                                
-                                <tr>
-                                    <td colspan="4">
-                                        <div>Sin datos disponibles</div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        }
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        
-
+        }
     </div>
 
-    <div style="grid-template: 5/1/6/3;"></div>
+    
+    <div style="grid-template: 5/1/6/3;">
+
+    </div>
 </div>
 
 

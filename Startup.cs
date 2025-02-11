@@ -29,6 +29,7 @@ using Sicem_Blazor.Services.Whatsapp;
 using Sicem_Blazor.Services.PagoLinea;
 using Sicem_Blazor.PonteAlCorriente.Data;
 using Sicem_Blazor.SeguimientoCobros.Data;
+using Sicem_Blazor.Boletines.Services;
 
 
 namespace Sicem_Blazor {
@@ -77,6 +78,7 @@ namespace Sicem_Blazor {
             services.AddScoped<AnalisisInformacionService>();
             services.AddScoped<NotificacionesTemplateService>();
             services.AddScoped<PonteAlCorrienteService>();
+            services.AddScoped<IBoletinService, BoletinService>();
             services.AddWhatsappService(Configuration);
             services.AddPagoLineaServices(Configuration);
             services.AddSeguimientoCobroServices(Configuration);

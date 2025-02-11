@@ -20,29 +20,40 @@
     <div class="border rounded bg-white px-2 d-flex flex-column align-items-center" style="grid-area: 3/1/4/2;">
         <div class="w-100 p-2 d-flex flex-column border-bottom pb-3">
             <h4 class="mx-auto text-uppercase font-weight-bold mt-2 py-2">Destinatarios</h4>
-            <button class="btn btn-success p-2 mr-auto me-auto">
-                <i class="fa fa-plus mr-2" />
+            <label class="btn btn-success p-2 mr-auto me-auto" for="inputFile">
+                <i class="fa fa-upload mr-2" />
                 Cargar destinatarios
-            </button>
+                <InputFile id="inputFile" class="d-none" OnChange="@LoadFilePhones" multiple accept=".xlsx, .xls" />
+            </label>
         </div>
 
         <div class="d-flex flex-column h-100 w-100 overflow-auto">
-            @for(int i = 1; i<=4; i++ )
+            @if(Destinatarios != null)
             {
-                <div class="mailbox-list__single d-flex justify-content-between mt-3 border-bottom pb-3 shadow-sm">
-                    <div class="mail-authorBox d-flex align-items-center">
-                        <div class="checkbox-theme-default custom-checkbox mr-2">
-                            <input class="checkbox" type="checkbox" id="mail-1">
-                        </div>
-                        <span class="author-info">
-                            <img src="https://ui-avatars.com/api/?name=Dest&color=333" alt="admin author" height="40">
-                        </span>
-                        <div class="mail-content">
-                            <h4 class="mail-title">
-                                <span class="badge badge-transparent badge-round">+52 8341111313</span>
-                            </h4>
+                @foreach(var destinatario in Destinatarios)
+                {
+                    <div class="mailbox-list__single d-flex justify-content-between mt-3 border-bottom pb-3 shadow-sm">
+                        <div class="mail-authorBox d-flex align-items-center px-2">
+                            @* <div class="checkbox-theme-default custom-checkbox mr-2">
+                                <input class="checkbox" type="checkbox" id="mail-1">
+                            </div> *@
+                            <span class="author-info">
+                                <img src="https://ui-avatars.com/api/?name=Tel&color=333&rounded=true" alt="admin author" height="40">
+                            </span>
+                            <div class="mail-content">
+                                <h4 class="mail-title">
+                                    <span class="badge badge-transparent badge-round">@destinatario.Titulo</span>
+                                </h4>
+                            </div>
                         </div>
                     </div>
+                }
+
+            }else
+            {
+                <div class="border rounded m-4 p-4 text-center" style="background-color:#f6f6f6;">
+                    <i class="fa fa-exclamation-circle" />
+                    <div>Sin destinatarios registrados</div>
                 </div>
             }
         </div>
@@ -63,12 +74,12 @@
 
                 <div class="mb-3 w-50 px-2">
                     <label for="title" class="form-label">Titulo</label>
-                    <input type="text" class="form-control" id="title" placeholder="Boletin 1">
+                    <input type="text" class="form-control" id="title" placeholder="Boletin 1" @bind-value="@Boletin.Titulo">
                 </div>
 
                 <div class="mb-3 w-100 px-2">
                     <label for="mensaje" class="form-label">Mensaje</label>
-                    <textarea class="form-control" id="mensaje" rows="4"></textarea>
+                    <textarea class="form-control" id="mensaje" rows="4" @bind="@MensajeString"></textarea>
                 </div>
             </div>
 
@@ -78,12 +89,25 @@
                 </div>
 
                 <div class="dm-upload mb-25">
-                    <label for="file" class="dm-upload-avatar media-import mb-25 dropzone-lg-s">
+                    <label for="attachFile" class="dm-upload-avatar media-import mb-25 dropzone-lg-s">
                         <p class="color-light mt-0 fs-15">Seleccione un archivo o arrastrelo aqui.</p>
-                        <input type="file" id="file" name="upload-avatar-input" class="upload-avatar-input d-none">
+                        <InputFile id="attachFile" class="d-none" OnChange="@UploadAttacFile" multiple />
                     </label>
                 </div>
 
+            </div>
+
+            <div class="mdc__footer p-2 mt-4 d-flex flex-column">
+                <div class="" style="font-weight:medium;">
+                    <i class="fa fa-paperclip mx-1"></i>
+                    <span>@AttachedFiles.Count() Documentos Adjunto</span>
+                </div>
+                <div class="d-flex mt-2">
+                    @foreach(var mfile in AttachedFiles)
+                    {
+                        <BoletinMessageFilePanel Mensaje="@mfile" />
+                    }
+                </div>
             </div>
 
             <div class="d-flex align-items-center justify-content-center my-3 border-top pt-4">

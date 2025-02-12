@@ -23,29 +23,31 @@ public class AnaliticoService
 
     public AnaliticoResumen ObtenerAnaliticoOficina(IEnlace enlace, int year)
     {
-        var analiticoResumen = new AnaliticoResumen
+        var analiticoResumen = new AnaliticoResumen(enlace)
         {
-            Enlace = enlace,
             Estatus = ResumenOficinaEstatus.Error
         };
 
+        var from = new DateTime(year - 2, 1,1);
+        var to = new DateTime(year, 12,31);
+
         // * get the data from the office
         var listResponse = new List<AnaliticoResumenResponse>();
-
         try
         {
             using(var connection = new SqlConnection(enlace.GetConnectionString()))
             {
                 connection.Open();
-                var query = @";With xTarjeta as
+                var query = @"
+                    ;With xTarjeta as
                     (
                         SELECT
                             YEAR(fecha) as ano,
                             MONTH(fecha) as mes,
                             SUM(a.cobrado) as cobrado
-                        FROM [Facturacion].[Opr_Abonos] a With(NoLock) 
+                        FROM [Facturacion].[Opr_Abonos] a With(NoLock)
                         WHERE
-                        (convert(Varchar(8),a.fecha,112) BetWeen @cFec1 AND @cFec2) AND  a.id_tipomovto = 6 AND a.id_estatus != 31
+                        (convert(Varchar(8),a.fecha,112) BetWeen @cFec1 AND @cFec2) AND a.id_tipomovto = 6 AND a.id_estatus != 31
                         Group By year(fecha),MONTH(fecha)
                         UNION
                         SELECT
@@ -63,6 +65,8 @@ public class AnaliticoService
                     ORDER BY ano desc, mes desc";
 
                 var command = new SqlCommand(query, connection);
+                command.Parameters.AddWithValue("@cFec1", from.ToString("yyyyMMdd"));
+                command.Parameters.AddWithValue("@cFec2", to.ToString("yyyyMMdd"));
                 using(var dataReader = command.ExecuteReader())
                 {
                     while(dataReader.Read())
@@ -87,6 +91,7 @@ public class AnaliticoService
         }
         
         // * process the response
+        var analiticoResumenAnoList = new List<AnaliticoResumenAno>();
         foreach(var group in listResponse.GroupBy(item => item.Ano))
         {
             var analiticoResumenAno = new AnaliticoResumenAno
@@ -97,10 +102,12 @@ public class AnaliticoService
             {
                 analiticoResumenAno.Meses[m.Mes - 1] = m.Cobrado;
             }
-            analiticoResumen.Anos.Append(analiticoResumenAno);
+            analiticoResumenAnoList.Add(analiticoResumenAno);
         }
+        // * fill the response with the data
+        analiticoResumen.Anos = analiticoResumenAnoList;
         analiticoResumen.Estatus = ResumenOficinaEstatus.Completado;
-        
+
         return analiticoResumen;
     }
 }

@@ -8,7 +8,7 @@ using Sicem_Blazor.Data.Contracts;
 
 namespace Sicem_Blazor.Recaudacion.Models {
     public class Recaudacion_Resumen : IResumOficina {
-        public ResumenOficinaEstatus Estatus { get;  set; }
+        public ResumenOficinaEstatus Estatus { get; set; }
         public IEnlace Enlace { get; set; }
         
         public int Usuarios_Propios {get;set;}

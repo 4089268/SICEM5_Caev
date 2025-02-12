@@ -1,7 +1,5 @@
 @namespace Sicem_Blazor.Recaudacion.Views
 @page "/RecaudacionAnalitico"
-@using Syncfusion.Blazor.Grids
-@using Syncfusion.Blazor.Charts
 @using System.Threading.Tasks
 @using Sicem_Blazor.Recaudacion.Models
 @using Sicem_Blazor.Recaudacion.Data
@@ -15,26 +13,32 @@
     </div>
 
     <div class="border rounded bg-white d-flex align-items-center">
-        <MatButton Class="mx-2" style="min-width: 130px;" Raised="true">Exportar Excel</MatButton>
+        @* <MatButton Class="mx-2" style="min-width: 130px;" Raised="true">Exportar Excel</MatButton> *@
     </div>
 
     <div class="border rounded bg-white d-flex align-items-center">
-        <SfChart Title="" SubTitle="" Width="100%" Height="270">
+        <SfChart @ref="chartAnalitico" Title="" SubTitle="" Width="100%" Height="270">
             <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
             <ChartPrimaryYAxis Title="Analitico" Visible="false" LabelFormat="c2" />
             <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
             <ChartLegendSettings Visible="true" Position="LegendPosition.Right"></ChartLegendSettings>
             <ChartZoomSettings EnableMouseWheelZooming="true" EnablePinchZooming="true" EnableSelectionZooming="true"></ChartZoomSettings>
             <ChartSeriesCollection>
-                @for(int i = 0; i <= DatosAnalitico.Analitico_Mensual.Length - 1; i++)
-                {
-                    var ano = DatosAnalitico.Analitico_Mensual.OrderByDescending(item => item.Año).ToArray()[i].Año;
-                    <ChartSeries XName="Descripcion" DashArray="5,1" DataSource="@itemsGrafica_analitico" YName="@($"Valor{i+1}")" Name="@(ano.ToString())" Type="ChartSeriesType.Line">
-                        <ChartMarker Visible="true">
-                            <ChartDataLabel Visible="true" />
-                        </ChartMarker>
-                    </ChartSeries>
-                }
+                <ChartSeries XName="Descripcion" DashArray="5,1" DataSource="@itemsGrafica" YName="Valor1" Name="@(GraficaLabels[0])" Type="ChartSeriesType.Line">
+                    <ChartMarker Visible="true">
+                        <ChartDataLabel Visible="true" />
+                    </ChartMarker>
+                </ChartSeries>
+                <ChartSeries XName="Descripcion" DashArray="5,1" DataSource="@itemsGrafica" YName="Valor2" Name="@(GraficaLabels[1])" Type="ChartSeriesType.Line">
+                    <ChartMarker Visible="true">
+                        <ChartDataLabel Visible="true" />
+                    </ChartMarker>
+                </ChartSeries>
+                <ChartSeries XName="Descripcion" DashArray="5,1" DataSource="@itemsGrafica" YName="Valor3" Name="@(GraficaLabels[2])" Type="ChartSeriesType.Line">
+                    <ChartMarker Visible="true">
+                        <ChartDataLabel Visible="true" />
+                    </ChartMarker>
+                </ChartSeries>
             </ChartSeriesCollection>
         </SfChart>
     </div>

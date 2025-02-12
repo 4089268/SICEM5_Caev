@@ -584,7 +584,7 @@ namespace Sicem_Blazor.Services {
                         sqlConnection.Close();
                     }
                 });
-                if (!task.Wait(TimeSpan.FromSeconds(6)))
+                if (!task.Wait(TimeSpan.FromSeconds(8)))
                 {
                     this.logger.LogInformation("Timeout al verificar la conexion con la oficina {Nombre}", enlace.Nombre);
                 }

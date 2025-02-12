@@ -20,9 +20,21 @@
         <MatDivider></MatDivider>
 
         @if(OpcionesDisponibles.Contains(1)){
-        <MatNavItem Title="Recaudacion" Href="/recaudacion">
-            <MatIcon Icon="local_atm"/>&nbsp;Recaudación
-        </MatNavItem>
+        <MatNavSubMenu>
+            <MatNavSubMenuHeader Title="Recaudacion">
+                <MatNavItem AllowSelection="false">
+                    <MatIcon Icon="local_atm"/>&nbsp;Recaudacion
+                </MatNavItem>
+            </MatNavSubMenuHeader>
+            <MatNavSubMenuList>
+                <MatNavItem Title="Recaudacion" Href="/recaudacion">
+                    <MatIcon Icon="local_atm"/>&nbsp;Recaudación
+                </MatNavItem>
+                <MatNavItem Title="Analitico" Href="/RecaudacionAnalitico">
+                    <MatIcon Icon="multiline_chart"/>&nbsp;Analitico
+                </MatNavItem>
+            </MatNavSubMenuList>
+        </MatNavSubMenu>
         }
 
         @if(OpcionesDisponibles.Contains(17)){

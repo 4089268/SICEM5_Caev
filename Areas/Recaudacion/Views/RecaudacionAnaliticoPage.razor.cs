@@ -14,6 +14,8 @@ using Sicem_Blazor.Data.Contracts;
 using Sicem_Blazor.Recaudacion.Models;
 using Sicem_Blazor.Recaudacion.Data;
 using Sicem_Blazor.Recaudacion.Services;
+using System.Threading;
+using Microsoft.Extensions.Logging;
 
 
 namespace Sicem_Blazor.Recaudacion.Views;
@@ -29,65 +31,113 @@ public partial class RecaudacionAnaliticoPage
     
     [Inject]
     public AnaliticoService AnaliticoService1 {get; set;}
+
+    [Inject]
+    public ILogger<RecaudacionAnaliticoPage> Logger {get; set;}
     
     [Inject]
     public SicemService SicemService {get; set;}
 
-
+    private SfChart chartAnalitico = default!;
     private bool busyDialog = false;
     private DateTime f1, f2;
-    private int Subsistema, Sector;
 
-    public List<AnaliticoResumen> analiticoResumen;
-    public List<ChartItem> itemsGrafica = new();
+    public List<AnaliticoResumen> analiticoResumenList;
+    public AnaliticoResumen analiticoResumenGlobal;
+    public ChartItem[] itemsGrafica;
+    public string[] GraficaLabels
+    {
+        get {
+            if( analiticoResumenGlobal == null)
+            {
+                return new string[]{"2025", "2024", "2023"};
+            }
+            return analiticoResumenGlobal.Anos.Select(item => item.Ano.ToString()).OrderByDescending(item => item).ToArray();
+        }
+    }
+    private static readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 
 
     protected override void OnInitialized()
     {
-        var _now = DateTime.Now;
-        this.f1 = new DateTime(_now.Year, _now.Month, 1);
-        this.f2 = new DateTime(_now.Year, _now.Month, DateTime.DaysInMonth(_now.Year, _now.Month));
-        this.Subsistema = 0;
-        this.Sector = 0;
+        InitChartItems();
     }
 
-    public void Procesar(SeleccionarFechaEventArgs e)
+    public async Task Procesar(SeleccionarFechaEventArgs e)
     {
+        this.busyDialog = true;
+        await Task.Delay(100);
+        StateHasChanged();
+
+        // * prepare the range
+        var targetYear = e.Fecha1.Year;
+        f1 = new DateTime(targetYear-3, 1, 1);
+        f2 = new DateTime(targetYear, 12, 31);
+
         // * get the offices related of the user
         IEnlace[] enlaces = SicemService.ObtenerOficinasDelUsuario().ToArray();
 
         // * prepare chart items
-        datosRecaudacion = new List<Recaudacion_Resumen>();
-        var Tareas = new List<Task>();
+        InitChartItems();
+        await chartAnalitico.RefreshAsync();
 
-        //****** Prepara Filas
-        foreach (var enlace in enlaces) {
-            var oficinaModel = new Recaudacion_Resumen();
-            oficinaModel.Enlace  = enlace;
-            datosRecaudacion.Add(oficinaModel);
+        InitAnaliticoResumenGlobal();
+        
+        // * prepara Filas
+        var tareas = new List<Task>();
+        analiticoResumenList = new List<AnaliticoResumen>();
+        foreach (var enlace in enlaces)
+        {
+            var resumenOficina = new AnaliticoResumen(enlace, f2.Year);
+            analiticoResumenList.Add(resumenOficina);
 
             //*** Agregar tarea
-            Tareas.Add(new Task(() => ConsultarOficina(enlace)) );
+            tareas.Add(new Task( async () => await ConsultarOficina(enlace)) );
+        }
+        StateHasChanged();
+
+        // * iniciar tareas
+        foreach (var tarea in tareas)
+        {
+            tarea.Start();
         }
 
-        //*** Agregar fila total
-        if (enlaces.Length > 1) {
-            var oficinaModel = new Recaudacion_Resumen(){
-                Estatus = ResumenOficinaEstatus.Completado,
-                Enlace = new Ruta(){
-                    Oficina =" TOTAL",
-                    Id = 999
-                }
-            };
-            datosRecaudacion.Add(oficinaModel);
-        }
-
-        //****** Iniciar tareas
-        foreach (var tarea in Tareas) { tarea.Start(); }
-
+        // * esperar tareas
+        Task.WaitAll(tareas.ToArray());
+        this.busyDialog = false;
     }
 
-    private void ConsultarOficina(IEnlace enlace)
+    private void InitChartItems()
+    {
+        itemsGrafica = new ChartItem[12];
+        for(int i = 0; i < 12; i++)
+        {
+            itemsGrafica[i] = new ChartItem {
+                Descripcion = (new DateTime(2025, i+1 ,1)).ToString("MMM"),
+                Valor1 = 0,
+                Valor2 = 0,
+                Valor3 = 0
+            };
+        }
+    }
+
+    private void InitAnaliticoResumenGlobal()
+    {
+        var anosList = new List<AnaliticoResumenAno>();
+        for(int year = f2.Year; year > f1.Year; year --)
+        {
+            anosList.Add(new AnaliticoResumenAno(year));
+        }
+
+        analiticoResumenGlobal = new AnaliticoResumen(new Ruta {
+            Id = 999,
+            Oficina = "Total",
+        }){
+            Anos = anosList
+        };
+    }
+
+    private async Task ConsultarOficina(IEnlace enlace)
     {
         try
         {
@@ -97,17 +147,31 @@ public partial class RecaudacionAnaliticoPage
                 throw new Exception($"The office {enlace.Nombre} is not connected");
             }
 
-            var tmpResponse = AnaliticoService1.ObtenerAnaliticoOficina(enlace, f1.Year);
+            var tmpResponse = AnaliticoService1.ObtenerAnaliticoOficina(enlace, f2.Year);
+
+            // **** print response for debug ****
+            // Console.WriteLine(">> Oficina: " + tmpResponse.Enlace.Nombre);
+            // foreach(var resumenAno in tmpResponse.Anos)
+            // {
+            //     Console.Write(resumenAno.Ano);
+            //     for(int i = 0; i < 12; i++)
+            //     {
+            //         Console.Write( $" {i+1}:{resumenAno.Meses[i].ToString("c2")}");
+            //     }
+            //     Console.Write("\n");
+            // }
+            // **********************************
 
             var _random = new Random();
             var sleep = _random.Next(3000);
             System.Threading.Thread.Sleep(sleep);
 
             // * Refrescar datos grid
-            lock(analiticoResumen)
+            await _lock.WaitAsync();
+            try
             {
-                // * update witht he response data
-                var targetResume = analiticoResumen.FirstOrDefault(item => item.Id == tmpResponse.Id);
+                // * update with the response data
+                var targetResume = analiticoResumenList.FirstOrDefault(item => item.Id == tmpResponse.Id);
                 if (targetResume != null)
                 {
                     if (tmpResponse.Estatus == ResumenOficinaEstatus.Completado)
@@ -121,41 +185,108 @@ public partial class RecaudacionAnaliticoPage
                     }
                 }
 
-                RecalcularGrafica();
+                RecalcularTotal();
+                await RecalcularGrafica(); // Now it can be awaited safely
+            }
+            catch(Exception err)
+            {
+                Logger.LogError(err, "Fail at process the data");
+            }
+            finally
+            {
+                _lock.Release(); // Always release the lock
             }
         }
         catch(Exception)
         {
-            lock(analiticoResumen)
+            await _lock.WaitAsync();
+            try
             {
-                var targetResume = analiticoResumen.FirstOrDefault(item => item.Id == enlace.Id);
+                var targetResume = analiticoResumenList.FirstOrDefault(item => item.Id == enlace.Id);
                 if (targetResume != null)
                 {
                     targetResume.Estatus = ResumenOficinaEstatus.Error;
                 }
-                RecalcularGrafica();
+            }
+            finally
+            {
+                _lock.Release(); // Always release the lock
             }
         }
     }
 
-    private void RecalcularGrafica()
+    private void RecalcularTotal()
     {
-        //*** Recalcular fila total
-        var itemTotal = datosRecaudacion.Where(item => item.Id == 999).FirstOrDefault();
-        if (itemTotal != null) {
-            var _tmpData = datosRecaudacion.Where(item => item.Id != 999).ToList();
+        var responseTotal = new Dictionary<int, decimal[]>();
 
-            itemTotal.Usuarios_Propios = _tmpData.Sum(item => item.Usuarios_Propios);
-            itemTotal.Ingresos_Propios = _tmpData.Sum(item => item.Ingresos_Propios);
+        // * sum the months
+        var anios = analiticoResumenGlobal.Anos.Select(item => item.Ano);
+        foreach(int targetYear in anios)
+        {
+            // * get the data from the target year
+            var analiticoByYear = analiticoResumenList
+                .Select(rm => rm.Anos.FirstOrDefault(peridod => peridod.Ano == targetYear))
+                .Where(item => item != null)
+                .ToArray();
 
-            itemTotal.Usuarios_Otros = _tmpData.Sum(item => item.Usuarios_Otros);
-            itemTotal.Ingresos_Otros = _tmpData.Sum(item => item.Ingresos_Otros);
+            this.Logger.LogDebug(">> Total analiticoByYear: {total}", analiticoByYear.Count() );
             
-            itemTotal.Iva = _tmpData.Sum(item => item.Iva);
-            itemTotal.Importe_Total = _tmpData.Sum(item => item.Importe_Total);
-            itemTotal.Cobrado = _tmpData.Sum(item => item.Cobrado);
-            itemTotal.Usuarios_Total = _tmpData.Sum(item => item.Usuarios_Total);
+            try
+            {
+                decimal[] sumAnalitico = analiticoByYear.Aggregate((acc, next) => {
+                    for (int i = 0; i < acc.Meses.Length; i++)
+                    {
+                        acc.Meses[i] += next.Meses[i];
+                    }
+                    return acc;
+                }).Meses;
+                responseTotal.Add(targetYear, sumAnalitico);
+            }
+            catch(Exception err)
+            {
+                this.Logger.LogError(err, "Fail at Agregate: {message}", err.Message);
+                var sumAnalitico = new decimal[12]{ 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m };
+                responseTotal.Add(targetYear, sumAnalitico);
+            }
         }
+
+        // * update the data
+        foreach(var y in responseTotal.Keys)
+        {
+            var item = this.analiticoResumenGlobal.Anos.FirstOrDefault(item => item.Ano == y);
+            if(item != null)
+            {
+                item.Meses = responseTotal[y];
+            }
+        }
+
+        // ****** print the data for debug ******
+        foreach(var resumenAno in analiticoResumenGlobal.Anos)
+        {
+            Console.Write("\n");
+            Console.Write(resumenAno.Ano);
+            for(int i = 0; i < 12; i++)
+            {
+                Console.Write( $" {i+1}:{resumenAno.Meses[i].ToString("c2")}");
+            }
+            Console.Write("\n");
+        }
+        // ***************************************
+
     }
-    
+
+    private async Task RecalcularGrafica()
+    {
+        for(int monthN = 0; monthN < itemsGrafica.Length; monthN ++)
+        {
+            itemsGrafica[monthN] = new ChartItem
+            {
+                Descripcion = (new DateTime(2025, monthN+1 ,1)).ToString("MMM"),
+                Valor1 = analiticoResumenGlobal.Anos.ElementAt(0).Meses[monthN],
+                Valor2 = analiticoResumenGlobal.Anos.ElementAt(1).Meses[monthN],
+                Valor3 = analiticoResumenGlobal.Anos.ElementAt(2).Meses[monthN]
+            };
+        }
+        await chartAnalitico.RefreshAsync();
+    }
 }

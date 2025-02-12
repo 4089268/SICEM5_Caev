@@ -61,7 +61,6 @@ namespace Sicem_Blazor {
             services.AddScoped<UsersSicemService>();
             services.AddScoped<ConsultaGralService>();
             services.AddScoped<IAtencionService, AtencionService>();
-            services.AddScoped<IRecaudacionService, RecaudacionService>();
             services.AddScoped<ITarifasService, TarifasService>();
             services.AddScoped<IUbitomaService, UbitomaService>();
             services.AddScoped<ControlRezagoService>();
@@ -77,6 +76,7 @@ namespace Sicem_Blazor {
             services.AddScoped<AnalisisInformacionService>();
             services.AddScoped<NotificacionesTemplateService>();
             services.AddScoped<PonteAlCorrienteService>();
+            services.AddRecaudacionServices();
             services.AddWhatsappService(Configuration);
             services.AddPagoLineaServices(Configuration);
             services.AddSeguimientoCobroServices(Configuration);

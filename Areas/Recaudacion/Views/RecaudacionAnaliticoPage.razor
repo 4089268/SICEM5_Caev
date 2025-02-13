@@ -8,20 +8,49 @@
 
     <div class="title-page">CONSULTA DE INGRESOS ANALITICO</div>
 
-    <div class="border rounded bg-white px-2 d-flex align-items-center">
-        <SeleccionarFecha ProcesarParam="@Procesar" />
+    <div class="border rounded bg-white px-2 d-flex align-items-center px-4" style="color:#808080;">
+        @if(processing)
+        {
+            <div class="d-flex align-items-center justify-content-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden"></span>
+                </div>
+                <div class="fa-2x mx-2"> Procesando</div>
+            </div>
+        }
+        else
+        {
+            <SeleccionarFecha MostrarPeriodos="@false" OcultarMes="@true" OcultarSector="@true" ProcesarParam="@Procesar" />
+        }
     </div>
 
-    <div class="border rounded bg-white d-flex align-items-center">
-        @* <MatButton Class="mx-2" style="min-width: 130px;" Raised="true">Exportar Excel</MatButton> *@
+    <div class="border rounded bg-white d-flex align-items-center px-4">
+        <div class="border rounded bg-white d-flex flex-column align-items-center justify-content-start p-4 mr-4" style="min-width: 24rem;">
+            <div> Importe Año @GraficaLabels[0]</div>
+            <div class="d-flex align-items-center justify-content-around">
+                <div class="fa-3x text-center w-100">@GetTotalByAnoIndex(0).ToString("c2", currentCultureInfo)</div>
+            </div>
+        </div>
+        <div class="border rounded bg-white d-flex flex-column align-items-center justify-content-around p-4 mr-4" style="min-width: 24rem;">
+            <div> Importe Año @GraficaLabels[1]</div>
+            <div class="d-flex align-items-center justify-content-around">
+                <div class="fa-3x text-center w-100">@GetTotalByAnoIndex(1).ToString("c2", currentCultureInfo)</div>
+            </div>
+        </div>
+        <div class="border rounded bg-white d-flex flex-column align-items-center justify-content-around p-4 mr-4" style="min-width: 24rem;">
+            <div> Importe Año @GraficaLabels[2]</div>
+            <div class="d-flex align-items-center justify-content-around">
+                <div class="fa-3x text-center w-100">@GetTotalByAnoIndex(2).ToString("c2", currentCultureInfo)</div>
+            </div>
+        </div>
     </div>
 
     <div class="border rounded bg-white d-flex align-items-center w-100 h-100">
-        <SfChart @ref="chartAnalitico" Title="" SubTitle="" Width="100%" Height="270">
+        <SfChart @ref="chartAnalitico" Title="COMPARACIÓN DE INGRESOS DE LOS ÚLTIMOS 3 AÑOS" SubTitle="" Width="100%" Height="100%">
             <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
-            <ChartPrimaryYAxis Title="Analitico" Visible="false" LabelFormat="c2" />
+            <ChartPrimaryYAxis Title="Ingresos" Visible="false" LabelFormat="c2" />
             <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
-            <ChartLegendSettings Visible="true" Position="LegendPosition.Right"></ChartLegendSettings>
+            <ChartLegendSettings Visible="true" Position="LegendPosition.Top"></ChartLegendSettings>
             <ChartZoomSettings EnableMouseWheelZooming="true" EnablePinchZooming="true" EnableSelectionZooming="true"></ChartZoomSettings>
             <ChartSeriesCollection>
                 <ChartSeries XName="Descripcion" DashArray="5,1" DataSource="@itemsGrafica" YName="Valor1" Name="@(GraficaLabels[0])" Type="ChartSeriesType.Line">
@@ -43,46 +72,20 @@
         </SfChart>
     </div>
 
-    <div class="m-1 p-2 border rounded bg-white">
-        @if(DatosGrid.Any())
-        {
-            <SfGrid @ref="dataGrid" DataSource="@DatosGrid" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowGrouping="true" Height="100%" Width="auto" EnableHover="true" RowHeight="20" TValue="AnaliticoResumenAno" >
-                <GridGroupSettings Columns="@(new string[] { "Oficina"})" ShowDropArea="false">
-                    <CaptionTemplate>
-                        @{
-                            var order = (context as AnaliticoResumenAno);
-                            <div>OFICINA @order.Oficina</div>
-                        }
-                    </CaptionTemplate>
-                </GridGroupSettings>
-                <GridColumns>
-                    <GridColumn Field="@nameof(AnaliticoResumenAno.Ano)" HeaderText="Año" TextAlign="TextAlign.Center" Width="130" />
-                    <GridColumn Field="@nameof(AnaliticoResumenAno.Ene)" HeaderText="Enero" TextAlign="TextAlign.Right" Width="110" Format="c2" />
-                    <GridColumn Field="@nameof(AnaliticoResumenAno.Feb)" HeaderText="Febrero" TextAlign="TextAlign.Right" Width="110" Format="c2" />
-                    <GridColumn Field="@nameof(AnaliticoResumenAno.Mar)" HeaderText="Marzo" TextAlign="TextAlign.Right" Width="110" Format="c2" />
-                    <GridColumn Field="@nameof(AnaliticoResumenAno.Abr)" HeaderText="Abril" TextAlign="TextAlign.Right" Width="110" Format="c2" />
-                    <GridColumn Field="@nameof(AnaliticoResumenAno.May)" HeaderText="Mayo" TextAlign="TextAlign.Right" Width="110" Format="c2" />
-                    <GridColumn Field="@nameof(AnaliticoResumenAno.Jun)" HeaderText="Junio" TextAlign="TextAlign.Right" Width="110" Format="c2" />
-                    <GridColumn Field="@nameof(AnaliticoResumenAno.Jul)" HeaderText="Julio" TextAlign="TextAlign.Right" Width="110" Format="c2" />
-                    <GridColumn Field="@nameof(AnaliticoResumenAno.Ago)" HeaderText="Agosto" TextAlign="TextAlign.Right" Width="110" Format="c2" />
-                    <GridColumn Field="@nameof(AnaliticoResumenAno.Sep)" HeaderText="Septiembre" TextAlign="TextAlign.Right" Width="110" Format="c2" />
-                    <GridColumn Field="@nameof(AnaliticoResumenAno.Oct)" HeaderText="Octubre" TextAlign="TextAlign.Right" Width="110" Format="c2" />
-                    <GridColumn Field="@nameof(AnaliticoResumenAno.Nov)" HeaderText="Noviembre" TextAlign="TextAlign.Right" Width="110" Format="c2" />
-                    <GridColumn Field="@nameof(AnaliticoResumenAno.Dic)" HeaderText="Diciembre" TextAlign="TextAlign.Right" Width="110" Format="c2" />
-                    <GridColumn Field="@nameof(AnaliticoResumenAno.Oficina)" HeaderText="Oficina" TextAlign="TextAlign.Center" Width="120" />
-                </GridColumns>
-            </SfGrid>
-        }
-    </div>
-
 </div>
 
 <style>
     .layout-page
     {
+        height: 100%;
+        width: 100%;
         display: grid;
-        grod-template-rows: 4rem 6rem 6rem calc(100% - 46.5rem) 20rem;
-        grod-template-columns: 1fr;
+        grid-template-rows: 4rem 6rem 11rem calc(100% - 20.5rem);
+        grid-template-columns: 100%;
+        align-content: stretch;
+        justify-content: center;
+        align-items: stretch;
+        justify-items: stretch;
     }
 </style>
 

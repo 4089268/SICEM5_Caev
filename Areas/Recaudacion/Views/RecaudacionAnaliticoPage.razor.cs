@@ -1,10 +1,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Globalization;
 using Microsoft.AspNetCore.Components;
-using Syncfusion.Blazor.Grids;
+using Microsoft.Extensions.Logging;
 using Syncfusion.Blazor.Charts;
 using MatBlazor;
 using Sicem_Blazor.Services;
@@ -14,8 +16,6 @@ using Sicem_Blazor.Data.Contracts;
 using Sicem_Blazor.Recaudacion.Models;
 using Sicem_Blazor.Recaudacion.Data;
 using Sicem_Blazor.Recaudacion.Services;
-using System.Threading;
-using Microsoft.Extensions.Logging;
 
 
 namespace Sicem_Blazor.Recaudacion.Views;
@@ -38,11 +38,10 @@ public partial class RecaudacionAnaliticoPage
     [Inject]
     public SicemService SicemService {get; set;}
 
-    private SfGrid<AnaliticoResumenAno> dataGrid = default!;
     private SfChart chartAnalitico = default!;
     private bool busyDialog = false;
+    private bool processing = false;
     private DateTime f1, f2;
-
     public List<AnaliticoResumen> analiticoResumenList;
     public AnaliticoResumen analiticoResumenGlobal;
     public ChartItem[] itemsGrafica;
@@ -57,19 +56,7 @@ public partial class RecaudacionAnaliticoPage
         }
     }
     private static readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
-
-    public List<AnaliticoResumenAno> DatosGrid
-    {
-        get
-        {
-            if(analiticoResumenList == null)
-            {
-                return Array.Empty<AnaliticoResumenAno>().ToList();
-            }
-            return analiticoResumenList.SelectMany(item => item.Anos).ToList();
-        }
-
-    }
+    private CultureInfo currentCultureInfo = new CultureInfo("es-MX");
 
     protected override void OnInitialized()
     {
@@ -78,7 +65,7 @@ public partial class RecaudacionAnaliticoPage
 
     public async Task Procesar(SeleccionarFechaEventArgs e)
     {
-        this.busyDialog = true;
+        this.processing = true;
         await Task.Delay(100);
         StateHasChanged();
 
@@ -92,7 +79,7 @@ public partial class RecaudacionAnaliticoPage
 
         // * prepare chart items
         InitChartItems();
-        await chartAnalitico.RefreshAsync();
+        chartAnalitico.RefreshLiveData();
 
         InitAnaliticoResumenGlobal();
         
@@ -117,7 +104,7 @@ public partial class RecaudacionAnaliticoPage
 
         // * esperar tareas
         Task.WaitAll(tareas.ToArray());
-        this.busyDialog = false;
+        this.processing = false;
     }
 
     private void InitChartItems()
@@ -199,7 +186,7 @@ public partial class RecaudacionAnaliticoPage
                 }
 
                 RecalcularTotal();
-                await RecalcularGrafica(); // Now it can be awaited safely
+                await RecalcularGrafica();
             }
             catch(Exception err)
             {
@@ -226,6 +213,10 @@ public partial class RecaudacionAnaliticoPage
                 _lock.Release(); // Always release the lock
             }
         }
+        finally
+        {
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private void RecalcularTotal()
@@ -242,8 +233,6 @@ public partial class RecaudacionAnaliticoPage
                 .Where(item => item != null)
                 .ToArray();
 
-            this.Logger.LogDebug(">> Total analiticoByYear: {total}", analiticoByYear.Count() );
-            
             try
             {
                 decimal[] sumAnalitico = analiticoByYear.Aggregate((acc, next) => {
@@ -274,18 +263,17 @@ public partial class RecaudacionAnaliticoPage
         }
 
         // ****** print the data for debug ******
-        foreach(var resumenAno in analiticoResumenGlobal.Anos)
-        {
-            Console.Write("\n");
-            Console.Write(resumenAno.Ano);
-            for(int i = 0; i < 12; i++)
-            {
-                Console.Write( $" {i+1}:{resumenAno.Meses[i].ToString("c2")}");
-            }
-            Console.Write("\n");
-        }
+        // foreach(var resumenAno in analiticoResumenGlobal.Anos)
+        // {
+        //     Console.Write("\n");
+        //     Console.Write(resumenAno.Ano);
+        //     for(int i = 0; i < 12; i++)
+        //     {
+        //         Console.Write( $" {i+1}:{resumenAno.Meses[i].ToString("c2")}");
+        //     }
+        //     Console.Write("\n");
+        // }
         // ***************************************
-
     }
 
     private async Task RecalcularGrafica()
@@ -300,6 +288,16 @@ public partial class RecaudacionAnaliticoPage
                 Valor3 = analiticoResumenGlobal.Anos.ElementAt(2).Meses[monthN]
             };
         }
-        await chartAnalitico.RefreshAsync();
+        chartAnalitico.RefreshLiveData();
+        await Task.Delay(100);
+    }
+
+    private decimal GetTotalByAnoIndex(int index)
+    {
+        if( analiticoResumenGlobal?.Anos.ElementAt(index) == null)
+        {
+            return 0m;
+        }
+        return analiticoResumenGlobal.Anos.ElementAt(index).Meses.Sum(item=>item);
     }
 }

@@ -38,6 +38,7 @@ public partial class RecaudacionAnaliticoPage
     [Inject]
     public SicemService SicemService {get; set;}
 
+    private SfGrid<AnaliticoResumenAno> dataGrid = default!;
     private SfChart chartAnalitico = default!;
     private bool busyDialog = false;
     private DateTime f1, f2;
@@ -57,6 +58,18 @@ public partial class RecaudacionAnaliticoPage
     }
     private static readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 
+    public List<AnaliticoResumenAno> DatosGrid
+    {
+        get
+        {
+            if(analiticoResumenList == null)
+            {
+                return Array.Empty<AnaliticoResumenAno>().ToList();
+            }
+            return analiticoResumenList.SelectMany(item => item.Anos).ToList();
+        }
+
+    }
 
     protected override void OnInitialized()
     {
@@ -126,7 +139,7 @@ public partial class RecaudacionAnaliticoPage
         var anosList = new List<AnaliticoResumenAno>();
         for(int year = f2.Year; year > f1.Year; year --)
         {
-            anosList.Add(new AnaliticoResumenAno(year));
+            anosList.Add(new AnaliticoResumenAno(new Ruta{Id=999, Oficina = "Total"},year));
         }
 
         analiticoResumenGlobal = new AnaliticoResumen(new Ruta {

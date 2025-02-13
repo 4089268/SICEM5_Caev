@@ -94,7 +94,7 @@ public class AnaliticoService
         var analiticoResumenAnoList = new List<AnaliticoResumenAno>();
         foreach(var group in listResponse.GroupBy(item => item.Ano))
         {
-            var analiticoResumenAno = new AnaliticoResumenAno
+            var analiticoResumenAno = new AnaliticoResumenAno(enlace)
             {
                 Ano = group.Key
             };

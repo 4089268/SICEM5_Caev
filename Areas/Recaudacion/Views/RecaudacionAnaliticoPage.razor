@@ -16,7 +16,7 @@
         @* <MatButton Class="mx-2" style="min-width: 130px;" Raised="true">Exportar Excel</MatButton> *@
     </div>
 
-    <div class="border rounded bg-white d-flex align-items-center">
+    <div class="border rounded bg-white d-flex align-items-center w-100 h-100">
         <SfChart @ref="chartAnalitico" Title="" SubTitle="" Width="100%" Height="270">
             <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
             <ChartPrimaryYAxis Title="Analitico" Visible="false" LabelFormat="c2" />
@@ -43,13 +43,45 @@
         </SfChart>
     </div>
 
+    <div class="m-1 p-2 border rounded bg-white">
+        @if(DatosGrid.Any())
+        {
+            <SfGrid @ref="dataGrid" DataSource="@DatosGrid" AllowSorting="true" AllowFiltering="false" AllowExcelExport="true" AllowGrouping="true" Height="100%" Width="auto" EnableHover="true" RowHeight="20" TValue="AnaliticoResumenAno" >
+                <GridGroupSettings Columns="@(new string[] { "Oficina"})" ShowDropArea="false">
+                    <CaptionTemplate>
+                        @{
+                            var order = (context as AnaliticoResumenAno);
+                            <div>OFICINA @order.Oficina</div>
+                        }
+                    </CaptionTemplate>
+                </GridGroupSettings>
+                <GridColumns>
+                    <GridColumn Field="@nameof(AnaliticoResumenAno.Ano)" HeaderText="Año" TextAlign="TextAlign.Center" Width="130" />
+                    <GridColumn Field="@nameof(AnaliticoResumenAno.Ene)" HeaderText="Enero" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                    <GridColumn Field="@nameof(AnaliticoResumenAno.Feb)" HeaderText="Febrero" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                    <GridColumn Field="@nameof(AnaliticoResumenAno.Mar)" HeaderText="Marzo" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                    <GridColumn Field="@nameof(AnaliticoResumenAno.Abr)" HeaderText="Abril" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                    <GridColumn Field="@nameof(AnaliticoResumenAno.May)" HeaderText="Mayo" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                    <GridColumn Field="@nameof(AnaliticoResumenAno.Jun)" HeaderText="Junio" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                    <GridColumn Field="@nameof(AnaliticoResumenAno.Jul)" HeaderText="Julio" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                    <GridColumn Field="@nameof(AnaliticoResumenAno.Ago)" HeaderText="Agosto" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                    <GridColumn Field="@nameof(AnaliticoResumenAno.Sep)" HeaderText="Septiembre" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                    <GridColumn Field="@nameof(AnaliticoResumenAno.Oct)" HeaderText="Octubre" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                    <GridColumn Field="@nameof(AnaliticoResumenAno.Nov)" HeaderText="Noviembre" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                    <GridColumn Field="@nameof(AnaliticoResumenAno.Dic)" HeaderText="Diciembre" TextAlign="TextAlign.Right" Width="110" Format="c2" />
+                    <GridColumn Field="@nameof(AnaliticoResumenAno.Oficina)" HeaderText="Oficina" TextAlign="TextAlign.Center" Width="120" />
+                </GridColumns>
+            </SfGrid>
+        }
+    </div>
+
 </div>
 
 <style>
     .layout-page
     {
         display: grid;
-        grod-template-rows: 4rem 6rem 6rem calc(100% - 16.5rem);
+        grod-template-rows: 4rem 6rem 6rem calc(100% - 46.5rem) 20rem;
         grod-template-columns: 1fr;
     }
 </style>

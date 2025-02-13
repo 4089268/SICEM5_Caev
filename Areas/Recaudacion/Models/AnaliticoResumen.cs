@@ -18,9 +18,9 @@ namespace Sicem_Blazor.Recaudacion.Models
         {
             this.Enlace = enlace;
             Anos = new AnaliticoResumenAno[3]{
-                new AnaliticoResumenAno{ Ano = DateTime.Now.Year },
-                new AnaliticoResumenAno{ Ano = DateTime.Now.Year - 1},
-                new AnaliticoResumenAno{ Ano = DateTime.Now.Year - 2},
+                new AnaliticoResumenAno(enlace){ Ano = DateTime.Now.Year },
+                new AnaliticoResumenAno(enlace){ Ano = DateTime.Now.Year - 1},
+                new AnaliticoResumenAno(enlace){ Ano = DateTime.Now.Year - 2},
             };
             Estatus = ResumenOficinaEstatus.Pendiente;
         }
@@ -29,27 +29,11 @@ namespace Sicem_Blazor.Recaudacion.Models
         {
             this.Enlace = enlace;
             Anos = new AnaliticoResumenAno[3]{
-                new AnaliticoResumenAno{ Ano = anio},
-                new AnaliticoResumenAno{ Ano = anio - 1},
-                new AnaliticoResumenAno{ Ano = anio - 2},
+                new AnaliticoResumenAno(enlace){ Ano = anio},
+                new AnaliticoResumenAno(enlace){ Ano = anio - 1},
+                new AnaliticoResumenAno(enlace){ Ano = anio - 2},
             };
             Estatus = ResumenOficinaEstatus.Pendiente;
-        }
-    }
-
-    public class AnaliticoResumenAno
-    {
-        public int Ano {get;set;}
-        public decimal[] Meses {get;set;}
-
-        public AnaliticoResumenAno()
-        {
-            Meses = new decimal[12];
-        }
-        public AnaliticoResumenAno(int year)
-        {
-            Ano = year;
-            Meses = new decimal[12];
         }
     }
 }

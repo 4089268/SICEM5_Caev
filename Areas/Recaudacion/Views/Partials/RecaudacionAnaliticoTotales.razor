@@ -1,0 +1,54 @@
+@namespace Sicem_Blazor.Recaudacion.Views.Partials
+@using System.Globalization
+
+@if((Labels ?? []).Any())
+{
+    <div class="border rounded bg-white d-flex align-items-center p-2">
+        @foreach(var lbl in Labels)
+        {
+            <div class="border rounded bg-white d-flex flex-column align-items-center justify-content-start p-4 mr-4" style="min-width: 24rem;">
+                <div> Importe Año @lbl</div>
+                <div class="d-flex align-items-center justify-content-around">
+                    <div class="fa-3x text-center w-100">
+                        @GetTotal(int.Parse(lbl))
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="border rounded bg-white d-flex align-items-center p-2">
+        <div class="border rounded bg-white d-flex flex-column align-items-center justify-content-start p-4 mr-4" style="min-width: 24rem;">
+            <div> Total Importe Por Año</div>
+            <div class="d-flex align-items-center justify-content-around">
+                <div class="fa-3x text-center w-100">
+                    $0.00
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code
+{
+    [Parameter]
+    public Dictionary<int, decimal> ResumenTotal {get;set;}
+
+    [Parameter]
+    public string[] Labels {get;set;}
+
+    public string GetTotal(int year)
+    {
+        try
+        {
+            return ResumenTotal[year].ToString("c2", new CultureInfo("es-MX"));
+        }
+        catch(Exception)
+        {
+            return "$0.00";
+        }
+    }
+
+}

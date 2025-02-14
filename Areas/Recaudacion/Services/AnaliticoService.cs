@@ -21,64 +21,24 @@ public class AnaliticoService
     }
 
 
-    public AnaliticoResumen ObtenerAnaliticoOficina(IEnlace enlace, int year)
+    public ICollection<AnaliticoResumenAno> ObtenerAnaliticoOficina(IEnlace enlace, int year, int years = 2)
     {
-        var analiticoResumen = new AnaliticoResumen(enlace)
-        {
-            Estatus = ResumenOficinaEstatus.Error
-        };
-
-        var from = new DateTime(year - 2, 1,1);
-        var to = new DateTime(year, 12,31);
-
-        // * get the data from the office
-        var listResponse = new List<AnaliticoResumenResponse>();
+        var responseList = new List<AnaliticoResumenAno>();
         try
         {
             using(var connection = new SqlConnection(enlace.GetConnectionString()))
             {
                 connection.Open();
-                var query = @"
-                    ;With xTarjeta as
-                    (
-                        SELECT
-                            YEAR(fecha) as ano,
-                            MONTH(fecha) as mes,
-                            SUM(a.cobrado) as cobrado
-                        FROM [Facturacion].[Opr_Abonos] a With(NoLock)
-                        WHERE
-                        (convert(Varchar(8),a.fecha,112) BetWeen @cFec1 AND @cFec2) AND a.id_tipomovto = 6 AND a.id_estatus != 31
-                        Group By year(fecha),MONTH(fecha)
-                        UNION
-                        SELECT
-                            YEAR(fecha) as ano,
-                            MONTH(fecha) as mes,
-                            SUM(v.cobrado) as cobrado
-                        FROM [Ventanillas].[Opr_Ventas] v With(NoLock)
-                        WHERE
-                        (Convert(Varchar(8),v.fecha,112) BetWeen @cFec1 And @cFec2) And v.id_estatus != 44
-                        Group By YEAR(fecha), MONTH(fecha)
-                    )
-                    SELECT ano, mes, SUM(cobrado) as cobrado
-                    FROM xTarjeta
-                    GROUP BY ano, mes
-                    ORDER BY ano desc, mes desc";
-
+                var query = @"[Sicem].[Recaudacion_Global]";
                 var command = new SqlCommand(query, connection);
-                command.Parameters.AddWithValue("@cFec1", from.ToString("yyyyMMdd"));
-                command.Parameters.AddWithValue("@cFec2", to.ToString("yyyyMMdd"));
+                command.CommandType = System.Data.CommandType.StoredProcedure;
+                command.Parameters.AddWithValue("@nAno", year);
+                command.Parameters.AddWithValue("@nAnos", years);
                 using(var dataReader = command.ExecuteReader())
                 {
                     while(dataReader.Read())
                     {
-                        listResponse.Add( new AnaliticoResumenResponse
-                            {
-                                Enlace = enlace,
-                                Ano = ConvertUtils.ParseInteger(dataReader["ano"]),
-                                Mes = ConvertUtils.ParseInteger(dataReader["mes"]),
-                                Cobrado = ConvertUtils.ParseDecimal(dataReader["cobrado"])
-                            }
-                        );
+                        responseList.Add(AnaliticoResumenAno.FromDataReader(enlace, dataReader));
                     }
                 }
                 connection.Close();
@@ -87,27 +47,8 @@ public class AnaliticoService
         catch(Exception err)
         {
             logger.LogError(err, "Error al obtener resumen analitico enlace:{Enlace}", enlace.Nombre);
-            return analiticoResumen;
+            return null;
         }
-        
-        // * process the response
-        var analiticoResumenAnoList = new List<AnaliticoResumenAno>();
-        foreach(var group in listResponse.GroupBy(item => item.Ano))
-        {
-            var analiticoResumenAno = new AnaliticoResumenAno(enlace)
-            {
-                Ano = group.Key
-            };
-            foreach(var m in group)
-            {
-                analiticoResumenAno.Meses[m.Mes - 1] = m.Cobrado;
-            }
-            analiticoResumenAnoList.Add(analiticoResumenAno);
-        }
-        // * fill the response with the data
-        analiticoResumen.Anos = analiticoResumenAnoList;
-        analiticoResumen.Estatus = ResumenOficinaEstatus.Completado;
-
-        return analiticoResumen;
+        return responseList;
     }
 }

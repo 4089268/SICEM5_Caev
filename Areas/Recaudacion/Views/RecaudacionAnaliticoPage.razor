@@ -3,12 +3,13 @@
 @using System.Threading.Tasks
 @using Sicem_Blazor.Recaudacion.Models
 @using Sicem_Blazor.Recaudacion.Data
+@using Sicem_Blazor.Recaudacion.Views.Partials
 
 <div class="layout-page">
 
-    <div class="title-page">CONSULTA DE INGRESOS ANALITICO</div>
+    <div class="title-page" style="grid-area:1/1/2/2;">CONSULTA DE INGRESOS ANALITICO</div>
 
-    <div class="border rounded bg-white px-2 d-flex align-items-center px-4" style="color:#808080;">
+    <div class="border rounded bg-white p-2 d-flex align-items-center" style="color:#808080; grid-area:2/1/3/2;">
         @if(processing)
         {
             <div class="d-flex align-items-center justify-content-center">
@@ -24,52 +25,62 @@
         }
     </div>
 
-    <div class="border rounded bg-white d-flex align-items-center px-4">
-        <div class="border rounded bg-white d-flex flex-column align-items-center justify-content-start p-4 mr-4" style="min-width: 24rem;">
-            <div> Importe Año @GraficaLabels[0]</div>
-            <div class="d-flex align-items-center justify-content-around">
-                <div class="fa-3x text-center w-100">@GetTotalByAnoIndex(0).ToString("c2", currentCultureInfo)</div>
-            </div>
-        </div>
-        <div class="border rounded bg-white d-flex flex-column align-items-center justify-content-around p-4 mr-4" style="min-width: 24rem;">
-            <div> Importe Año @GraficaLabels[1]</div>
-            <div class="d-flex align-items-center justify-content-around">
-                <div class="fa-3x text-center w-100">@GetTotalByAnoIndex(1).ToString("c2", currentCultureInfo)</div>
-            </div>
-        </div>
-        <div class="border rounded bg-white d-flex flex-column align-items-center justify-content-around p-4 mr-4" style="min-width: 24rem;">
-            <div> Importe Año @GraficaLabels[2]</div>
-            <div class="d-flex align-items-center justify-content-around">
-                <div class="fa-3x text-center w-100">@GetTotalByAnoIndex(2).ToString("c2", currentCultureInfo)</div>
-            </div>
-        </div>
+    <div class="w-100 h-100 py-2" style="grid-area:3/1/4/2;">
+        <RecaudacionAnaliticoTotales Labels="@GraficaLabels" ResumenTotal="@analiticoResumenTotal" />
     </div>
 
-    <div class="border rounded bg-white d-flex align-items-center w-100 h-100">
-        <SfChart @ref="chartAnalitico" Title="COMPARACIÓN DE INGRESOS DE LOS ÚLTIMOS 3 AÑOS" SubTitle="" Width="100%" Height="100%">
-            <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
-            <ChartPrimaryYAxis Title="Ingresos" Visible="false" LabelFormat="c2" />
-            <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
-            <ChartLegendSettings Visible="true" Position="LegendPosition.Top"></ChartLegendSettings>
-            <ChartZoomSettings EnableMouseWheelZooming="true" EnablePinchZooming="true" EnableSelectionZooming="true"></ChartZoomSettings>
-            <ChartSeriesCollection>
-                <ChartSeries XName="Descripcion" DashArray="5,1" DataSource="@itemsGrafica" YName="Valor1" Name="@(GraficaLabels[0])" Type="ChartSeriesType.Line">
-                    <ChartMarker Visible="true">
-                        <ChartDataLabel Visible="true" />
-                    </ChartMarker>
-                </ChartSeries>
-                <ChartSeries XName="Descripcion" DashArray="5,1" DataSource="@itemsGrafica" YName="Valor2" Name="@(GraficaLabels[1])" Type="ChartSeriesType.Line">
-                    <ChartMarker Visible="true">
-                        <ChartDataLabel Visible="true" />
-                    </ChartMarker>
-                </ChartSeries>
-                <ChartSeries XName="Descripcion" DashArray="5,1" DataSource="@itemsGrafica" YName="Valor3" Name="@(GraficaLabels[2])" Type="ChartSeriesType.Line">
-                    <ChartMarker Visible="true">
-                        <ChartDataLabel Visible="true" />
-                    </ChartMarker>
-                </ChartSeries>
-            </ChartSeriesCollection>
-        </SfChart>
+    <div class="w-100 h-100 py-2" style="grid-area:4/1/5/2;">
+        @if(processing)
+        {
+            <div class="d-flex flex-wrap justify-content-around p-4">
+                @foreach(var officeStatus in officeStatuses ?? [])
+                {
+                    <div class="card border-secondary mb-3 mx-2" style="width: 24rem;">
+                        <div class="card-body text-secondary">
+                            <h5 class="card-title">@officeStatus.Oficina</h5>
+                            <p class="card-text" style="height:2.5rem;">
+                                @switch (officeStatus.Estatus)
+                                {
+                                    case ResumenOficinaEstatus.Completado:
+                                        <i class="fas fa-check-circle" style="color:green; font-size:1.5rem;"></i>
+                                        break;
+
+                                    case ResumenOficinaEstatus.Error:
+                                        <i class="fas fa-exclamation-circle" style="color:red; font-size:1.5rem;"></i>
+                                        break;
+
+                                    default:
+                                        <div class="spinner-border p-2" role="status"> </div>
+                                        break;
+                                }
+                            </p>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="border rounded bg-white d-flex align-items-center w-100 h-100">
+                <SfChart @ref="chartAnalitico" Title="COMPARACIÓN DE INGRESOS DE LOS ÚLTIMOS 3 AÑOS" SubTitle="" Width="100%" Height="100%">
+                    <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+                    <ChartPrimaryYAxis Title="Ingresos" Visible="false" LabelFormat="c2" />
+                    <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+                    <ChartLegendSettings Visible="true" Position="LegendPosition.Top"></ChartLegendSettings>
+                    <ChartZoomSettings EnableMouseWheelZooming="true" EnablePinchZooming="true" EnableSelectionZooming="true"></ChartZoomSettings>
+                    <ChartSeriesCollection>
+                        @for(int i = 0; i < GraficaLabels.Length; i++)
+                        {
+                            <ChartSeries XName="Descripcion" DashArray="5,1" DataSource="@itemsGrafica" YName="@($"Valor{i+1}")" Name="@(GraficaLabels[i])" Type="ChartSeriesType.Line">
+                                <ChartMarker Visible="true">
+                                    <ChartDataLabel Visible="true" />
+                                </ChartMarker>
+                            </ChartSeries>
+                        }
+                    </ChartSeriesCollection>
+                </SfChart>
+            </div>
+        }
     </div>
 
 </div>
@@ -80,7 +91,7 @@
         height: 100%;
         width: 100%;
         display: grid;
-        grid-template-rows: 4rem 6rem 11rem calc(100% - 20.5rem);
+        grid-template-rows: 4rem 6rem 12rem calc(100% - 21.5rem);
         grid-template-columns: 100%;
         align-content: stretch;
         justify-content: center;

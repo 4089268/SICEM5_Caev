@@ -5,19 +5,25 @@
     <div class="message-body" style="max-width:1000px; margin:0 auto;">
         <div class="mdc__body mt-2 px-2 py-4 border rounded" style="background-color: #f6f6f6;">
             <p>
-                @MensajeTexto.Mensaje
+                @if(@MensajeTexto != null )
+                {
+                    <span>@MensajeTexto.Mensaje</span>
+                }
             </p>
         </div>
 
         <div class="mdc__footer p-2 mt-4 d-flex flex-column">
             <div class="" style="font-weight:medium;">
                 <i class="fa fa-paperclip mx-1"></i>
-                <span>@MensajeArchivos.Count() Documentos Adjunto</span>
+                <span>Documentos Adjunto</span>
             </div>
             <div class="d-flex mt-2">
-                @foreach(var mfile in MensajeArchivos)
+                @if(MensajeArchivos != null)
                 {
-                    <BoletinMessageFilePanel Mensaje="@mfile" />
+                    @foreach(var mfile in MensajeArchivos)
+                    {
+                        <BoletinMessageFilePanel Mensaje="@mfile" />
+                    }
                 }
             </div>
         </div>
@@ -32,12 +38,16 @@
     public IBoletinMensaje MensajeTexto
     {
         get {
-            return Mensajes.FirstOrDefault(m => m.EsArchivo == false);
+            return Mensajes?.FirstOrDefault(m => m.EsArchivo == false);
         }
     }
     public List<IBoletinMensaje> MensajeArchivos
     {
         get {
+            if(Mensajes == null)
+            {
+                return Array.Empty<IBoletinMensaje>().ToList();
+            }
             return Mensajes.Where(m => m.EsArchivo).ToList();
         }
     }

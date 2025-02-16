@@ -39,7 +39,7 @@ namespace Sicem_Blazor.Boletines.Views
 
         private bool busyDialog = false;
         private OprBoletin Boletin {get;set;}
-        private string MensajeString {get;set;} = "";
+        private string MensageString {get;set;} = "";
         private List<Destinatario> Destinatarios {get;set;}
         private List<BoletinMensaje> AttachedFiles {get;set;}
 
@@ -56,6 +56,7 @@ namespace Sicem_Blazor.Boletines.Views
             };
 
             AttachedFiles = new();
+            Destinatarios = new();
         }
 
         private async Task GoBackClick()
@@ -165,24 +166,40 @@ namespace Sicem_Blazor.Boletines.Views
 
         private async Task SaveClick()
         {
+            // * validate if the message is setted
+            if(string.IsNullOrEmpty(MensageString) && !AttachedFiles.Any())
+            {
+                Toaster.Add("Agrege un mensaje o un archivo.", MatToastType.Warning);
+                return;
+            }
+
+            // * Validate destinatarios
+            if(!Destinatarios.Any())
+            {
+                Toaster.Add("Agregue un minimo destinatario.", MatToastType.Warning);
+                return;
+            }
+
+
             var boletinID = await this.BoletinService.AlmacenarBoletin(BoletinDTO.FromEntity(this.Boletin));
 
-            if(string.IsNullOrEmpty(this.MensajeString))
+            if(!string.IsNullOrEmpty(this.MensageString))
             {
+                this.Logger.LogDebug("Generando mensaje de texto: {texto}", this.MensageString);
                 await this.BoletinService.StoreBoletinMensaje(boletinID, new BoletinMensaje
                     {
                         BoletinId = boletinID,
                         EsArchivo = false,
-                        Mensaje = this.MensajeString,
+                        Mensaje = this.MensageString,
                         CreatedAt = DateTime.Now
                     }
                 );
             }
+
             foreach(var fileAttach in AttachedFiles)
             {
                 await this.BoletinService.StoreBoletinMensaje(boletinID, fileAttach);
             }
-
 
             foreach(var dest in Destinatarios)
             {
@@ -192,5 +209,6 @@ namespace Sicem_Blazor.Boletines.Views
             this.Toaster.Add("Boletin Registrado!", MatToastType.Info);
             await GoBackClick();
         }
+
     }
 }

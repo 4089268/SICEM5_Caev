@@ -77,13 +77,20 @@
                                     <td>@c</td>
                                     <td>@dest.Lada @dest.Telefono</td>
                                     <td>
-                                        @if(dest.Error)
+                                        @if(dest.FechaEnvio == null)
                                         {
-                                            <span class="badge badge-danger mx-2">Error al enviar</span>
+                                            <span class="badge badge-info mx-2">Pendiente</span>
                                         }
                                         else
                                         {
-                                            <span class="badge badge-success mx-2">Enviado</span>
+                                            @if(dest.Error)
+                                            {
+                                                <span class="badge badge-danger mx-2">Error al enviar</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-success mx-2">Enviado</span>
+                                            }
                                         }
                                     </td>
                                     <td>

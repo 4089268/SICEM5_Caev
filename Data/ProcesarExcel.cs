@@ -29,7 +29,7 @@ namespace Sicem_Blazor.Data {
             }
 
             // * Poblar dataTable
-            for(int fila = 0; fila < _totalFilas; fila++)
+            for(int fila = 0; fila <= _totalFilas; fila++)
             {
                 var _tmpRow = dataTableResponse.NewRow();
                 for(int columna = 0; columna < _totalColumnas; columna ++)

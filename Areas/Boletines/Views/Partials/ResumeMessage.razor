@@ -1,0 +1,69 @@
+@namespace Sicem_Blazor.Boletines.Views.Partials
+@using Sicem_Blazor.Boletines.Models;
+
+<div class="w-100 p-4" style="font-size:1.5rem;">
+    <div class="message-body" style="max-width:1000px; margin:0 auto;">
+        <div class="mdc__body mt-2 p-4 border rounded" style="background-color: #f6f6f6; font-family:Consolas, monaco, monospace;">
+            <p>
+                @if(@MensajeTexto != null )
+                {
+                    <span>@MensajeTexto.Mensaje</span>
+                }
+            </p>
+        </div>
+
+        <div class="mdc__footer p-2 mt-4 d-flex flex-column">
+            <div class="" style="font-weight:medium;">
+                <i class="fa fa-paperclip mx-1"></i>
+                <span>Documentos Adjunto</span>
+            </div>
+            <div class="d-flex mt-2">
+                @if(MensajeArchivos != null)
+                {
+                    @foreach(var mfile in MensajeArchivos)
+                    {
+                        <BoletinMessageFilePanel Mensaje="@mfile" />
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code
+{
+    [Parameter]
+    public List<IBoletinMensaje> Mensajes { get; set; }
+
+    public IBoletinMensaje MensajeTexto
+    {
+        get {
+            return Mensajes?.FirstOrDefault(m => m.EsArchivo == false);
+        }
+    }
+    public List<IBoletinMensaje> MensajeArchivos
+    {
+        get {
+            if(Mensajes == null)
+            {
+                return Array.Empty<IBoletinMensaje>().ToList();
+            }
+            return Mensajes.Where(m => m.EsArchivo).ToList();
+        }
+    }
+
+    public string GetHumanReadableSize(double fileSize)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+        double len = fileSize;
+        int order = 0;
+
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len /= 1024;
+        }
+
+        return $"{len:0.##} {sizes[order]}";
+    }
+}

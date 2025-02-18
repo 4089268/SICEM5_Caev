@@ -88,30 +88,32 @@ namespace Sicem_Blazor.Boletines.Views
 
             // * get the phone numbers
             var tmpListaDestinatarios = new List<Destinatario>();
+            var i = 1;
             foreach(DataRow row in _datos.Rows)
             {
-                var telefono = Convert.ToInt64(row[0]);
-                var lada = 52;
+                this.Logger.LogDebug("Procesando {i} de {total}", i, _datos.Rows.Count);
                 try
                 {
-                    lada = Convert.ToInt32(row[1]);
-                }catch(Exception)
+                    var telefono = Convert.ToInt64(row[0]);
+                    var lada = int.TryParse(row[1].ToString(), out int _lada) ? _lada : 52;
+                    if(tmpListaDestinatarios.Select(item=> item.Telefono).Contains(telefono))
+                    {
+                        continue;
+                    }
+                    tmpListaDestinatarios.Add( new Destinatario
+                    {
+                        BoletinId = Boletin.Id,
+                        Lada = lada.ToString(),
+                        Telefono = telefono,
+                        Titulo = $"+{lada} {telefono}"
+                    });
+                } catch(Exception ex)
                 {
-                    //
+                    this.Logger.LogError("No se puede cargar el telefono '{phone}': {message}", row[0], ex.Message);
                 }
-
-                if(tmpListaDestinatarios.Select(item=> item.Telefono).Contains(telefono))
-                {
-                    continue;
-                }
-                tmpListaDestinatarios.Add( new Destinatario
-                {
-                    BoletinId = Boletin.Id,
-                    Lada = lada.ToString(),
-                    Telefono = telefono,
-                    Titulo = $"+{lada} {telefono}"
-                });
+                i++;
             }
+            
 
             // * append the new phone numbers
             if(Destinatarios == null)

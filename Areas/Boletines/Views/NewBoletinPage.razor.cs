@@ -41,6 +41,9 @@ namespace Sicem_Blazor.Boletines.Views
         private OprBoletin Boletin {get;set;}
         private string MensageString {get;set;} = "";
         private List<Destinatario> Destinatarios {get;set;}
+        private int DestinatariosError {
+            get => (Destinatarios?.Where(item => item.Error == true).Count() ?? 0);
+        }
         private List<BoletinMensaje> AttachedFiles {get;set;}
 
         private CultureInfo currentCultueInfo = new("es-MX");
@@ -94,12 +97,30 @@ namespace Sicem_Blazor.Boletines.Views
                 this.Logger.LogDebug("Procesando {i} de {total}", i, _datos.Rows.Count);
                 try
                 {
-                    var telefono = Convert.ToInt64(row[0]);
-                    var lada = int.TryParse(row[1].ToString(), out int _lada) ? _lada : 52;
-                    if(tmpListaDestinatarios.Select(item=> item.Telefono).Contains(telefono))
+                    long telefono = Convert.ToInt64(row[0]);
+                    int lada = int.TryParse(row[1].ToString(), out int _lada) ? _lada : 52;
+                    if(Destinatarios.Select(item => item.Telefono).Contains(telefono))
                     {
                         continue;
                     }
+
+                    // * validate the phonenumber and save as failure
+                    if(telefono.ToString().Length != 10)
+                    {
+                        tmpListaDestinatarios.Add( new Destinatario
+                        {
+                            BoletinId = Boletin.Id,
+                            Lada = lada.ToString(),
+                            Telefono = telefono,
+                            Titulo = $"+{lada} {telefono}",
+                            Error = true,
+                            Resultado = "Telefono Invalido",
+                            FechaEnvio = DateTime.Now
+                        });
+                        continue;
+                    }
+
+                    // * save the phonenumber
                     tmpListaDestinatarios.Add( new Destinatario
                     {
                         BoletinId = Boletin.Id,
@@ -168,6 +189,9 @@ namespace Sicem_Blazor.Boletines.Views
 
         private async Task SaveClick()
         {
+            busyDialog = true;
+            await InvokeAsync(StateHasChanged);
+
             // * validate if the message is setted
             if(string.IsNullOrEmpty(MensageString) && !AttachedFiles.Any())
             {
@@ -207,6 +231,9 @@ namespace Sicem_Blazor.Boletines.Views
             {
                 await this.BoletinService.StoreBoletinDestinatatio(boletinID, dest);
             }
+            
+            busyDialog = false;
+            await InvokeAsync(StateHasChanged);
 
             this.Toaster.Add("Boletin Registrado!", MatToastType.Info);
             await GoBackClick();

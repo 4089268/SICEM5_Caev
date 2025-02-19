@@ -26,13 +26,23 @@
                 <InputFile id="inputFile" class="d-none" OnChange="@LoadFilePhones" multiple accept=".xlsx, .xls" />
             </label>
         </div>
+        
+        @if(DestinatariosError > 0)
+        {
+            <div class="w-100 p-2 d-flex border-bottom">
+                <div class="badge badge-danger p-2">
+                    @DestinatariosError
+                    Telefonos invalidos
+                </div>
+            </div>
+        }
 
         <div class="d-flex flex-column h-100 w-100 overflow-auto">
             @if(Destinatarios != null)
             {
                 @foreach(var destinatario in Destinatarios)
                 {
-                    <div class="mailbox-list__single d-flex justify-content-between mt-3 border-bottom pb-3 shadow-sm">
+                    <div class="mailbox-list__single d-flex justify-content-between pt-3 border-bottom pb-3 shadow-sm @(destinatario.Error == true ? "badge-danger": "")">
                         <div class="mail-authorBox d-flex align-items-center px-2">
                             @* <div class="checkbox-theme-default custom-checkbox mr-2">
                                 <input class="checkbox" type="checkbox" id="mail-1">
@@ -56,6 +66,12 @@
                                 <h4 class="mail-title">
                                     <span class="badge badge-transparent badge-round">@destinatario.Titulo</span>
                                 </h4>
+                                @if(destinatario.Error == true)
+                                {
+                                    <h6>
+                                        <span class="badge badge-transparent badge-round">@destinatario.Resultado</span>
+                                    </h6>
+                                }
                             </div>
                         </div>
                     </div>
@@ -136,7 +152,7 @@
 
 
 @* ****** Dialogos y ventanas secundarias ****** *@
-<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+<BusyIndicator Busy="@busyDialog" ContentText="Registrando boletin...." />
 <style>
     .layoutPage
     {

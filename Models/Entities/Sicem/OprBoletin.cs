@@ -15,6 +15,7 @@ namespace Sicem_Blazor.Models
         public string Titulo { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? FinishedAt { get; set; }
+        public string Proveedor { get; set; }
 
         public virtual ICollection<BoletinMensaje> BoletinMensajes { get; set; }
         public virtual ICollection<Destinatario> Destinatarios { get; set; }

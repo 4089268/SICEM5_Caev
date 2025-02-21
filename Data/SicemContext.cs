@@ -26,6 +26,7 @@ namespace Sicem_Blazor.Models
         public virtual DbSet<CatLocalidade> CatLocalidades { get; set; }
         public virtual DbSet<CatMessagesTemplate> CatMessagesTemplates { get; set; }
         public virtual DbSet<CatOpcione> CatOpciones { get; set; }
+        public virtual DbSet<CatProveedore> CatProveedores { get; set; }
         public virtual DbSet<CatSistema> CatSistemas { get; set; }
         public virtual DbSet<CatTipoOficina> CatTipoOficinas { get; set; }
         public virtual DbSet<CatTipoUsuario> CatTipoUsuarios { get; set; }
@@ -401,6 +402,28 @@ namespace Sicem_Blazor.Models
                 entity.Property(e => e.IdOpcion)
                     .HasColumnType("numeric(4, 0)")
                     .HasColumnName("id_opcion");
+            });
+
+            modelBuilder.Entity<CatProveedore>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.ToTable("CatProveedores", "Boletin");
+
+                entity.HasIndex(e => e.Name, "UQ__CatProve__737584F601C2DE0C")
+                    .IsUnique();
+
+                entity.Property(e => e.Description)
+                    .IsRequired()
+                    .HasMaxLength(250)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
             });
 
             modelBuilder.Entity<CatSistema>(entity =>
@@ -1149,6 +1172,16 @@ namespace Sicem_Blazor.Models
                 entity.Property(e => e.CreatedAt)
                     .HasColumnName("createdAt")
                     .HasDefaultValueSql("(getdate())");
+
+                entity.Property(e => e.FinishedAt)
+                    .HasColumnName("finishedAt")
+                    .HasDefaultValueSql("(getdate())");
+
+                entity.Property(e => e.Proveedor)
+                    .HasMaxLength(20)
+                    .IsUnicode(false)
+                    .HasColumnName("proveedor")
+                    .HasDefaultValueSql("('WAPP')");
 
                 entity.Property(e => e.Titulo)
                     .IsRequired()

@@ -9,6 +9,7 @@ public class BoletinDTO
     public string Titulo { get; set; }
     public DateTime CreatedAt { get; set;}
     public DateTime? FinishedAt { get; set;}
+    public string Proveedor { get; set;}
 
     public int TotalDestinatarios {get;set;} = 0;
     public int Exitos {get;set;} = 0;
@@ -21,6 +22,7 @@ public class BoletinDTO
         newItem.Titulo = b.Titulo;
         newItem.CreatedAt = b.CreatedAt;
         newItem.FinishedAt = b.FinishedAt;
+        newItem.Proveedor = b.Proveedor;
         return newItem;
     }
 

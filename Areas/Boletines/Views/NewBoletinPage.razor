@@ -101,6 +101,15 @@
                     <input type="text" class="form-control" id="title" placeholder="Boletin 1" @bind-value="@Boletin.Titulo">
                 </div>
 
+                <div class="mb-3 w-50 px-2">
+                    <label for="mensaje" class="form-label">Proveedor</label>
+                    <select class="form-control" @bind="Boletin.Proveedor">
+                        <option value="WAPP">WhatsApp</option>
+                        <option value="SMS">Mensaje Telefonico</option>
+                        <option value="EMAIL">Correo Electronico</option>
+                    </select>
+                </div>
+
                 <div class="mb-3 w-100 px-2">
                     <label for="mensaje" class="form-label">Mensaje</label>
                     <textarea class="form-control" id="mensaje" rows="4" @bind="@MensageString"></textarea>
@@ -163,5 +172,9 @@
         width: 100%;
         height: 100%;
         padding-bottom: 1rem;
+    }
+    select, input, textarea
+    {
+        box-shadow:none;
     }
 </style>

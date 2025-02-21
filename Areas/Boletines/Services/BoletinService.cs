@@ -60,6 +60,7 @@ public class BoletinService : IBoletinService
             Titulo = boletin.Titulo,
             CreatedAt = boletin.CreatedAt,
             FinishedAt = null,
+            Proveedor = boletin.Proveedor
         };
         this.sicemContext.OprBoletins.Add(newBoletin);
         await this.sicemContext.SaveChangesAsync();

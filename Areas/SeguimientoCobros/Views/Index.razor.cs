@@ -32,17 +32,26 @@ public partial class Index : IAsyncDisposable
     [Inject]
     public SeguimientoCobroMapJsInterop MapJsInterop {get;set;}
 
+    [Inject]
+    public IncomeDataService IncomeDataService1 {get;set;}
+
     private DotNetObjectReference<Index> objRef;
     private static Timer fetchTimer;
     private List<OfficePushpinMap> incomeData {get; set;}
     private SfGrid<OfficePushpinMap> dataGrid;
     private string[] palettes = {"#2e86c1", "#28b463", "#d68910", "#884ea0"};
+    private List<LiveIncome> dataList = new();
+    private List<MapMark> listMarks = new();
 
     protected override void OnInitialized()
     {
         objRef = DotNetObjectReference.Create(this);
+
         // * load offices with coordenates
         incomeData = SeguimientoCobroService1.GetOffices().ToList();
+
+        dataList = IncomeDataService1.GetData();
+        IncomeDataService1.OnChange += IncomeDataHasChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -53,7 +62,7 @@ public partial class Index : IAsyncDisposable
             // await Task.Delay(8000);
             // fetchTimer = new Timer(FetchData, null, 0, 6000);
 
-            var marks = this.incomeData.Select( item => new MapMark()
+            listMarks = this.incomeData.Select( item => new MapMark()
             {
                 IdOficina = item.Id,
                 Descripcion = item.Office,
@@ -62,51 +71,15 @@ public partial class Index : IAsyncDisposable
                 
             }).ToList();
 
-            await MapJsInterop.UpdateMarks(objRef, marks);
-
-
+            await MapJsInterop.UpdateMarks(objRef, listMarks);
         }
     }
 
-    private async void FetchData(object state)
-    {
-        throw new NotImplementedException();
-        // try
-        // {
-        //     var tmpIncomeData = incomeOfficeService.GetIncomes().ToList();
-        //     refreIncomesData(tmpIncomeData);
-        //     await JSRuntime.InvokeVoidAsync("actualizarItems", tmpIncomeData );
-        // }
-        // catch(Exception err)
-        // {
-        //     Console.WriteLine(err.Message);
-        // }
-    }
-
-    private void refreIncomesData(List<OfficePushpinMap> data)
-    {
-        // try
-        // {
-        //     foreach(var newData in data)
-        //     {
-        //         var refdata = incomeData.Where(item => item.Id == newData.Id).FirstOrDefault();
-        //         if(refdata != null)
-        //         {
-        //             refdata.Bills = newData.Bills;
-        //             refdata.Income = newData.Income;
-        //         }
-        //     }
-        //     dataGrid.Refresh();
-        // }
-        // catch(Exception err)
-        // {
-        //     Console.WriteLine(err.Message);
-        // }
-    }
-    
     public async ValueTask DisposeAsync()
     {
-        // await JSRuntime.InvokeVoidAsync("cerrarVentanaCobroCaja");
+
+        IncomeDataService1.OnChange -= IncomeDataHasChanged;
+        
         try
         {
             fetchTimer.Dispose();
@@ -122,5 +95,32 @@ public partial class Index : IAsyncDisposable
     public void MapLoaded()
     {
         //Logger.LogInformation("Mapa cargado");
+    }
+
+    [JSInvokable("PushpinClick")]
+    public void PushpinClick()
+    {
+        //
+    }
+
+    public void IncomeDataHasChanged()
+    {
+        dataList = IncomeDataService1.GetData();
+
+        var task = Task.Run( async () => {
+
+            foreach(var m in listMarks)
+            {
+                if(dataList.Where(item => item.OficinaId == m.IdOficina).Any())
+                {
+                    var random = new Random();
+                    var cobrado = dataList.FirstOrDefault(item => item.OficinaId == m.IdOficina).Cobrado + random.Next(1, 1000);
+                    m.Subtitulo = cobrado.ToString("c2");
+                }
+            }
+
+            await MapJsInterop.UpdateMarks(objRef, listMarks);
+            await InvokeAsync(StateHasChanged);
+        });
     }
 }

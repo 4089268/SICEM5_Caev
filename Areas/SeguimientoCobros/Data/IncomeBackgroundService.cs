@@ -19,7 +19,6 @@ public class IncomeBackgroundService : BackgroundService
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<IncomeBackgroundService> _logger;
-    // private IHubContext<IncomeLiveDataHub> _hubContext;
 
     public IncomeBackgroundService(IServiceScopeFactory scf, ILogger<IncomeBackgroundService> l)
     {
@@ -35,6 +34,7 @@ public class IncomeBackgroundService : BackgroundService
             using(var scope = _serviceScopeFactory.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<SicemContext>();
+                var incomeDataService = scope.ServiceProvider.GetRequiredService<IncomeDataService>();
 
                 // get the routes
                 var ruta = dbContext.Rutas.Where(r => r.Inactivo != true).ToList();
@@ -55,12 +55,8 @@ public class IncomeBackgroundService : BackgroundService
 
                 // Flatten the results into a single list
                 List<LiveIncome> dataList = results.SelectMany(r => r).ToList();
-
-                foreach(var item in dataList.GroupBy(e => e.OficinaId))
-                {
-                    _logger.LogDebug(">> {oficina}: {sucursal} {recibo} {income}", item.First().Oficina, item.First().Sucursal, item.First().Recibos, item.First().Cobrado);
-                }
-
+                incomeDataService.SetData(dataList);
+                
                 _logger.LogDebug($"BG Finished: {DateTime.Now.ToShortTimeString()}");
             }
             await Task.Delay(TimeSpan.FromSeconds(5));

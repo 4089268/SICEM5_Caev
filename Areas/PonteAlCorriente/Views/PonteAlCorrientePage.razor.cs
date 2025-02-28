@@ -42,7 +42,7 @@ namespace Sicem_Blazor.PonteAlCorriente.Views
         private int Subsistema, Sector;
         private DetalleOficinaVtn detalleOficina;
         private bool detalleOficinaVisible = false;
-        private bool detallePTVVisible = false;
+        // private bool detallePTVVisible = false;
         
         protected override async Task OnInitializedAsync()
         {

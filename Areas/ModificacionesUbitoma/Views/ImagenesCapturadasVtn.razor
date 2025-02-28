@@ -70,7 +70,9 @@
         await CerrarModal.InvokeAsync("");
     }
 
-    private async void MostrarImagen(ImagenInfoResponse data) {
+    private async void MostrarImagen(ImagenInfoResponse data)
+    {
+        await Task.CompletedTask;
         /*
         documentoSeleccionado = xi;
         if (documentoSeleccionado.Extencion != "pdf") {

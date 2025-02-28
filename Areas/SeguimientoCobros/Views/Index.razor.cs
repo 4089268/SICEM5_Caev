@@ -33,9 +33,9 @@ public partial class Index : IAsyncDisposable
     public SeguimientoCobroMapJsInterop MapJsInterop {get;set;}
 
     private DotNetObjectReference<Index> objRef;
-    private static Timer fetchTimer;
+    // private static Timer fetchTimer;
     private List<OfficePushpinMap> incomeData {get; set;}
-    private SfGrid<OfficePushpinMap> dataGrid;
+    // private SfGrid<OfficePushpinMap> dataGrid;
     private string[] palettes = {"#2e86c1", "#28b463", "#d68910", "#884ea0"};
 
     protected override void OnInitialized()
@@ -70,6 +70,7 @@ public partial class Index : IAsyncDisposable
 
     private async void FetchData(object state)
     {
+        await Task.CompletedTask;
         throw new NotImplementedException();
         // try
         // {
@@ -107,14 +108,14 @@ public partial class Index : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         // await JSRuntime.InvokeVoidAsync("cerrarVentanaCobroCaja");
-        try
-        {
-            fetchTimer.Dispose();
-        }
-        catch(Exception)
-        {
-            //
-        }
+        // try
+        // {
+        //     fetchTimer.Dispose();
+        // }
+        // catch(Exception)
+        // {
+        //     //
+        // }
         await Task.CompletedTask;
     }
 

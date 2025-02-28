@@ -174,6 +174,7 @@ namespace Sicem_Blazor.PagoLinea.Views
             }
             catch(Exception err)
             {
+                this.Logger.LogError(err, "Fail at retrive the data");
                 Toaster.Add("Erro al obtener los datos de la oficina.", MatToastType.Danger);
                 this.busyDialog = false;
                 return;

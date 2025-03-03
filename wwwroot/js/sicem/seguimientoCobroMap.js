@@ -5,6 +5,7 @@
  * @property {string} descripcion
  * @property {string} subtitulo
  * @property {number} zoom
+ * @property {number} radius
  */
 
 /**
@@ -21,7 +22,20 @@ const MAPCONTEXT = {
     },
     map: null,
     markers: [],
-    initZoom: 14
+    circles: [],
+    initZoom: 14,
+    clearMarkers: ()=>{
+        MAPCONTEXT.markers.forEach(m => {
+            MAPCONTEXT.map.removeLayer(m);
+        });
+        MAPCONTEXT.markers = [];
+    },
+    clearCircles: ()=>{
+        MAPCONTEXT.circles.forEach(m => {
+            MAPCONTEXT.map.removeLayer(m);
+        });
+        MAPCONTEXT.circles = [];
+    },
 };
 
 /**
@@ -76,18 +90,31 @@ export function moveMap(dotNetHelper, point, zoom) {
  */
 export function updateMarks(dotNetHelper, marks) {
     
-    // clear the markers
-    MAPCONTEXT.markers.forEach(m => {
-        MAPCONTEXT.map.removeLayer(m);
+    var customIcon = L.icon({
+        iconUrl: '/img/caev-map-icon.png',
+        iconSize:     [30, 35], // size of the icon
+        iconAnchor:   [15, 17.5], // point of the icon which will correspond to marker's location
+        popupAnchor:  [0, -10] // point from which the popup should open relative to the iconAnchor
     });
-    MAPCONTEXT.markers = [];
+
+    // clear previous data
+    MAPCONTEXT.clearMarkers();
+    MAPCONTEXT.clearCircles();
 
     // Add pushpins
     MAPCONTEXT.points = marks;
     marks.forEach(point => {
+
         var marker = L.marker([point.latitude, point.longitude ], {
             opacity: 0.75,
-            riseOnHover: true
+            riseOnHover: true,
+            // icon: customIcon
+            icon: L.divIcon({
+                className: 'text-labels', // Set class for CSS styling
+                html: `<p>Poza Rica <br/> ${point.subtitulo}</p>`,
+                iconSize: [140, 55],
+                iconAnchor: [70, 20]
+            }),
         });
         marker.bindPopup(`<b>${point.descripcion}</b> <br/> ${point.subtitulo}`).openPopup();
         
@@ -98,10 +125,20 @@ export function updateMarks(dotNetHelper, marks) {
         
         // save the reference of the marker
         MAPCONTEXT.markers.push(marker);
-        
+
+        // create the circle
+        var circle = L.circle([point.latitude, point.longitude ], point.radius, {
+            opacity:0.9,
+            fillColor: "#b18856",
+            color:"#b18856"
+        });
+
+        MAPCONTEXT.circles.push(circle);
+
+
         // add the marker to the map
         MAPCONTEXT.map.addLayer(marker);
-
+        MAPCONTEXT.map.addLayer(circle);
     });
 
 }

@@ -10,7 +10,8 @@ namespace Sicem_Blazor.Models
         public string Descripcion {get;set;} = "";
         public string Subtitulo {get;set;} = "";
         public double Zoom {get;set;} = 8;
-
+        public double Radius {get;set;} = 0;
+        
         public int IdOficina = 0;
 
         public CatPadron Padron {get;set;}

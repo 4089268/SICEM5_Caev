@@ -12,6 +12,7 @@ using System.Threading;
 using Sicem_Blazor.SeguimientoCobros.Models;
 using Sicem_Blazor.SeguimientoCobros.Data;
 using Sicem_Blazor.Models;
+using Sicem_Blazor.Helpers;
 
 namespace Sicem_Blazor.SeguimientoCobros.Views;
 
@@ -43,8 +44,17 @@ public partial class Index : IAsyncDisposable
     private List<LiveIncome> dataList = new();
     private List<MapMark> listMarks = new();
 
+    private CircleRadius circleRadius;
+
     protected override void OnInitialized()
     {
+        circleRadius = new CircleRadius(
+            minInc:0,
+            maxInc:10000000,
+            minR: 1000,
+            maxR: 30000
+        );
+
         objRef = DotNetObjectReference.Create(this);
 
         // * load offices with coordenates
@@ -67,8 +77,8 @@ public partial class Index : IAsyncDisposable
                 IdOficina = item.Id,
                 Descripcion = item.Office,
                 Latitude = double.Parse(item.Lat),
-                Longitude = double.Parse(item.Lon)
-                
+                Longitude = double.Parse(item.Lon),
+                Radius = circleRadius.GetRadius((double) item.Income)
             }).ToList();
 
             await MapJsInterop.UpdateMarks(objRef, listMarks);
@@ -114,7 +124,7 @@ public partial class Index : IAsyncDisposable
                 if(dataList.Where(item => item.OficinaId == m.IdOficina).Any())
                 {
                     var random = new Random();
-                    var cobrado = dataList.FirstOrDefault(item => item.OficinaId == m.IdOficina).Cobrado + random.Next(1, 1000);
+                    var cobrado = dataList.FirstOrDefault(item => item.OficinaId == m.IdOficina).Cobrado;
                     m.Subtitulo = cobrado.ToString("c2");
                 }
             }

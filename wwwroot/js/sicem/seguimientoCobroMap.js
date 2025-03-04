@@ -111,7 +111,7 @@ export function updateMarks(dotNetHelper, marks) {
             // icon: customIcon
             icon: L.divIcon({
                 className: 'text-labels', // Set class for CSS styling
-                html: `<p>Poza Rica <br/> ${point.subtitulo}</p>`,
+                html: `<p>${point.descripcion}<br/>${point.subtitulo}</p>`,
                 iconSize: [140, 55],
                 iconAnchor: [70, 20]
             }),

@@ -17,6 +17,7 @@ public interface IBoletinService
     Task RemoverMensaje(IBoletinMensaje mensaje);
     
     Task<Guid> StoreBoletinDestinatatio(Guid boletinId, IBoletinDestinatario destinatario);
+    Task<int> StoreBoletinDestinatatioRange(Guid boletinId, IEnumerable<IBoletinDestinatario> destinatarios);
     Task ActualizarDestinatario(Guid destinatarioId, IBoletinDestinatario destinatario);
     Task RemoverDestinatario(IBoletinDestinatario destinatario);
 

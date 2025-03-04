@@ -206,7 +206,6 @@ namespace Sicem_Blazor.Boletines.Views
                 return;
             }
 
-
             var boletinID = await this.BoletinService.AlmacenarBoletin(BoletinDTO.FromEntity(this.Boletin));
 
             if(!string.IsNullOrEmpty(this.MensageString))
@@ -227,10 +226,8 @@ namespace Sicem_Blazor.Boletines.Views
                 await this.BoletinService.StoreBoletinMensaje(boletinID, fileAttach);
             }
 
-            foreach(var dest in Destinatarios)
-            {
-                await this.BoletinService.StoreBoletinDestinatatio(boletinID, dest);
-            }
+            var t = await this.BoletinService.StoreBoletinDestinatatioRange(boletinID, Destinatarios);
+            this.Logger.LogDebug("{t} Destinatarios almacenados", t);
             
             busyDialog = false;
             await InvokeAsync(StateHasChanged);

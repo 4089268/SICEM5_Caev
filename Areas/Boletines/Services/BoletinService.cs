@@ -144,6 +144,40 @@ public class BoletinService : IBoletinService
         await this.sicemContext.SaveChangesAsync();
         return newDest.Id;
     }
+    public async Task<int> StoreBoletinDestinatatioRange(Guid boletinId, IEnumerable<IBoletinDestinatario> destinatarios)
+    {
+        var t = 0;
+        var count = 0;
+        this.sicemContext.ChangeTracker.AutoDetectChangesEnabled = false;
+        foreach (var destinatario in destinatarios)
+        {
+            var newDestinatario = new Destinatario
+            {
+                Id = Guid.NewGuid(),
+                BoletinId = boletinId,
+                Titulo = destinatario.Titulo,
+                Telefono = destinatario.Telefono,
+                Lada = destinatario.Lada,
+                Error = destinatario.Error,
+                Resultado = destinatario.Resultado,
+                EnvioMetadata = destinatario.EnvioMetadata,
+                FechaEnvio = destinatario.FechaEnvio
+            };
+            this.sicemContext.Destinatarios.Add(newDestinatario);
+            count++;
+            
+            // * save changes every 100 records
+            if (count % 100 == 0)
+            {
+                t += await this.sicemContext.SaveChangesAsync();
+            }
+        }
+
+        t += await this.sicemContext.SaveChangesAsync();
+
+        this.sicemContext.ChangeTracker.AutoDetectChangesEnabled = true;
+        return t;
+    }
 
     public async Task<Guid> StoreBoletinMensaje(Guid boletinId, IBoletinMensaje mensaje)
     {

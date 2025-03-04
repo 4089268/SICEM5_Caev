@@ -37,7 +37,6 @@ public partial class Index : IAsyncDisposable
     public IncomeDataService IncomeDataService1 {get;set;}
 
     private DotNetObjectReference<Index> objRef;
-    // private static Timer fetchTimer;
     private List<OfficePushpinMap> incomeData {get; set;}
     // private SfGrid<OfficePushpinMap> dataGrid;
     private string[] palettes = {"#2e86c1", "#28b463", "#d68910", "#884ea0"};
@@ -69,8 +68,6 @@ public partial class Index : IAsyncDisposable
         if(firstRender)
         {
             await MapJsInterop.InitializedMapAsync(objRef, "map", new MapMark() );
-            // await Task.Delay(8000);
-            // fetchTimer = new Timer(FetchData, null, 0, 6000);
 
             listMarks = this.incomeData.Select( item => new MapMark()
             {
@@ -87,17 +84,7 @@ public partial class Index : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-
         IncomeDataService1.OnChange -= IncomeDataHasChanged;
-        
-        try
-        {
-            fetchTimer.Dispose();
-        }
-        catch(Exception)
-        {
-            //
-        }
         await Task.CompletedTask;
     }
 

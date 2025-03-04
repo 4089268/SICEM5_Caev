@@ -12,6 +12,7 @@ using System.Threading;
 using Sicem_Blazor.SeguimientoCobros.Models;
 using Sicem_Blazor.SeguimientoCobros.Data;
 using Sicem_Blazor.Models;
+using Sicem_Blazor.Helpers;
 
 namespace Sicem_Blazor.SeguimientoCobros.Views;
 
@@ -32,17 +33,35 @@ public partial class Index : IAsyncDisposable
     [Inject]
     public SeguimientoCobroMapJsInterop MapJsInterop {get;set;}
 
+    [Inject]
+    public IncomeDataService IncomeDataService1 {get;set;}
+
     private DotNetObjectReference<Index> objRef;
     // private static Timer fetchTimer;
     private List<OfficePushpinMap> incomeData {get; set;}
     // private SfGrid<OfficePushpinMap> dataGrid;
     private string[] palettes = {"#2e86c1", "#28b463", "#d68910", "#884ea0"};
+    private List<LiveIncome> dataList = new();
+    private List<MapMark> listMarks = new();
+
+    private CircleRadius circleRadius;
 
     protected override void OnInitialized()
     {
+        circleRadius = new CircleRadius(
+            minInc:0,
+            maxInc:10000000,
+            minR: 1000,
+            maxR: 30000
+        );
+
         objRef = DotNetObjectReference.Create(this);
+
         // * load offices with coordenates
         incomeData = SeguimientoCobroService1.GetOffices().ToList();
+
+        dataList = IncomeDataService1.GetData();
+        IncomeDataService1.OnChange += IncomeDataHasChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -53,69 +72,32 @@ public partial class Index : IAsyncDisposable
             // await Task.Delay(8000);
             // fetchTimer = new Timer(FetchData, null, 0, 6000);
 
-            var marks = this.incomeData.Select( item => new MapMark()
+            listMarks = this.incomeData.Select( item => new MapMark()
             {
                 IdOficina = item.Id,
                 Descripcion = item.Office,
                 Latitude = double.Parse(item.Lat),
-                Longitude = double.Parse(item.Lon)
-                
+                Longitude = double.Parse(item.Lon),
+                Radius = circleRadius.GetRadius((double) item.Income)
             }).ToList();
 
-            await MapJsInterop.UpdateMarks(objRef, marks);
-
-
+            await MapJsInterop.UpdateMarks(objRef, listMarks);
         }
     }
 
-    private async void FetchData(object state)
-    {
-        await Task.CompletedTask;
-        throw new NotImplementedException();
-        // try
-        // {
-        //     var tmpIncomeData = incomeOfficeService.GetIncomes().ToList();
-        //     refreIncomesData(tmpIncomeData);
-        //     await JSRuntime.InvokeVoidAsync("actualizarItems", tmpIncomeData );
-        // }
-        // catch(Exception err)
-        // {
-        //     Console.WriteLine(err.Message);
-        // }
-    }
-
-    private void refreIncomesData(List<OfficePushpinMap> data)
-    {
-        // try
-        // {
-        //     foreach(var newData in data)
-        //     {
-        //         var refdata = incomeData.Where(item => item.Id == newData.Id).FirstOrDefault();
-        //         if(refdata != null)
-        //         {
-        //             refdata.Bills = newData.Bills;
-        //             refdata.Income = newData.Income;
-        //         }
-        //     }
-        //     dataGrid.Refresh();
-        // }
-        // catch(Exception err)
-        // {
-        //     Console.WriteLine(err.Message);
-        // }
-    }
-    
     public async ValueTask DisposeAsync()
     {
-        // await JSRuntime.InvokeVoidAsync("cerrarVentanaCobroCaja");
-        // try
-        // {
-        //     fetchTimer.Dispose();
-        // }
-        // catch(Exception)
-        // {
-        //     //
-        // }
+
+        IncomeDataService1.OnChange -= IncomeDataHasChanged;
+        
+        try
+        {
+            fetchTimer.Dispose();
+        }
+        catch(Exception)
+        {
+            //
+        }
         await Task.CompletedTask;
     }
 
@@ -123,5 +105,32 @@ public partial class Index : IAsyncDisposable
     public void MapLoaded()
     {
         //Logger.LogInformation("Mapa cargado");
+    }
+
+    [JSInvokable("PushpinClick")]
+    public void PushpinClick()
+    {
+        //
+    }
+
+    public void IncomeDataHasChanged()
+    {
+        dataList = IncomeDataService1.GetData();
+
+        var task = Task.Run( async () => {
+
+            foreach(var m in listMarks)
+            {
+                if(dataList.Where(item => item.OficinaId == m.IdOficina).Any())
+                {
+                    var random = new Random();
+                    var cobrado = dataList.FirstOrDefault(item => item.OficinaId == m.IdOficina).Cobrado;
+                    m.Subtitulo = cobrado.ToString("c2");
+                }
+            }
+
+            await MapJsInterop.UpdateMarks(objRef, listMarks);
+            await InvokeAsync(StateHasChanged);
+        });
     }
 }

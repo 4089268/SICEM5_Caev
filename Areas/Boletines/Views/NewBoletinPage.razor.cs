@@ -16,6 +16,7 @@ using Sicem_Blazor.Models;
 using Sicem_Blazor.Data;
 using Sicem_Blazor.Boletines.Services;
 using Sicem_Blazor.Boletines.Models;
+using Sicem_Blazor.Helpers;
 
 namespace Sicem_Blazor.Boletines.Views
 {
@@ -40,13 +41,14 @@ namespace Sicem_Blazor.Boletines.Views
         private bool busyDialog = false;
         private OprBoletin Boletin {get;set;}
         private string MensageString {get;set;} = "";
-        private List<Destinatario> Destinatarios {get;set;}
-        private int DestinatariosError {
+        public List<Destinatario> Destinatarios {get;set;}
+        public int DestinatariosError {
             get => (Destinatarios?.Where(item => item.Error == true).Count() ?? 0);
         }
         private List<BoletinMensaje> AttachedFiles {get;set;}
-
         private CultureInfo currentCultueInfo = new("es-MX");
+        private bool dialogIsOpen = false;
+        private string newContactValue = null;
 
 
         protected override async Task OnInitializedAsync()
@@ -68,7 +70,7 @@ namespace Sicem_Blazor.Boletines.Views
             NavManager.NavigateTo("/Boletines");
         }
 
-        private async Task LoadFilePhones(InputFileChangeEventArgs e)
+        public async Task ImportContacts(InputFileChangeEventArgs e)
         {
             busyDialog = true;
             await Task.Delay(100);
@@ -144,6 +146,17 @@ namespace Sicem_Blazor.Boletines.Views
             Destinatarios.AddRange(tmpListaDestinatarios);
 
             busyDialog = false;
+        }
+
+        public async Task AddContact()
+        {
+            if(dialogIsOpen)
+            {
+                return;
+            }
+            this.newContactValue = string.Empty;
+            this.dialogIsOpen = true;
+            await Task.CompletedTask;
         }
 
         private async Task UploadAttachFile(InputFileChangeEventArgs e)
@@ -236,5 +249,72 @@ namespace Sicem_Blazor.Boletines.Views
             await GoBackClick();
         }
 
+        private void HandleSelectionChange(ChangeEventArgs e)
+        {
+            Boletin.Proveedor = e.Value?.ToString();
+            StateHasChanged();
+        }
+
+        private void DialogContactSave()
+        {
+            // * validate the input value
+            if(string.IsNullOrEmpty(newContactValue))
+            {
+                this.Toaster.Add("Ingrese un contacto valido.", MatToastType.Warning);
+                return;
+            }
+
+
+            Destinatario newDestinatario = null;
+            
+            if(Boletin.Proveedor == "EMAIL")
+            {
+                if(!ValidateContact.IsValidEmail(newContactValue))
+                {
+                    this.Toaster.Add("Ingrese un correo electronico valido.", MatToastType.Warning);
+                    return;
+                }
+
+                if(this.Destinatarios.Select(item => item.Correo).Contains(newContactValue.Trim()))
+                {
+                    this.Toaster.Add("El correo ya se encuentra registrado.", MatToastType.Warning);
+                    return;
+                }
+
+                newDestinatario = new Destinatario
+                {
+                    BoletinId = Boletin.Id,
+                    Correo = newContactValue.Trim(),
+                    Titulo = newContactValue
+                };
+
+            }
+            else
+            {
+                if(!ValidateContact.IsValidPhoneNumber(newContactValue))
+                {
+                    this.Toaster.Add("Ingrese un numero de telefono valido de 10 digitos.", MatToastType.Warning);
+                    return;
+                }
+
+                if(this.Destinatarios.Select(item => item.Telefono).Contains(long.Parse(newContactValue)))
+                {
+                    this.Toaster.Add("El numero de telefono ya se encuentra registrado.", MatToastType.Warning);
+                    return;
+                }
+
+                newDestinatario = new Destinatario
+                {
+                    BoletinId = Boletin.Id,
+                    Lada = "52",
+                    Telefono = long.Parse(newContactValue),
+                    Titulo = $"+52 {newContactValue}"
+                };
+            }
+
+            this.Destinatarios.Add(newDestinatario);
+            this.dialogIsOpen = false;
+            StateHasChanged();
+        }
     }
 }

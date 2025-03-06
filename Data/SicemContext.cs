@@ -797,6 +797,11 @@ namespace Sicem_Blazor.Models
 
                 entity.Property(e => e.BoletinId).HasColumnName("boletinId");
 
+                entity.Property(e => e.Correo)
+                    .HasMaxLength(250)
+                    .IsUnicode(false)
+                    .HasColumnName("correo");
+
                 entity.Property(e => e.EnvioMetadata)
                     .IsUnicode(false)
                     .HasColumnName("envioMetadata");
@@ -1171,10 +1176,6 @@ namespace Sicem_Blazor.Models
 
                 entity.Property(e => e.CreatedAt)
                     .HasColumnName("createdAt")
-                    .HasDefaultValueSql("(getdate())");
-
-                entity.Property(e => e.FinishedAt)
-                    .HasColumnName("finishedAt")
                     .HasDefaultValueSql("(getdate())");
 
                 entity.Property(e => e.Proveedor)

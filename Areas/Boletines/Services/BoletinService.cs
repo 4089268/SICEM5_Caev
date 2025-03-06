@@ -59,8 +59,8 @@ public class BoletinService : IBoletinService
             Id = boletin.Id,
             Titulo = boletin.Titulo,
             CreatedAt = boletin.CreatedAt,
+            Proveedor = boletin.Proveedor,
             FinishedAt = null,
-            Proveedor = boletin.Proveedor
         };
         this.sicemContext.OprBoletins.Add(newBoletin);
         await this.sicemContext.SaveChangesAsync();
@@ -138,7 +138,8 @@ public class BoletinService : IBoletinService
             Error = destinatario.Error,
             Resultado = destinatario.Resultado,
             EnvioMetadata = destinatario.EnvioMetadata,
-            FechaEnvio = destinatario.FechaEnvio
+            FechaEnvio = destinatario.FechaEnvio,
+            Correo = destinatario.Correo,
         };
         this.sicemContext.Destinatarios.Add(newDest);
         await this.sicemContext.SaveChangesAsync();
@@ -161,7 +162,8 @@ public class BoletinService : IBoletinService
                 Error = destinatario.Error,
                 Resultado = destinatario.Resultado,
                 EnvioMetadata = destinatario.EnvioMetadata,
-                FechaEnvio = destinatario.FechaEnvio
+                FechaEnvio = destinatario.FechaEnvio,
+                Correo = destinatario.Correo
             };
             this.sicemContext.Destinatarios.Add(newDestinatario);
             count++;

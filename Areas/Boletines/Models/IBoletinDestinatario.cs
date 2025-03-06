@@ -14,4 +14,5 @@ public interface IBoletinDestinatario
     public string Resultado {get;set;}
     public string EnvioMetadata {get;set;}
     public DateTime? FechaEnvio {get;set;}
+    public string Correo {get;set;}
 }

@@ -15,6 +15,7 @@ namespace Sicem_Blazor.Models
         public string Resultado { get; set; }
         public string EnvioMetadata { get; set; }
         public DateTime? FechaEnvio { get; set; }
+        public string Correo { get; set; }
 
         public virtual OprBoletin Boletin { get; set; }
 

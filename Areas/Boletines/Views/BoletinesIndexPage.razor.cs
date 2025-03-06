@@ -46,6 +46,8 @@ namespace Sicem_Blazor.Boletines.Views
         private List<IBoletinMensaje> messagesList {get;set;}
         private List<IBoletinDestinatario> destinatarios {get;set;}
         private bool dialogIsOpen = false;
+        private bool showMessage = false;
+        private string messageIdSelected = "";
 
         protected override async Task OnInitializedAsync()
         {
@@ -81,7 +83,6 @@ namespace Sicem_Blazor.Boletines.Views
             await Task.CompletedTask;
             NavigationManager1.NavigateTo("/Boletines/Nuevo");
         }
-
 
         public async Task OnBoletinEditClick()
         {
@@ -122,6 +123,12 @@ namespace Sicem_Blazor.Boletines.Views
             }
         }
 
+        public async Task ShowAttachFile(string messageId)
+        {
+            this.messageIdSelected = messageId;
+            this.showMessage = true;
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
 }

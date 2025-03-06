@@ -137,6 +137,13 @@ public class BoletinService : IBoletinService
             .ToList<IBoletinMensaje>();
     }
 
+    public async Task<IBoletinMensaje> ObtenerMensaje(Guid mensajeId)
+    {
+        var message = this.sicemContext.BoletinMensajes.FirstOrDefault(item => item.Id == mensajeId) ?? throw new KeyNotFoundException();
+        await Task.CompletedTask;
+        return message;
+    }
+
     public async Task RemoverDestinatario(IBoletinDestinatario destinatario)
     {
         var dest = this.sicemContext.Destinatarios.FirstOrDefault( item => item.Id == destinatario.Id);

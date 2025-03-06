@@ -75,6 +75,12 @@
     </MatDialogActions>
 </MatDialog>
 
+<MatDialog @bind-IsOpen="@showMessage">
+    <MatDialogContent>
+        <iframe src="@($"/api/Boletin/attachment/{messageIdSelected}")" width="1024" height="720" />
+    </MatDialogContent>
+</MatDialog>
+
 
 <style>
     .layoutPage

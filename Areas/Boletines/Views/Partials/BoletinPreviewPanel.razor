@@ -61,7 +61,7 @@
         </div>
         @if(MessagesList != null)
         {
-            <ResumeMessage Mensajes="@MessagesList" />
+            <ResumeMessage Mensajes="@MessagesList" OnAttachFileClick="@BoletinPage.ShowAttachFile" />
         }
     </div>
 

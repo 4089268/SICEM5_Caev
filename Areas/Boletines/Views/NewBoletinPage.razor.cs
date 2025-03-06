@@ -256,13 +256,15 @@ namespace Sicem_Blazor.Boletines.Views
             if(string.IsNullOrEmpty(MensageString) && !AttachedFiles.Any())
             {
                 Toaster.Add("Agrege un mensaje o un archivo.", MatToastType.Warning);
+                busyDialog = false;
                 return;
             }
 
             // * Validate destinatarios
             if(!Destinatarios.Any())
             {
-                Toaster.Add("Agregue un minimo destinatario.", MatToastType.Warning);
+                Toaster.Add("Agregue minimo un contacto destinatario.", MatToastType.Warning);
+                busyDialog = false;
                 return;
             }
 

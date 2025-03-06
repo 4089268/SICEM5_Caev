@@ -1178,10 +1178,6 @@ namespace Sicem_Blazor.Models
                     .HasColumnName("createdAt")
                     .HasDefaultValueSql("(getdate())");
 
-                entity.Property(e => e.FinishedAt)
-                    .HasColumnName("finishedAt")
-                    .HasDefaultValueSql("(getdate())");
-
                 entity.Property(e => e.Proveedor)
                     .HasMaxLength(20)
                     .IsUnicode(false)

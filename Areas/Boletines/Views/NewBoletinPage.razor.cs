@@ -93,50 +93,22 @@ namespace Sicem_Blazor.Boletines.Views
 
             // * get the phone numbers
             var tmpListaDestinatarios = new List<Destinatario>();
-            var i = 1;
-            foreach(DataRow row in _datos.Rows)
+            var tmpDestinatariosFailure = new List<string>();
+
+            for(int i = 0; i< _datos.Rows.Count; i++)
             {
-                this.Logger.LogDebug("Procesando {i} de {total}", i, _datos.Rows.Count);
-                try
+                var row = _datos.Rows[i];
+                this.Logger.LogDebug("Procesando {i} de {total}", i + 1, _datos.Rows.Count);
+                
+                if(Boletin.Proveedor == "EMAIL")
                 {
-                    long telefono = Convert.ToInt64(row[0]);
-                    int lada = int.TryParse(row[1].ToString(), out int _lada) ? _lada : 52;
-                    if(Destinatarios.Select(item => item.Telefono).Contains(telefono))
-                    {
-                        continue;
-                    }
-
-                    // * validate the phonenumber and save as failure
-                    if(telefono.ToString().Length != 10)
-                    {
-                        tmpListaDestinatarios.Add( new Destinatario
-                        {
-                            BoletinId = Boletin.Id,
-                            Lada = lada.ToString(),
-                            Telefono = telefono,
-                            Titulo = $"+{lada} {telefono}",
-                            Error = true,
-                            Resultado = "Telefono Invalido",
-                            FechaEnvio = DateTime.Now
-                        });
-                        continue;
-                    }
-
-                    // * save the phonenumber
-                    tmpListaDestinatarios.Add( new Destinatario
-                    {
-                        BoletinId = Boletin.Id,
-                        Lada = lada.ToString(),
-                        Telefono = telefono,
-                        Titulo = $"+{lada} {telefono}"
-                    });
-                } catch(Exception ex)
-                {
-                    this.Logger.LogError("No se puede cargar el telefono '{phone}': {message}", row[0], ex.Message);
+                    ProcessContactRowEmail(row, tmpListaDestinatarios, tmpDestinatariosFailure);
                 }
-                i++;
+                else
+                {
+                    ProcessContactRowPhone(row, tmpListaDestinatarios, tmpDestinatariosFailure);
+                }
             }
-            
 
             // * append the new phone numbers
             if(Destinatarios == null)
@@ -146,6 +118,81 @@ namespace Sicem_Blazor.Boletines.Views
             Destinatarios.AddRange(tmpListaDestinatarios);
 
             busyDialog = false;
+
+            // * show failures
+            if(tmpDestinatariosFailure.Any())
+            {
+                this.Toaster.Add($"Se encontraron {tmpDestinatariosFailure.Count} contactos no validos", MatToastType.Warning);
+                this.Logger.LogWarning("Se encontraron contactos no validos: {total}", tmpDestinatariosFailure.Count);
+                foreach(var item in tmpDestinatariosFailure)
+                {
+                    this.Logger.LogWarning("Contacto no valido: {contacto}", item);
+                }
+            }
+        }
+
+        private void ProcessContactRowPhone(DataRow row, List<Destinatario> tmpListaDestinatarios, List<string> tmpDestinatariosFailure)
+        {
+            try
+            {
+                // * validate the contact phone number
+                if(!ValidateContact.IsValidPhoneNumber(row[0].ToString().Trim()))
+                {
+                    tmpDestinatariosFailure.Add(row[0].ToString());
+                    return;
+                }
+
+                // * check if the phone is already stored
+                long telefono = Convert.ToInt64(row[0]);
+                int lada = int.TryParse(row[1].ToString(), out int _lada) ? _lada : 52;
+                if(Destinatarios.Select(item => item.Telefono).Contains(telefono))
+                {
+                    return;
+                }
+
+                // * save the phonenumber
+                tmpListaDestinatarios.Add( new Destinatario
+                {
+                    BoletinId = Boletin.Id,
+                    Lada = lada.ToString(),
+                    Telefono = telefono,
+                    Titulo = $"+{lada} {telefono}"
+                });
+            } catch(Exception ex)
+            {
+                this.Logger.LogError("No se puede cargar el telefono '{phone}': {message}", row[0], ex.Message);
+            }
+        }
+
+        private void ProcessContactRowEmail(DataRow row, List<Destinatario> tmpListaDestinatarios, List<string> tmpDestinatariosFailure)
+        {
+            try
+            {
+                // * validate the contact email
+                if(!ValidateContact.IsValidEmail(row[0].ToString().Trim()))
+                {
+                    tmpDestinatariosFailure.Add(row[0].ToString());
+                    return;
+                }
+
+                // * check if the phone is already stored
+                string correo = row[0].ToString().Trim();
+                if(Destinatarios.Select(item => item.Correo).Contains(correo))
+                {
+                    return;
+                }
+
+                // * save the contact
+                tmpListaDestinatarios.Add( new Destinatario
+                {
+                    BoletinId = Boletin.Id,
+                    Correo = correo,
+                    Titulo = correo
+                });
+            } catch(Exception ex)
+            {
+                this.Logger.LogError("No se puede cargar el correo '{correo}': {message}", row[0], ex.Message);
+            }
         }
 
         public async Task AddContact()
@@ -252,6 +299,7 @@ namespace Sicem_Blazor.Boletines.Views
         private void HandleSelectionChange(ChangeEventArgs e)
         {
             Boletin.Proveedor = e.Value?.ToString();
+            this.Destinatarios.Clear();
             StateHasChanged();
         }
 

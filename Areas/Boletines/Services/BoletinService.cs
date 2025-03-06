@@ -138,7 +138,8 @@ public class BoletinService : IBoletinService
             Error = destinatario.Error,
             Resultado = destinatario.Resultado,
             EnvioMetadata = destinatario.EnvioMetadata,
-            FechaEnvio = destinatario.FechaEnvio
+            FechaEnvio = destinatario.FechaEnvio,
+            Correo = destinatario.Correo,
         };
         this.sicemContext.Destinatarios.Add(newDest);
         await this.sicemContext.SaveChangesAsync();
@@ -161,7 +162,8 @@ public class BoletinService : IBoletinService
                 Error = destinatario.Error,
                 Resultado = destinatario.Resultado,
                 EnvioMetadata = destinatario.EnvioMetadata,
-                FechaEnvio = destinatario.FechaEnvio
+                FechaEnvio = destinatario.FechaEnvio,
+                Correo = destinatario.Correo
             };
             this.sicemContext.Destinatarios.Add(newDestinatario);
             count++;

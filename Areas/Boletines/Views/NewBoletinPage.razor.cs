@@ -183,7 +183,7 @@ namespace Sicem_Blazor.Boletines.Views
                 }
 
                 // * save the contact
-                tmpListaDestinatarios.Add( new Destinatario
+                tmpListaDestinatarios.Add(new Destinatario
                 {
                     BoletinId = Boletin.Id,
                     Correo = correo,

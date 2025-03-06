@@ -11,6 +11,8 @@ public interface IBoletinService
     Task<ICollection<IBoletinMensaje>> GetMensajesBoletin(Guid boletinId);
     Task<ICollection<IBoletinDestinatario>> GetDestinatariosBoletin(Guid boletinId);
     Task<Guid> AlmacenarBoletin(BoletinDTO boletin);
+
+    Task<int> EliminarBoletin(BoletinDTO boletin);
     
     Task<Guid> StoreBoletinMensaje(Guid boletinId, IBoletinMensaje mensaje);
     Task ActualizarMensaje(Guid mensajeId, IBoletinMensaje mensaje);

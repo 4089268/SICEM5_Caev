@@ -45,7 +45,7 @@
     <div style="grid-area: 3/2/4/3;">
         @if(boletinSelected != null)
         {
-            <BoletinPreviewPanel Boletin="@boletinSelected" MessagesList="@messagesList" Destinatarios="@destinatarios" />
+            <BoletinPreviewPanel BoletinPage="@this" Boletin="@boletinSelected" MessagesList="@messagesList" Destinatarios="@destinatarios" />
         }
         else
         {
@@ -64,6 +64,18 @@
 
 @* ****** Dialogos y ventanas secundarias ****** *@
 <BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+
+<MatDialog @bind-IsOpen="@dialogIsOpen">
+    <MatDialogContent>
+        <p>Esta por eliminar este boletin, desea continuar?</p>
+    </MatDialogContent>
+    <MatDialogActions>
+        <MatButton class="btn-danger" OnClick="@(e => { dialogIsOpen = false; })">Cancelar</MatButton>
+        <MatButton OnClick="EliminarBoletin">Eliminar</MatButton>
+    </MatDialogActions>
+</MatDialog>
+
+
 <style>
     .layoutPage
     {

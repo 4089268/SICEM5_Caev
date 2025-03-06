@@ -1,7 +1,21 @@
 @namespace Sicem_Blazor.Boletines.Views.Partials
 @using Sicem_Blazor.Boletines.Models
+@using Sicem_Blazor.Boletines.Views
 
 <div class="border rounded bg-white h-100 overflow-auto">
+
+    <div class="d-flex bg-white shadow p-4 mb-1" style="font-size:1.2rem;">
+        <button class="btn btn-info mr-2 me-2" style="width:12rem; font-size: inherit;" @onclick="@BoletinPage.OnBoletinEditClick">
+            <i class="fa fa-pencil"></i>
+            <span>Editar</span>
+        </button>
+
+        <button class="btn btn-danger mr-2 me-2" style="width:12rem; font-size: inherit;" @onclick="@BoletinPage.OnBoletinDeleteClick">
+            <i class="fa fa-trash"></i>
+            <span>Eliminar</span>
+        </button>
+    </div>
+
     <div class="d-flex flex-column bg-white shadow p-4">
         <div class="d-flex align-items-center justify-content-between">
             <h2>@Boletin.Titulo</h2>
@@ -50,7 +64,8 @@
             <ResumeMessage Mensajes="@MessagesList" />
         }
     </div>
-    <div class="d-flex flex-column bg-white shadow p-4">
+
+    <div class="d-flex flex-column bg-white p-4">
         <div class="pt-4 px-2">
             <h2>Destinatarios</h2>
         </div>
@@ -108,7 +123,6 @@
                 else
                 {
                     <tbody>
-                        
                         <tr>
                             <td colspan="4">
                                 <div>Sin datos disponibles</div>
@@ -124,6 +138,9 @@
 @code
 {
     [Parameter]
+    public BoletinesIndexPage BoletinPage {get;set;}
+
+    [Parameter]
     public BoletinDTO Boletin {get;set;}
 
     [Parameter]
@@ -131,9 +148,4 @@
 
     [Parameter]
     public List<IBoletinDestinatario> Destinatarios {get;set;}
-
-    [Parameter]
-    public EventCallback<BoletinDTO> OnBoletinClick {get;set;}
-
-
 }

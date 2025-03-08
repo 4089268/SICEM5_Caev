@@ -45,6 +45,9 @@ namespace Sicem_Blazor.Boletines.Views
         private BoletinDTO boletinSelected {get;set;}
         private List<IBoletinMensaje> messagesList {get;set;}
         private List<IBoletinDestinatario> destinatarios {get;set;}
+        private bool dialogIsOpen = false;
+        private bool showMessage = false;
+        private string messageIdSelected = "";
 
         protected override async Task OnInitializedAsync()
         {
@@ -81,6 +84,51 @@ namespace Sicem_Blazor.Boletines.Views
             NavigationManager1.NavigateTo("/Boletines/Nuevo");
         }
 
+        public async Task OnBoletinEditClick()
+        {
+            this.Toaster.Add("Boletin edit click", MatToastType.Warning);
+            await Task.CompletedTask;
+        }
+
+        public async Task OnBoletinDeleteClick()
+        {
+            this.dialogIsOpen = false;
+            dialogIsOpen = true;
+            await InvokeAsync(StateHasChanged);
+        }
+
+        public async Task EliminarBoletin()
+        {
+
+            this.busyDialog = true;
+            await InvokeAsync(StateHasChanged);
+            try
+            {
+                // * delete the boletin
+                var results = await this.BoletinService.EliminarBoletin(boletinSelected);
+
+                // * update the current list`
+                this.boletinesList = boletinesList.Where(item => item.Id != boletinSelected.Id).ToList();
+                await InvokeAsync(StateHasChanged);
+            }
+            catch(Exception err)
+            {
+                this.Toaster.Add("Error al eliminar el boletin: " + err.Message, MatToastType.Danger);
+            }
+            finally
+            {
+                this.boletinSelected = null;
+                this.dialogIsOpen = false;
+                this.busyDialog = false;
+            }
+        }
+
+        public async Task ShowAttachFile(string messageId)
+        {
+            this.messageIdSelected = messageId;
+            this.showMessage = true;
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
 }

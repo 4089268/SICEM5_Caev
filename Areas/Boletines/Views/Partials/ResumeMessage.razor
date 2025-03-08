@@ -22,7 +22,7 @@
                 {
                     @foreach(var mfile in MensajeArchivos)
                     {
-                        <BoletinMessageFilePanel Mensaje="@mfile" />
+                        <BoletinMessageFilePanel Mensaje="@mfile" OnAttachFileClick="ShowAttachFile" />
                     }
                 }
             </div>
@@ -34,6 +34,9 @@
 {
     [Parameter]
     public List<IBoletinMensaje> Mensajes { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnAttachFileClick { get; set; }
 
     public IBoletinMensaje MensajeTexto
     {
@@ -65,5 +68,10 @@
         }
 
         return $"{len:0.##} {sizes[order]}";
+    }
+
+    public async Task ShowAttachFile(string messageId)
+    {
+        await OnAttachFileClick.InvokeAsync(messageId);
     }
 }

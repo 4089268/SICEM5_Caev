@@ -45,7 +45,7 @@
     <div style="grid-area: 3/2/4/3;">
         @if(boletinSelected != null)
         {
-            <BoletinPreviewPanel Boletin="@boletinSelected" MessagesList="@messagesList" Destinatarios="@destinatarios" />
+            <BoletinPreviewPanel BoletinPage="@this" Boletin="@boletinSelected" MessagesList="@messagesList" Destinatarios="@destinatarios" />
         }
         else
         {
@@ -64,6 +64,35 @@
 
 @* ****** Dialogos y ventanas secundarias ****** *@
 <BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+
+<MatDialog @bind-IsOpen="@dialogIsOpen">
+    <MatDialogContent>
+        <p>Esta por eliminar este boletin, desea continuar?</p>
+    </MatDialogContent>
+    <MatDialogActions>
+        <MatButton class="btn-danger" OnClick="@(e => { dialogIsOpen = false; })">Cancelar</MatButton>
+        <MatButton OnClick="EliminarBoletin">Eliminar</MatButton>
+    </MatDialogActions>
+</MatDialog>
+
+
+
+@if(showMessage)
+{
+    <VentanaSecundaria Titulo="Documento adjunto" Filas="@(new double[]{.75})" Columnas="@(new double[]{ .75 })" CerrarVentana="@(e => showMessage = false)" Draggable="false">
+        <Content>
+            <iframe class="w-100 h-100 border-0" src="@($"/api/Boletin/attachment/{messageIdSelected}")" />
+        </Content>
+    </VentanaSecundaria>
+}
+
+@* <MatDialog @bind-IsOpen="@showMessage">
+    <MatDialogContent>
+        
+    </MatDialogContent>
+</MatDialog> *@
+
+
 <style>
     .layoutPage
     {

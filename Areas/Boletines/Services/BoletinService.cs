@@ -67,6 +67,37 @@ public class BoletinService : IBoletinService
         return newBoletin.Id;
     }
 
+    public async Task<int> EliminarBoletin(BoletinDTO boletin)
+    {
+        var _boletin = this.sicemContext.OprBoletins.Find(boletin.Id);
+        if(_boletin == null)
+        {
+            throw new KeyNotFoundException("Boletin not found");
+        }
+
+        using var transaction = await this.sicemContext.Database.BeginTransactionAsync();
+        try
+        {
+            var destinatarios = this.sicemContext.Destinatarios.Where(d => d.BoletinId == boletin.Id).ToList();
+            this.sicemContext.Destinatarios.RemoveRange(destinatarios);
+
+            var mensajes = this.sicemContext.BoletinMensajes.Where(m => m.BoletinId == boletin.Id).ToList();
+            this.sicemContext.BoletinMensajes.RemoveRange(mensajes);
+
+            this.sicemContext.OprBoletins.Remove(_boletin);
+
+            var result = await this.sicemContext.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return result;
+        }
+        catch (Exception err)
+        {
+            this.logger.LogError(err, "Fail at delete the boletin");
+            await transaction.RollbackAsync();
+            return 0;
+        }
+    }
+
     public async Task<ICollection<BoletinDTO>> GetBoletines()
     {
         await Task.CompletedTask;
@@ -104,6 +135,13 @@ public class BoletinService : IBoletinService
         return this.sicemContext.BoletinMensajes
             .Where( item => item.BoletinId == boletinId)
             .ToList<IBoletinMensaje>();
+    }
+
+    public async Task<IBoletinMensaje> ObtenerMensaje(Guid mensajeId)
+    {
+        var message = this.sicemContext.BoletinMensajes.FirstOrDefault(item => item.Id == mensajeId) ?? throw new KeyNotFoundException();
+        await Task.CompletedTask;
+        return message;
     }
 
     public async Task RemoverDestinatario(IBoletinDestinatario destinatario)

@@ -99,18 +99,17 @@ namespace Sicem_Blazor.Boletines.Views
 
         public async Task EliminarBoletin()
         {
+
             this.busyDialog = true;
             await InvokeAsync(StateHasChanged);
             try
             {
-
                 // * delete the boletin
                 var results = await this.BoletinService.EliminarBoletin(boletinSelected);
 
                 // * update the current list`
                 this.boletinesList = boletinesList.Where(item => item.Id != boletinSelected.Id).ToList();
                 await InvokeAsync(StateHasChanged);
-                
             }
             catch(Exception err)
             {
@@ -118,6 +117,7 @@ namespace Sicem_Blazor.Boletines.Views
             }
             finally
             {
+                this.boletinSelected = null;
                 this.dialogIsOpen = false;
                 this.busyDialog = false;
             }

@@ -75,11 +75,22 @@
     </MatDialogActions>
 </MatDialog>
 
-<MatDialog @bind-IsOpen="@showMessage">
+
+
+@if(showMessage)
+{
+    <VentanaSecundaria Titulo="Documento adjunto" Filas="@(new double[]{.75})" Columnas="@(new double[]{ .75 })" CerrarVentana="@(e => showMessage = false)" Draggable="false">
+        <Content>
+            <iframe class="w-100 h-100 border-0" src="@($"/api/Boletin/attachment/{messageIdSelected}")" />
+        </Content>
+    </VentanaSecundaria>
+}
+
+@* <MatDialog @bind-IsOpen="@showMessage">
     <MatDialogContent>
-        <iframe src="@($"/api/Boletin/attachment/{messageIdSelected}")" width="1024" height="720" />
+        
     </MatDialogContent>
-</MatDialog>
+</MatDialog> *@
 
 
 <style>

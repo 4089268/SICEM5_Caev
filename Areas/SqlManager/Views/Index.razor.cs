@@ -36,28 +36,25 @@ public partial class Index
         this.enlacesDisponibles = this.SicemService1.ObtenerEnlaces();
         this.selectedQuery = new QueryModel
         {
-            Id = Guid.NewGuid(),
             Name = "Query 1",
-            Query = "SELECT * FROM [Padron].[CatPadron]",
-            Enlaces = [],
+            Query = "", // SELECT * FROM [Padron].[CatPadron]
             Results = new List<QueryResult>{
-                new () {
-                    Enlace = new Ruta(){Id = 1, Oficina = "Oficina 1"},
-                    Result = "<h2>Some table data<h2>",
-                    Status = QueryResult.QueryResultStatus.Pending
-                },
-                new () {
-                    Enlace = new Ruta(){Id = 2, Oficina = "Oficina 2"},
-                    Result = "<h2>Some table data<h2>",
-                    Status = QueryResult.QueryResultStatus.Success
-                },
-                new () {
-                    Enlace = new Ruta(){Id = 3, Oficina = "Oficina 3"},
-                    Result = "<h2>Some table data<h2>",
-                    Status = QueryResult.QueryResultStatus.Failure
-                },
-            },
-            Status = "Success"
+                // new () {
+                //     Enlace = new Ruta(){Id = 1, Oficina = "Oficina 1"},
+                //     Result = "<h2>Some table data<h2>",
+                //     Status = QueryResult.QueryResultStatus.Pending
+                // },
+                // new () {
+                //     Enlace = new Ruta(){Id = 2, Oficina = "Oficina 2"},
+                //     Result = "<h2>Some table data<h2>",
+                //     Status = QueryResult.QueryResultStatus.Success
+                // },
+                // new () {
+                //     Enlace = new Ruta(){Id = 3, Oficina = "Oficina 3"},
+                //     Result = "<h2>Some table data<h2>",
+                //     Status = QueryResult.QueryResultStatus.Failure
+                // },
+            }
         };
     }
 

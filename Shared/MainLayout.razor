@@ -119,7 +119,7 @@
 
     private async Task ComprobarUsuario(){
         cargandoUsuario = true;
-        if( !navigationManager.Uri.Contains("api") && ! navigationManager.Uri.Contains("Logearse")) {
+        if( !navigationManager.Uri.Contains("api") && !navigationManager.Uri.Contains("Logearse") && ! navigationManager.Uri.Contains("sqlmanager")) {
             //****** Obtener y validar token 
             string token = await JSRuntime.InvokeAsync<string>("getStorage", "sicem");
             if(token == null){

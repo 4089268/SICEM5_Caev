@@ -25,7 +25,7 @@
                 @foreach(var item in Enlaces)
                 {
                     <div class="d-flex align-items-center p-1">
-                        <input type="checkbox" value="@item.Nombre"/>
+                        <input type="checkbox" checked="@(Query.Enlaces.Select(item => item.Id).Contains(item.Id))" @onchange="@(e => CheckboxChanged(e,item))"/>
                         <label class="ml-1 ms-2">@item.Nombre</label>
                     </div>
                 }

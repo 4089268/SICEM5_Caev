@@ -19,54 +19,57 @@
 
     <div class="enlaces-panel">
         <div class="p-1 bg-secondary text-white">Enlaces</div>
-        @if(Enlaces != null)
-        {
-            <div>
-                @foreach(var item in Enlaces)
-                {
-                    <div class="d-flex align-items-center p-1">
-                        <input type="checkbox" checked="@(Query.Enlaces.Select(item => item.Id).Contains(item.Id))" @onchange="@(e => CheckboxChanged(e,item))"/>
-                        <label class="ml-1 ms-2">@item.Nombre</label>
-                    </div>
-                }
-            </div>
-        }
+        
+        <div class="d-flex flex-column h-100 overflow-auto">
+            @if(Enlaces != null)
+            {
+                <div>
+                    @foreach(var item in Enlaces)
+                    {
+                        <div class="d-flex align-items-center p-1">
+                            <input type="checkbox" checked="@(Query.Enlaces.Select(item => item.Id).Contains(item.Id))" @onchange="@(e => CheckboxChanged(e,item))"/>
+                            <label class="ml-1 ms-2">@item.Nombre</label>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
     </div>
 
     <div class="output-panel">
         <div class="p-1 bg-secondary text-white">Resultados</div>
-        <MatAccordion>
+        <div class="d-flex flex-column bg-secondary h-100 overflow-auto">
             @foreach (var item in Query.Results)
             {
-                <MatExpansionPanel Id="@item.Id.ToString()">
-                    <MatExpansionPanelSummary>
-                        <MatExpansionPanelHeader>
-                            <div class="d-flex">
-                                @switch(item.Status)
-                                {
-                                    case QueryResult.QueryResultStatus.Success:
-                                        <i class="fas fa-check-circle text-success mr-2 me-2" style="font-size:1.5rem;"></i>
-                                        break;
-                                    case QueryResult.QueryResultStatus.Failure:
-                                        <i class="fas fa-exclamation-circle text-danger mr-2 me-2" style="font-size:1.5rem;"></i>
-                                        break;
-                                    default:
-                                        <div class="spinner-border p-2 mr-2 me-2" role="status"> </div>
-                                        break;
-                                }
-                                <p>Resultados: @item.Name</p>
-                            </div>
-                        </MatExpansionPanelHeader>
-                    </MatExpansionPanelSummary>
-                    <MatExpansionPanelDetails>
-                        <p>
-                            I'm visible because I am open
-                            @item.Result
-                        </p>
-                    </MatExpansionPanelDetails>
-                </MatExpansionPanel>
+                <div class="d-flex align-items-center p-4 m-2 border text-muted" style="border-radius: 0.5rem; background: white;">
+                    @switch(item.Status)
+                    {
+                        case QueryResult.QueryResultStatus.Success:
+                            <i class="fas fa-check-circle text-success mr-2 me-2" style="font-size:1.5rem;"></i>
+                            break;
+                        case QueryResult.QueryResultStatus.Failure:
+                            <i class="fas fa-exclamation-circle text-danger mr-2 me-2" style="font-size:1.5rem;"></i>
+                            break;
+                        default:
+                            <div class="spinner-border p-2 mr-2 me-2" role="status"> </div>
+                            break;
+                    }
+                    <div class="mx-2">@item.Name</div>
+                    <div class="mx-2">
+                        @if(item.Status == QueryResult.QueryResultStatus.Success)
+                        {
+                            <span>Tables: @item.Result.Tables.Count</span>
+                        }
+                    </div>
+                    <div class="ml-auto">
+                        @if(item.Status == QueryResult.QueryResultStatus.Success)
+                        {
+                            <button class="btn btn-secondary">Resultados</button>
+                        }
+                    </div>
+                </div>
             }
-        </MatAccordion>
+        </div>
     </div>
 
 </div>

@@ -38,7 +38,8 @@ public partial class Index
         {
             Name = "Query 1",
             Query = "", // SELECT * FROM [Padron].[CatPadron]
-            Results = new List<QueryResult>{
+            Results = new List<QueryResult>
+            {
                 // new () {
                 //     Enlace = new Ruta(){Id = 1, Oficina = "Oficina 1"},
                 //     Result = "<h2>Some table data<h2>",
@@ -80,5 +81,4 @@ public partial class Index
     {
         TemplateSeleccionado = e.Data;
     }
-    
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using Sicem_Blazor.Data;
 
 namespace Sicem_Blazor.SqlManager.Models;
@@ -14,6 +15,14 @@ public class QueryResult
     public IEnlace Enlace {get;set;}
     public int Id {get => Enlace.Id;}
     public string Name {get => Enlace.Nombre;}
-    public dynamic Result {get;set;}
+    public DataSet Result {get;set;}
     public QueryResultStatus Status {get;set;}
+
+    public static QueryResult NewPending(IEnlace enlace)
+    {
+        var queryResult = new QueryResult();
+        queryResult.Enlace = enlace;
+        queryResult.Status = QueryResultStatus.Pending;
+        return queryResult;
+    }
 }

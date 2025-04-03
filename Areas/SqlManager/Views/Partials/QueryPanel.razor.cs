@@ -37,6 +37,10 @@ public partial class QueryPanel
 
     private List<Task> tareas;
 
+    private bool showResultsModal = false;
+    
+    private ResultsVtn resultsVtn1;
+
     public void CheckboxChanged(ChangeEventArgs e, IEnlace enlace)
     {
         var selected = (bool)e.Value;
@@ -126,6 +130,20 @@ public partial class QueryPanel
             }
         }
         InvokeAsync(StateHasChanged);
+    }
+
+
+    private async Task ShowResults(QueryResult queryResults)
+    {
+        if(showResultsModal == true)
+        {
+            return;
+        }
+
+        showResultsModal = true;
+        resultsVtn1.Inicializar(null, queryResults);
+
+        await InvokeAsync(StateHasChanged);
     }
 
 }

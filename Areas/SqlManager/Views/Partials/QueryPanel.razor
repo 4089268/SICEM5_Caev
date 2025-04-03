@@ -64,15 +64,17 @@
                     <div class="ml-auto">
                         @if(item.Status == QueryResult.QueryResultStatus.Success)
                         {
-                            <button class="btn btn-secondary">Resultados</button>
+                            <button class="btn btn-secondary" @onclick="(e => ShowResults(item))">Resultados</button>
                         }
                     </div>
                 </div>
             }
         </div>
     </div>
-
 </div>
+
+<ResultsVtn @ref="resultsVtn1" OnClose="@(e => showResultsModal = false)" Visible="showResultsModal"/>
+
 
 <style>
     .panel-root

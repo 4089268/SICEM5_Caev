@@ -1,0 +1,66 @@
+@namespace Sicem_Blazor.SqlManager.Views.Partials
+
+@using System
+@using System.Data
+@using System.Dynamic
+@using System.Collections.Generic
+@using Sicem_Blazor.Recaudacion.Models
+@using Sicem_Blazor.Recaudacion.Data
+@inject IMatToaster Toaster
+
+@if(Visible)
+{
+    <VentanaSecundaria Titulo="@Titulo" Columnas="@(new double[]{.9})" Filas="@(new double[]{50, .8})" CerrarVentana="@CerrarModal">
+        <Content>
+            <div class="d-flex align-items-center border rounded p-2 mb-2 bg-white">
+                <div class="button bg-success px-3 py-2" @onclick="OnExportExcel_Click" >
+                    <i class="fa fa-file-excel mr-2"></i>
+                    <span>Exportar Historial</span>
+                </div>
+            </div>
+            
+            <div class="d-flex flex-column h-100 w-100 overflow-auto">
+                <MatAccordion>
+                    @foreach(DataTable dataTable in Results.Result.Tables)
+                    {
+                        @if (dataTable == null) continue; // Si no es DataTable, ignóralo
+
+                        <MatExpansionPanel>
+                            <MatExpansionPanelSummary>
+                                <MatExpansionPanelHeader>
+                                    <div> Resultados </div>
+                                </MatExpansionPanelHeader>
+                            </MatExpansionPanelSummary>
+                            <MatExpansionPanelDetails>
+                                <div class="border rounded p-2 mb-2 bg-white w-full h-full overflow-auto">
+                                    <table class="table table-bordered">
+                                        <thead class="thead-dark">
+                                            <tr>
+                                                @foreach (DataColumn column in dataTable.Columns)
+                                                {
+                                                    <th>@column.ColumnName</th>
+                                                }
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (DataRow row in dataTable.Rows)
+                                            {
+                                                <tr>
+                                                    @foreach (DataColumn column in dataTable.Columns)
+                                                    {
+                                                        <td>@row[column]</td>
+                                                    }
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </MatExpansionPanelDetails>
+                        </MatExpansionPanel>
+                    }
+                </MatAccordion>
+            </div>
+        </Content>
+    </VentanaSecundaria>
+}
+<BusyIndicator Busy="@busyDialog" ContentText="Cargando datos..." />

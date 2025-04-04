@@ -13,6 +13,7 @@ using System.Data.SqlClient;
 using Sicem_Blazor.Models;
 using System.Data;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Sicem_Blazor.Controllers {
 
@@ -22,10 +23,12 @@ namespace Sicem_Blazor.Controllers {
 
         private readonly SicemService sicemService;
         private readonly IConfiguration configuration;
+        private readonly ILogger<DefaultController> logger;
 
-        public DefaultController(IConfiguration c, SicemService s) {
+        public DefaultController(IConfiguration c, SicemService s, ILogger<DefaultController> logger) {
             this.configuration = c;
-            sicemService = s;
+            this.sicemService = s;
+            this.logger = logger;
         }
 
 
@@ -182,8 +185,9 @@ namespace Sicem_Blazor.Controllers {
 
         [HttpGet]
         [Route("/api/Download/{guid}")]
-        public IActionResult DescargarArchivo(string guid){
-            Console.WriteLine(">>" + guid);
+        public IActionResult DescargarArchivo(string guid)
+        {
+            this.logger.LogInformation("Descargando archivo con GUID: " + guid);
             var _tmpFolder = configuration.GetValue<string>("TempFolder");
             var _dirInfo = new DirectoryInfo($"{_tmpFolder}{guid}");
 

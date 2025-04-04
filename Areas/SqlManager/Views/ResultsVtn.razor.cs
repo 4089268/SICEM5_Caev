@@ -3,13 +3,31 @@ using System.Data;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using MatBlazor;
 using Sicem_Blazor.Data;
 using Sicem_Blazor.SqlManager.Models;
+using Sicem_Blazor.Helpers;
 
 namespace Sicem_Blazor.SqlManager.Views.Partials;
 
 public partial class ResultsVtn
 {
+    [Inject]
+    public IMatToaster MatToaster {get;set;}
+
+    [Inject]
+    public IJSRuntime JSRuntime {get;set;}
+    
+    [Inject]
+    public IConfiguration Configuration {get;set;}
+
+    [Inject]
+    public ILogger<ResultsVtn> Logger {get;set;}
+
+
     [Parameter]
     public EventCallback OnClose {get;set;}
 
@@ -35,16 +53,25 @@ public partial class ResultsVtn
         await OnClose.InvokeAsync(null);
     }
 
-    private async Task OnExportExcel_Click()
+    private async Task ExportExcelClick()
     {
-        await Task.CompletedTask;
-        // var _guid = Guid.NewGuid().ToString().Replace("-","").Substring(0,10);
-        // var _titulo = Titulo.Replace(" - ",".").Replace(" ","_").ToString();
-        // var _p = new ExcelExportProperties(){
-        //     FileName = $"{_titulo}-{_guid}.xlsx",
-        //     IncludeHiddenColumn = true
-        // };
-        // await DataGrid.ExportToExcelAsync(_p);
+        MatToaster.Add("Exportando a Excel", MatToastType.Info);
+
+        // * prepare the file name
+        var fileId = Guid.NewGuid();
+        var _tmpFolder = Configuration.GetValue<string>("TempFolder");
+        var fileName = System.IO.Path.Combine(_tmpFolder, fileId.ToString(),$"resultados-{DateTime.Now.Ticks}.xlsx");
+        
+        // * export data to file
+        var exportDataSet = new ExportDataSet(Results.Result);
+        var fileName2 = exportDataSet.ExportToFile(fileName);
+        Logger.LogInformation("Exportando a Excel: {path}", fileName2);
+
+        // * download the file
+        await JSRuntime.InvokeVoidAsync("downloadFromUrl", new {
+            url = $"/api/download/{fileId}",
+            fileName = $"resultados-{DateTime.Now.Ticks}.xlsx"
+        });
     }
 
 }

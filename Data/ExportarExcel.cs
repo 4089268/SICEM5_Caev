@@ -42,7 +42,7 @@ namespace Sicem_Blazor.Data {
             {
                 var sheet = package.Workbook.Worksheets.Add("My Sheet");
                 
-                var _columnas =  FiltrarColumnas(dataType.GetRuntimeFields().ToList());
+                var _columnas = FiltrarColumnas(dataType.GetRuntimeFields().ToList());
                 var _totalColumnas = _columnas.Count();
                 int row = 1;
 

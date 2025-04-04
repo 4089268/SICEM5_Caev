@@ -132,7 +132,6 @@ public partial class QueryPanel
         InvokeAsync(StateHasChanged);
     }
 
-
     private async Task ShowResults(QueryResult queryResults)
     {
         if(showResultsModal == true)

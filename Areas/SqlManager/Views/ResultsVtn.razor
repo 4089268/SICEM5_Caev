@@ -13,9 +13,9 @@
     <VentanaSecundaria Titulo="@Titulo" Columnas="@(new double[]{.9})" Filas="@(new double[]{50, .8})" CerrarVentana="@CerrarModal">
         <Content>
             <div class="d-flex align-items-center border rounded p-2 mb-2 bg-white">
-                <div class="button bg-success px-3 py-2" @onclick="OnExportExcel_Click" >
+                <div class="button bg-success px-3 py-2" @onclick="ExportExcelClick" >
                     <i class="fa fa-file-excel mr-2"></i>
-                    <span>Exportar Historial</span>
+                    <span>Exportar Resultados</span>
                 </div>
             </div>
             
@@ -28,12 +28,12 @@
                         <MatExpansionPanel>
                             <MatExpansionPanelSummary>
                                 <MatExpansionPanelHeader>
-                                    <div> Resultados </div>
+                                    <div> Resultados: @dataTable.TableName </div>
                                 </MatExpansionPanelHeader>
                             </MatExpansionPanelSummary>
                             <MatExpansionPanelDetails>
-                                <div class="border rounded p-2 mb-2 bg-white w-full h-full overflow-auto">
-                                    <table class="table table-bordered">
+                                <div class="border rounded p-2 bg-white w-full h-full overflow-auto" style="max-height: 600px;">
+                                    <table class="table table-bordered mb-0">
                                         <thead class="thead-dark">
                                             <tr>
                                                 @foreach (DataColumn column in dataTable.Columns)

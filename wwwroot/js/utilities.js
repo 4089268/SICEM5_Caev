@@ -82,7 +82,7 @@ function DownloadFileFromBytes(options){
     URL.revokeObjectURL(url);
       
 }
-function DownloAdFileFromBase64(options){
+function DownloadFileFromBase64(options){
     // options:{content: string,  fileName: string,  contentType: string }
     console.dir(options);
     var element = document.createElement('a');

@@ -9,7 +9,6 @@ namespace Sicem_Blazor.SqlManager.Core;
 
 public class DataSetCombiner
 {
-
     private DataSet[] dataSets;
     private readonly int totalTables;
 
@@ -36,6 +35,7 @@ public class DataSetCombiner
             var table = _firstDataSet.Tables[i];
             combinedTables[i] = table.Clone();
             combinedTables[i].TableName = $"Resultados{i + 1}";
+            combinedTables[i].Columns.Add("Oficina", typeof(string));
         }
     }
 
@@ -49,7 +49,13 @@ public class DataSetCombiner
 
                 foreach(DataRow dataRow in _currentTable.Rows)
                 {
-                    combinedTables[i].ImportRow(dataRow);
+                    DataRow newRow = combinedTables[i].NewRow();
+                    foreach(DataColumn column in _currentTable.Columns)
+                    {
+                        newRow[column.ColumnName] = dataRow[column];
+                    }
+                    newRow["Oficina"] = string.IsNullOrEmpty(ds.DataSetName) ? "Desconocido" : ds.DataSetName;
+                    combinedTables[i].Rows.Add(newRow);
                 }
             }
         }

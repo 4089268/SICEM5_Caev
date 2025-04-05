@@ -111,7 +111,7 @@ public partial class QueryPanel
             var sleep = _random.Next(3000);
             System.Threading.Thread.Sleep(sleep);
 
-            var dataSet = new DataSet();
+            var dataSet = new DataSet(enlace.Nombre);
             using(var sqlConnection = new SqlConnection(enlace.GetConnectionString()))
             {
                 sqlConnection.Open();
@@ -166,25 +166,43 @@ public partial class QueryPanel
         }
 
         // * combine the datasets
-        var dataSetCombiner = new DataSetCombiner(results.Select(x => x.Result));
-        var dataSet = dataSetCombiner.Combine();
+        DataSet dataSet = null;
+        try
+        {
+            var dataSetCombiner = new DataSetCombiner(results.Select(x => x.Result));
+            dataSet = dataSetCombiner.Combine();
+        }
+        catch(Exception ex)
+        {
+            Logger.LogError(ex, "Error al combinar los resultados");
+            MatToaster.Add("Error al combinar los resultados: " + ex.Message, MatToastType.Danger);
+            return;
+        }
 
-        // * prepare the file name
-        var fileId = Guid.NewGuid();
-        var _tmpFolder = Configuration.GetValue<string>("TempFolder");
-        var fileName = System.IO.Path.Combine(_tmpFolder, fileId.ToString(),$"resultados-{DateTime.Now.Ticks}.xlsx");
-        
-        // * export data to file
-        var exportDataSet = new ExportDataSet(dataSet);
-        var fileName2 = exportDataSet.ExportToFile(fileName);
-        Logger.LogInformation("Exportando a Excel: {path}", fileName2);
+        try
+        {
+            // * prepare the file name
+            var fileId = Guid.NewGuid();
+            var _tmpFolder = Configuration.GetValue<string>("TempFolder");
+            var fileName = System.IO.Path.Combine(_tmpFolder, fileId.ToString(),$"resultados-{DateTime.Now.Ticks}.xlsx");
+            
+            // * export data to file
+            var exportDataSet = new ExportDataSet(dataSet);
+            var fileName2 = exportDataSet.ExportToFile(fileName);
+            Logger.LogInformation("Exportando a Excel: {path}", fileName2);
 
-        // * download the file
-        await JSRuntime.InvokeVoidAsync("downloadFromUrl", new {
-            url = $"/api/download/{fileId}",
-            fileName = $"resultados-{DateTime.Now.Ticks}.xlsx"
-        });
+            // * download the file
+            await JSRuntime.InvokeVoidAsync("downloadFromUrl", new {
+                url = $"/api/download/{fileId}",
+                fileName = $"resultados-{DateTime.Now.Ticks}.xlsx"
+            });
+        }
+        catch(Exception ex)
+        {
+            Logger.LogError(ex, "Error al exportar a Excel: {path}", ex.Message);
+            MatToaster.Add("Error al exportar los resultados" + ex.Message, MatToastType.Danger);
+        }
 
-
+        dataSet.Dispose();
     }
 }

@@ -6,17 +6,19 @@ using System.Linq;
 using System.Threading.Tasks;
 using MatBlazor;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using Sicem_Blazor.Data;
 using Sicem_Blazor.Services;
 using Sicem_Blazor.SqlManager.Models;
+using Sicem_Blazor.SqlManager.Core;
+using Sicem_Blazor.Helpers;
 
 namespace Sicem_Blazor.SqlManager.Views.Partials;
 
 public partial class QueryPanel
 {
-
     [Inject]
     public IJSRuntime JSRuntime {get;set;}
 
@@ -29,6 +31,10 @@ public partial class QueryPanel
     [Inject]
     public ILogger<QueryPanel> Logger {get;set;}
 
+    [Inject]
+    public IConfiguration Configuration {get;set;}
+    
+
     [Parameter]
     public QueryModel Query {get;set;}
 
@@ -38,7 +44,8 @@ public partial class QueryPanel
     private List<Task> tareas;
 
     private bool showResultsModal = false;
-    
+    private bool processing = false;
+
     private ResultsVtn resultsVtn1;
 
     public void CheckboxChanged(ChangeEventArgs e, IEnlace enlace)
@@ -60,6 +67,9 @@ public partial class QueryPanel
 
     public async Task RunOnClick()
     {
+        processing = true;
+        StateHasChanged();
+
         // * check if the query is not null
         if(string.IsNullOrEmpty(Query.Query))
         {
@@ -74,9 +84,6 @@ public partial class QueryPanel
             return;
         }
 
-        MatToaster.Add("Procesando consulta.", MatToastType.Success);
-        await Task.CompletedTask;
-
         // * prepare the rows
         Query.Results = Query.Enlaces.Select(e => QueryResult.NewPending(e)).ToList();
         StateHasChanged();
@@ -84,6 +91,10 @@ public partial class QueryPanel
         // * Prepare Tasks
         tareas = Query.Enlaces.Select( e => Task.Run( () => ProcessEnlace(e) )).ToList<Task>();
 
+        await Task.WhenAll(tareas);
+
+        processing = false;
+        StateHasChanged();
     }
 
     private void ProcessEnlace(IEnlace enlace)
@@ -145,4 +156,35 @@ public partial class QueryPanel
         await InvokeAsync(StateHasChanged);
     }
 
+    private async Task ExportExcelClick()
+    {
+        var results = Query.Results.Where(x => x.Status == QueryResult.QueryResultStatus.Success).ToList();
+        if(!results.Any())
+        {
+            MatToaster.Add("No hay resultados para exportar.", MatToastType.Warning);
+            return;
+        }
+
+        // * combine the datasets
+        var dataSetCombiner = new DataSetCombiner(results.Select(x => x.Result));
+        var dataSet = dataSetCombiner.Combine();
+
+        // * prepare the file name
+        var fileId = Guid.NewGuid();
+        var _tmpFolder = Configuration.GetValue<string>("TempFolder");
+        var fileName = System.IO.Path.Combine(_tmpFolder, fileId.ToString(),$"resultados-{DateTime.Now.Ticks}.xlsx");
+        
+        // * export data to file
+        var exportDataSet = new ExportDataSet(dataSet);
+        var fileName2 = exportDataSet.ExportToFile(fileName);
+        Logger.LogInformation("Exportando a Excel: {path}", fileName2);
+
+        // * download the file
+        await JSRuntime.InvokeVoidAsync("downloadFromUrl", new {
+            url = $"/api/download/{fileId}",
+            fileName = $"resultados-{DateTime.Now.Ticks}.xlsx"
+        });
+
+
+    }
 }

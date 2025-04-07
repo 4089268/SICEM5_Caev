@@ -2,102 +2,20 @@
 @namespace Sicem_Blazor.Areas.SqlManager.Views
 @using Sicem_Blazor.SqlManager.Views.Partials;
 
-<div class="content-layout">
+<div class="content-layout sqlmanager-page">
 
     <div class="title-page text-uppercase" style="grid-area: header;">Administrador SQL</div>
 
     @* Area Opciones *@
     <div class="grid border rounded bg-white px-2 d-flex align-items-center" style="grid-area: actions;">
-
-        <div class="button px-3 py-2 bg-success mr-3" @onclick="AgregarNuevoClick" >
-            <i class="fa fa-plus mr-2"></i>
-            <span>Nuevo Query</span>
-        </div>
+        @* Some Actions *@
     </div>
     
     @* Grid Panel *@
-    <div class="border rounded bg-white p-2" style="grid-area: list;">
-        <div class="d-flex align-items-center p-1" style="height:4rem;">
-            <div class="d-flex align-items-center border rounded p-2" style="width: 24rem; height:100%; font-size:1.1rem;">
-                <i class="fa fa-search ml-2 mr-2" style="color:#555;"></i>
-                <InputText placeholder="Buscar" @bind-Value="searchText" @onkeyup="OnGridSearchKeyUp" Class="input-search"/>
-                @if(searchText.Trim().Length > 1)
-                {
-                    <i class="icon-close fa fa-close link-btn aling ali align-self-start m m-1" aria-hidden="true" @onclick="ClearSearchClick"></i>
-                }
-            </div>
-        </div>
-
-        <div class="p-1" style="width: 100%; height: calc(100% - 4.5rem);">
-            <SfGrid @ref="DataGrid" DataSource="@DatosGrid" TValue="NotificacionTemplate" AllowResizing="true" AllowSorting="true" AllowFiltering="false"
-                AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
-                <GridEvents RowSelected="OnDataGrid_SelectionChanged" TValue="NotificacionTemplate"></GridEvents>
-                <GridColumns>
-                    <GridColumn Field=@nameof(NotificacionTemplate.Titulo) HeaderText="Nombre" TextAlign="TextAlign.Left" Width="140">
-                        <Template>
-                            @{
-                                var data = (context as NotificacionTemplate);
-                                <i class="fa fa-newspaper mr-2" />
-                                <span>@data.Titulo</span>
-                            }
-                        </Template>
-                    </GridColumn>
-                </GridColumns>
-            </SfGrid>
-        </div>
-    </div>
-
-    @* Grid Detalle *@
     <div class="border rounded bg-white p-2" style="grid-area: details;">
         <QueryPanel Query="@selectedQuery" Enlaces="enlacesDisponibles" />
     </div>
 
 </div>
-
-<style>
-    .content-layout
-    {
-        width: 100%;
-        height: 100%;
-        display: grid;
-        grid-template-columns: 300px calc(100% - 310px);
-        grid-template-rows: 3rem 4rem calc(100% - 8rem);
-        grid-template-areas:
-            "header header"
-            "actions actions"
-            "list details";
-        grid-gap: .4rem .4rem;
-    }
-
-    .list-props .prop
-    {
-        padding: 2px 4px;
-        margin-bottom: 2px;
-        background-color: #80acc9;
-        border: 1px solid #6491af;
-        border-radius: 4px;
-    }
-    .area-texto textarea
-    {
-        resize: none;
-    }
-
-    .input-search
-    {
-        border: none;
-        outline:none;
-        background-color:#fff;
-        width:100%;
-        box-shadow:none;
-    }
-    .input-search i.icon-close
-    {
-        width: 1rem;
-        height: 1rem;
-        color: #333;
-        text-decoration: none !important;
-        background-color: red;
-    }
-</style>
 
 <BusyIndicator Busy="@cargando" ContentText="Cargando datos..." />

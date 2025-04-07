@@ -16,7 +16,43 @@
         else
         {
             <MatButton Class="btn btn-primary" Raised="true" Icon="play_arrow" OnClick="@RunOnClick" Label="Ejecutar Query"></MatButton>
-        }
+            
+            <button type="button" class="button bg-success px-3 h-100 my-2 mx-2" @onclick="ExportExcelClick">
+                <i class="fa fa-file-excel mr-2"></i>
+                <span>Exportar Resultados</span>
+            </button>
+        }   
+
+        
+    </div>
+
+    <div class="enlaces-panel">
+        <div class="p-1 bg-secondary text-white">Enlaces</div>
+        
+        <div class="d-flex flex-column h-100 overflow-auto">
+            @if(Enlaces != null)
+            {
+                <div>
+                    @foreach(var item in EnlacesDisponibles)
+                    {
+                        <div class="d-flex align-items-center p-1">
+                            <input type="checkbox" checked="@(Query.Enlaces.Select(item => item.Id).Contains(item.Id))" @onchange="@(e => CheckboxChanged(e,item))"/>
+                            <label class="ml-1 ms-2">@item.Nombre</label>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+        <div class="d-flex align-items-center p-2" style="height: 2rem;">
+            <div class="w-50" role="form-group">
+                <input type="checkbox" id="checkAll" @onchange="@(e => CheckAll(e))"/>
+                <label class="ml-1 ms-2" for="checkAll">Seleccionar Todos</label>
+            </div>
+
+            <div class="w-50">
+                <input type="search" class="form-control pb-2 mb-2" @bind-value="searchText" placeholder="Buscar..." />
+            </div>
+        </div>
     </div>
 
     <div class="text-panel">
@@ -29,40 +65,17 @@
         <InputTextArea @bind-Value="@Query.Query"/>
     </div>
 
-    <div class="enlaces-panel">
-        <div class="p-1 bg-secondary text-white">Enlaces</div>
+    <div class="output-panel">
         
-        <div class="d-flex flex-column h-100 overflow-auto">
-            @if(Enlaces != null)
+        <div class="p-1 bg-secondary text-white">Resultados</div>
+
+        <div class="p-1 bg-light border-bottom d-flex align-items-center">
+            @if(processing)
             {
-                <div>
-                    @foreach(var item in Enlaces)
-                    {
-                        <div class="d-flex align-items-center p-1">
-                            <input type="checkbox" checked="@(Query.Enlaces.Select(item => item.Id).Contains(item.Id))" @onchange="@(e => CheckboxChanged(e,item))"/>
-                            <label class="ml-1 ms-2">@item.Nombre</label>
-                        </div>
-                    }
-                </div>
+                <div class="spinner-border mr-2 me-2 p-1" role="status"> </div>
             }
         </div>
-    </div>
 
-    <div class="output-panel">
-        <div class="p-1 bg-secondary text-white">Resultados</div>
-        <div class="p-1 bg-light text-white border-bottom d-flex align-items-center">
-            <button type="button" class="button bg-success px-3 py-2 mx-2" @onclick="ExportExcelClick" disabled="@processing">
-                @if(processing)
-                {
-                    <div class="spinner-border mr-2 me-2" role="status"> </div>
-                }
-                else
-                {
-                    <i class="fa fa-file-excel mr-2"></i>
-                }
-                <span>Exportar Resultados</span>
-            </button>
-        </div>
         <div class="d-flex flex-column bg-light h-100 overflow-auto">
             @foreach (var item in Query.Results)
             {
@@ -99,72 +112,3 @@
 </div>
 
 <ResultsVtn @ref="resultsVtn1" OnClose="@(e => showResultsModal = false)" Visible="showResultsModal"/>
-
-<style>
-    .panel-root
-    {
-        display: grid;
-        grid-template-rows: 3.5rem 1fr 1fr;
-        grid-template-columns: 1fr 32rem;
-        grid-template-areas:
-            "actions actions"
-            "editor enlaces"
-            "results results";
-
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        padding: .5rem;
-    }
-
-    .panel-root .text-panel, .panel-root .output-panel, .panel-root .enlaces-panel
-    {
-        border: 1px solid #bbb;
-    }
-
-    .panel-root .actions-panel
-    {
-        width: 100%;
-        height: 100%;
-        grid-area: actions;
-    }
-
-    .panel-root .text-panel
-    {
-        width: 100%;
-        height: 100%;
-        grid-area: editor;
-    }
-
-    .panel-root .text-panel textarea
-    {
-        width: 100%;
-        height: 100%;
-        resize: none;
-        font-size: 1.2rem;
-        font-family: monospace;
-        border: none;
-        padding: 1rem;
-    }
-
-    .panel-root .enlaces-panel
-    {
-        width: 100%;
-        height: 100%;
-        grid-area: enlaces;
-        border-left: none;
-        border-bottom:none;
-        overflow-y: auto;
-    }
-
-    .panel-root .output-panel
-    {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        overflow: scroll;
-        grid-area: results;
-    }
-
-</style>

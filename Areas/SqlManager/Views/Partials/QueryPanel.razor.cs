@@ -41,10 +41,29 @@ public partial class QueryPanel
     [Parameter]
     public IEnumerable<IEnlace> Enlaces {get;set;}
 
+    private IEnumerable<IEnlace> EnlacesDisponibles
+    {
+        get {
+            if(Enlaces == null || !Enlaces.Any())
+            {
+                return [];
+            }
+
+            if(string.IsNullOrEmpty(searchText))
+            {
+                return Enlaces;
+            }
+            
+            return this.Enlaces.Where( x => x.Nombre.ToLower().Contains(searchText.ToLower()) ).ToList();
+        }
+    }
+
     private List<Task> tareas;
 
     private bool showResultsModal = false;
     private bool processing = false;
+
+    private string searchText = "";
 
     private ResultsVtn resultsVtn1;
 
@@ -205,4 +224,19 @@ public partial class QueryPanel
 
         dataSet.Dispose();
     }
+
+    private async Task CheckAll(ChangeEventArgs e)
+    {
+        var selected = (bool)e.Value;
+        if(selected)
+        {
+            Query.Enlaces = Enlaces.ToList();
+        }
+        else
+        {
+            Query.Enlaces = new List<IEnlace>();
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
 }

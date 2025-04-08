@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Components;
@@ -33,7 +34,7 @@ public partial class Index
 
     protected override void OnInitialized()
     {
-        this.enlacesDisponibles = this.SicemService1.ObtenerEnlaces();
+        this.enlacesDisponibles = this.SicemService1.ObtenerEnlaces().Where(x => x.Inactivo != true).ToList();
         this.selectedQuery = new QueryModel
         {
             Name = "Query 1",

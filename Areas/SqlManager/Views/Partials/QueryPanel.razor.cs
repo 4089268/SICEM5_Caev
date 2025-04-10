@@ -135,6 +135,7 @@ public partial class QueryPanel
             {
                 sqlConnection.Open();
                 using var sqlCommand = new SqlCommand(Query.Query, sqlConnection);
+                sqlCommand.CommandTimeout = 60 * 5; // 5 minutes
                 using var sqlDataAdapter = new SqlDataAdapter(sqlCommand);
                 sqlDataAdapter.Fill(dataSet);
                 sqlConnection.Close();

@@ -30,6 +30,9 @@ using Sicem_Blazor.Services.PagoLinea;
 using Sicem_Blazor.PonteAlCorriente.Data;
 using Sicem_Blazor.SeguimientoCobros.Data;
 using Sicem_Blazor.Boletines.Services;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
 
 
 namespace Sicem_Blazor {
@@ -51,10 +54,18 @@ namespace Sicem_Blazor {
                 options.UseSqlServer(Configuration.GetConnectionString("SICEM"));
             });
 
-            services.AddLogging( config => {
-                config.AddConsole();
-                config.AddEventSourceLogger();
-            });
+            services.AddOpenTelemetry()
+                .ConfigureResource(builder => builder.AddService(serviceName: "SicemCaev"))
+                .WithLogging(opt => opt.AddOtlpExporter(o => {
+                    o.Endpoint = new Uri(Configuration.GetValue<string>("SEQ:Endpoint"));
+                    o.Headers = string.Format("X-SEQ-ApiKey={0}", Configuration.GetValue<string>("SEQ:ApiKey"));
+                    o.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+                }))
+                .WithMetrics(opt => opt.AddOtlpExporter(o => {
+                    o.Endpoint = new Uri(Configuration.GetValue<string>("SEQ:Endpoint"));
+                    o.Headers = string.Format("X-SEQ-ApiKey={0}", Configuration.GetValue<string>("SEQ:ApiKey"));
+                    o.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+                }));
 
             services.Configure<BingMapsSettings>(Configuration.GetSection("BingMapsSettings"));
             services.AddSingleton<SessionService>();

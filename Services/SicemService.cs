@@ -33,9 +33,11 @@ namespace Sicem_Blazor.Services {
 
 
         // ****** Funciones Sesiones ******
-        public string Logearse(string usuario, string pass, string ipAddress = "") {
-            var _cadConexion = appSettings.GetConnectionString("SICEM");
+        public string Logearse(string usuario, string pass, string ipAddress = "")
+        {
+            this.logger.LogInformation("Attempt to login the user {user} from address {addres}", usuario, ipAddress);
 
+            var _cadConexion = appSettings.GetConnectionString("SICEM");
             try {
                 
                 //*** Validar usando base de datos SICEM
@@ -60,11 +62,9 @@ namespace Sicem_Blazor.Services {
                 if(_usuario.Id < 0){
                     var _enlace = ObtenerEnlaces().Where( item => item.Oficina.ToLower() == usuario.ToLower() ).FirstOrDefault();
                     if(_enlace != null){
-                        Console.WriteLine(">>"+_enlace.GetConnectionString());
                         using( var sqlConnection = new SqlConnection(_enlace.GetConnectionString())){
                             sqlConnection.Open();
                             var _query = $"Select id_usuario, nombre, usuario From [Global].[Sys_Usuarios] Where IsNull(inactivo,0) = 0 and id_jerarquia = 1 and usuario = '{pass}'";
-                            Console.WriteLine($"oficina: {_enlace.Nombre} query:"+_query);
                             var _command = new SqlCommand(_query, sqlConnection);
                             using( var reader = _command.ExecuteReader()){
                                 if(reader.Read()){
@@ -72,22 +72,28 @@ namespace Sicem_Blazor.Services {
                                     _usuarioExt.Nombre = reader["nombre"].ToString();
                                     _usuarioExt.Usuario = reader["usuario"].ToString();
                                     _usuarioExt.SetEnlaces( new IEnlace[]{_enlace});
-                                }else{
-                                    return "El usuario y/o contraseña son incorrectas,";
+                                }
+                                else
+                                {
+                                    throw new UnauthorizedAccessException();
                                 }
                             }
                             sqlConnection.Close();
                         }
-                    }else{
-                        return "El usuario y/o contraseña son incorrectas";
+                    }
+                    else
+                    {
+                        throw new UnauthorizedAccessException();
                     }
                 }
 
 
                 //*** Cargar usuario sicem
-                if(_usuario.Id >= 0 ){
+                if(_usuario.Id >= 0 )
+                {
                     _usuario = sicemContext.Usuarios.Where(item => item.Id == _usuario.Id).FirstOrDefault();
-                    if(_usuario != null){
+                    if(_usuario != null)
+                    {
                         //**** Cargar Oficinas del usuario
                         var idEnlaces = _usuario.Oficinas.Split(";").Select( item => ConvertUtils.ParseInteger(item,-1)).ToList<int>();
                         var _tmpEnlaces = ObtenerEnlaces().Where(item => idEnlaces.Contains(item.Id)).ToList();
@@ -96,24 +102,32 @@ namespace Sicem_Blazor.Services {
                         //**** Cargar Opciones disponibles
                         var _catOpciones = ObtenerListaOpcionesDelUsuario(_usuario.Id).ToList<IOpcionSistema>();
                         _usuario.SetOpciones(_catOpciones);
-                        
 
                         this.Usuario = _usuario;
-                        
-                    }else{
-                        return "El usuario y/o contraseña son incorrectas.";
                     }
-                }else{
+                    else
+                    {
+                        throw new UnauthorizedAccessException();
+                    }
+                }
+                else
+                {
                     this.Usuario = _usuarioExt;
                 }
                 this.IdSession = sessionService.IniciarSesion(Usuario, ipAddress);
+                this.logger.LogInformation("User {user} successfully logged in with session ID {sessionId}", usuario, this.IdSession);
                 return null;
-                
-            }catch(Exception err) {
-                Console.WriteLine($">> Error al logearse: \n\t{err.Message}\n{err.StackTrace}");
+            }
+            catch(UnauthorizedAccessException ua)
+            {
+                this.logger.LogWarning("Bad credentials at attempt to loggin the user {user}: {message}", usuario, ua.Message);
+                return "El usuario y/o contraseña son incorrectas.";
+            }
+            catch(Exception err)
+            {
+                this.logger.LogError(err, "Fail to login the user {user}: {message}", usuario, err.Message);
                 return "Error al conectarse con el servidor, inténtelo mas tarde.";
             }
-
 
         }
         public bool CargarUsuarioToken(string token){

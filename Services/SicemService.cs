@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
-using System.IO;
+using System.Security.Claims;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 using Sicem_Blazor.Data;
 using Sicem_Blazor.Models;
 using Sicem_Blazor.Models.Entities.Arquos;
@@ -18,17 +21,19 @@ namespace Sicem_Blazor.Services {
         private readonly SicemContext sicemContext;
         private readonly SessionService sessionService;
         private readonly ILogger<SicemService> logger;
+        private readonly IHttpContextAccessor httpContextAccessor;
 
         public IUsuario Usuario { get; set;}
         public string IdSession {get;set;} = "";
 
         const string secret = "*SICEM*";
 
-        public SicemService(SicemContext context, IConfiguration c, SessionService s, ILogger<SicemService> logger) {
+        public SicemService(SicemContext context, IConfiguration c, SessionService s, ILogger<SicemService> logger, IHttpContextAccessor httpContextAccessor) {
             this.sicemContext = context;
             appSettings = c;
             sessionService = s;
             this.logger = logger;
+            this.httpContextAccessor = httpContextAccessor;
         }
 
 
@@ -116,6 +121,26 @@ namespace Sicem_Blazor.Services {
                 }
                 this.IdSession = sessionService.IniciarSesion(Usuario, ipAddress);
                 this.logger.LogInformation("User {user} successfully logged in with session ID {sessionId}", usuario, this.IdSession);
+                
+                
+
+                // * Create userSession
+                var claims = new List<Claim>{
+                    new Claim(ClaimTypes.Name, usuario),
+                    new Claim(ClaimTypes.Role, "Usuario"),
+                };
+                var claimIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = true
+                };
+                this.httpContextAccessor.HttpContext!.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimIdentity),
+                    authProperties
+                );
+                // * End create userSession
+
                 return null;
             }
             catch(UnauthorizedAccessException ua)

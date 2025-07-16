@@ -94,7 +94,7 @@
 @code{
     [CascadingParameter] private ConnectionInfo connectionInfo { get; set; }
 
-    private bool cargandoUsuario {get;set;} = true;
+    private bool cargandoUsuario {get;set;} = false;
     private bool mostrarMenu {get;set;} = false;
 
     private ConfigurarOficinas ConfigurarOficinas_vtn;
@@ -104,9 +104,9 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         if (firstRender) {
-            //*** Inicializar navigation manager
+            @* //*** Inicializar navigation manager
             navigationManager.LocationChanged += LocationChanged;
-            await ComprobarUsuario();
+            await ComprobarUsuario(); *@
         }
     }
     private void LocationChanged(object sender, LocationChangedEventArgs e) {

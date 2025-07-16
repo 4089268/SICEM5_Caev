@@ -62,8 +62,10 @@
 </div>
 
 
-@code {
-    [CascadingParameter] private ConnectionInfo connectionInfo { get; set; }
+@code
+{
+    [CascadingParameter]
+    private ConnectionInfo connectionInfo { get; set; }
 
     private string usuario = "";
     private string contra = "";

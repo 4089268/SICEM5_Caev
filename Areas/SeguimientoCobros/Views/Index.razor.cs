@@ -36,6 +36,9 @@ public partial class Index : IAsyncDisposable
     [Inject]
     public IncomeDataService IncomeDataService1 {get;set;}
 
+    [Inject]
+    public NavigationManager Navigator {get;set;}
+
     private DotNetObjectReference<Index> objRef;
     private List<OfficePushpinMap> incomeData {get; set;}
     // private SfGrid<OfficePushpinMap> dataGrid;
@@ -47,9 +50,11 @@ public partial class Index : IAsyncDisposable
 
     protected override void OnInitialized()
     {
+        Navigator.NavigateTo("/");
+        
         circleRadius = new CircleRadius(
-            minInc:0,
-            maxInc:10000000,
+            minInc: 0,
+            maxInc: 10000000,
             minR: 1000,
             maxR: 30000
         );

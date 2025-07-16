@@ -10,7 +10,7 @@ public static class SeguimientoCobroServiceCollectionExtension
     {
         serviceCollection.AddTransient<SeguimientoCobroService>();
         serviceCollection.AddTransient<SeguimientoCobroMapJsInterop>();
-        serviceCollection.AddHostedService<IncomeBackgroundService>();
+        // serviceCollection.AddHostedService<IncomeBackgroundService>();
         serviceCollection.AddSingleton<IncomeDataService>();
     }
 }

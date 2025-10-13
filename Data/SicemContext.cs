@@ -56,6 +56,9 @@ namespace Sicem_Blazor.Models
         public virtual DbSet<StoTarifa> StoTarifas { get; set; }
         public virtual DbSet<Usuario> Usuarios { get; set; }
 
+        public virtual DbSet<PagoCentCatGrupo> CatGrupos { get; set; }
+        public virtual DbSet<PagoCentOprGrupo> OprGrupos { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
@@ -410,7 +413,7 @@ namespace Sicem_Blazor.Models
 
                 entity.ToTable("CatProveedores", "Boletin");
 
-                entity.HasIndex(e => e.Name, "UQ__CatProve__737584F601C2DE0C")
+                entity.HasIndex(e => e.Name, "UQ__CatProve__737584F683CA713A")
                     .IsUnique();
 
                 entity.Property(e => e.Description)
@@ -1178,6 +1181,8 @@ namespace Sicem_Blazor.Models
                     .HasColumnName("createdAt")
                     .HasDefaultValueSql("(getdate())");
 
+                entity.Property(e => e.FinishedAt).HasColumnName("finishedAt");
+
                 entity.Property(e => e.Proveedor)
                     .HasMaxLength(20)
                     .IsUnicode(false)
@@ -1231,6 +1236,47 @@ namespace Sicem_Blazor.Models
                     .HasColumnName("id_poliza");
 
                 entity.Property(e => e.Recargado).HasColumnName("recargado");
+            });
+
+            modelBuilder.Entity<PagoCentCatGrupo>(entity =>
+            {
+                entity.ToTable("Cat_Grupos", "PagoCent");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+
+                entity.Property(e => e.Descripcion)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .IsUnicode(false)
+                    .HasColumnName("descripcion");
+            });
+
+            modelBuilder.Entity<PagoCentOprGrupo>(entity =>
+            {
+                entity.ToTable("Opr_Grupos", "PagoCent");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+
+                entity.Property(e => e.Cuenta).HasColumnName("cuenta");
+
+                entity.Property(e => e.IdGrupo).HasColumnName("id_grupo");
+
+                entity.Property(e => e.IdLocalidad).HasColumnName("id_localidad");
+
+                entity.Property(e => e.IdOficina).HasColumnName("id_oficina");
+
+                entity.Property(e => e.IdPadron).HasColumnName("id_padron");
+
+                entity.HasOne(d => d.IdGrupoNavigation)
+                    .WithMany(p => p.OprGrupos)
+                    .HasForeignKey(d => d.IdGrupo)
+                    .HasConstraintName("FK_Opr_Grupos_Grupo");
+
+                entity.HasOne(d => d.IdOficinaNavigation)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdOficina)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Opr_Grupos_Ruta");
             });
 
             modelBuilder.Entity<OprOpcione>(entity =>

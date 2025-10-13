@@ -131,6 +131,22 @@
         </MatNavItem>
         }
 
+        @if(OpcionesDisponibles.Contains(20))
+        {
+        <MatNavSubMenu>
+            <MatNavSubMenuHeader Title="Pagos Centralizados">
+                <MatNavItem AllowSelection="false">
+                    <MatIcon Icon="payment"/>&nbsp;Pagos Centralizados
+                </MatNavItem>
+            </MatNavSubMenuHeader>
+            <MatNavSubMenuList>
+                <MatNavItem Title="Catalogo Grupos" Href="/pagos-centralizados/catalogo-grupos">
+                    <MatIcon Icon="library_books"/>&nbsp;Catalogo Grupos
+                </MatNavItem>
+            </MatNavSubMenuList>
+        </MatNavSubMenu>
+        }
+
         <MatDivider></MatDivider>
 
         @if(sicemService.Usuario.Administrador){

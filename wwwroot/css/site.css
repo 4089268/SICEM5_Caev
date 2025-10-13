@@ -92,7 +92,9 @@ html, body {
 }
 
 /****** Estilos Input ******/
-select, input, .input{
+select:not(.mat-text-field-input),
+input:not(.mat-text-field-input),
+.input:not(.mat-text-field-input){
     border: #999999 1px solid ;
     border-radius: 4px;
     box-shadow: #b5b5b5 0px 2px 4px;

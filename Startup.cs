@@ -15,6 +15,9 @@ using Microsoft.EntityFrameworkCore;
 using Syncfusion.Blazor;
 using System.Net.Http;
 using MatBlazor;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
 using Sicem_Blazor.Models;
 using Sicem_Blazor.Services;
 using Sicem_Blazor.Data;
@@ -30,9 +33,8 @@ using Sicem_Blazor.Services.PagoLinea;
 using Sicem_Blazor.PonteAlCorriente.Data;
 using Sicem_Blazor.SeguimientoCobros.Data;
 using Sicem_Blazor.Boletines.Services;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
+
+using Sicem_Blazor.PagoCentralizado.Services;
 
 
 namespace Sicem_Blazor {
@@ -93,6 +95,7 @@ namespace Sicem_Blazor {
             services.AddWhatsappService(Configuration);
             services.AddPagoLineaServices(Configuration);
             services.AddSeguimientoCobroServices(Configuration);
+            services.AddPagosCentralizadosServices();
 
             services.AddHttpClient<UbitomaHttpClient>("ubitoma", client => {
                 string url = Configuration.GetSection("AppSettings").GetValue<string>("Ubitoma_Api");

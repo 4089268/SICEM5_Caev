@@ -56,8 +56,8 @@ namespace Sicem_Blazor.Models
         public virtual DbSet<StoTarifa> StoTarifas { get; set; }
         public virtual DbSet<Usuario> Usuarios { get; set; }
 
-        public virtual DbSet<PagoCentCatGrupo> CatGrupos { get; set; }
-        public virtual DbSet<PagoCentOprGrupo> OprGrupos { get; set; }
+        public virtual DbSet<PagoCentCatGrupo> PagoCentCatGrupos { get; set; }
+        public virtual DbSet<PagoCentOprGrupo> PagoCentOprGrupos { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -1249,6 +1249,10 @@ namespace Sicem_Blazor.Models
                     .HasMaxLength(255)
                     .IsUnicode(false)
                     .HasColumnName("descripcion");
+
+                entity.Property(e => e.FechaEliminacion)
+                    .HasColumnType("datetime2")
+                    .HasColumnName("fecha_eliminacion");
             });
 
             modelBuilder.Entity<PagoCentOprGrupo>(entity =>

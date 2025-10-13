@@ -12,6 +12,7 @@ namespace Sicem_Blazor.Models
 
         public int Id { get; set; }
         public string Descripcion { get; set; }
+        public DateTime? FechaEliminacion { get; set; }
 
         public virtual ICollection<PagoCentOprGrupo> OprGrupos { get; set; }
     }

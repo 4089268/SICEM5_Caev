@@ -1,0 +1,52 @@
+@page "/pagos-centralizados/catalogo-grupos"
+@namespace Sicem_Blazor.PagoCentralizado.Views
+
+<PageTitle>Pagos Centralizados - Catlogo Grupos</PageTitle>
+
+<div class="container w-100 h-100">
+    <div class="row h-100">
+        <div class="col-12">
+            <div class="title-page text-uppercase">Catalogo Grupos</div>
+        </div>
+        
+        <div class="col-12 border rounded bg-white p-2 d-flex align-items-center">
+            <button class="btn btn-success px-4 py-2" onclick="@AgregarGrupoClick">
+                <i class="fa fa-plus mr-2" />
+                Nuevo Grupo
+            </button>
+        </div>
+
+        <div class="col-4 border rounded bg-white p-2 d-flex align-items-center" style="height: calc(100% - 11rem);">
+            <div class="d-flex flex-column h-100 w-100 overflow-auto">
+                @foreach(var grupo in ListaGrupos)
+                {
+                    <button type="button" class="btn btn-white text-left rounded shadow-sm p-4 cursor-pointer">
+                        <h4><i class="fa fa-group text-muted"></i> @grupo.Descripcion</h4>
+                    </button>
+                }
+                @if(!ListaGrupos.Any())
+                {
+                    <div class="d-flex w-100 pt-4 pb-2 borde rounded align-items-center justify-content-center" style="background-color: #d3d3d3;">
+                        <p class="h5 text-muted">No hay datos disponibles</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-8 border rounded bg-white p-2 d-flex align-items-center" style="height: calc(100% - 11rem);">
+        </div>
+    </div>
+</div>
+
+<BusyIndicator Busy="@isBusy" ContentText="Cargando datos..." />
+
+<style>
+    label.mat-text-field
+    {
+        width: 32rem;
+    }
+    input.mat-text-field-input
+    {
+        font-size: 16px;
+    }
+</style>

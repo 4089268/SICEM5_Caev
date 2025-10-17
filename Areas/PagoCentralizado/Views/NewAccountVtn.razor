@@ -1,0 +1,147 @@
+﻿@namespace Sicem_Blazor.PagoCentralizado.Views
+
+@if(Visible)
+{
+    <VentanaSecundaria Titulo="@Titulo" CerrarVentana="@HandleVentanaClosing" Filas="@filas" Columnas="@columnas">
+        <Content>
+            <div class="mb-3" style="font-size: 14px;">
+                <div class="row">
+                    <div class="col-12 my-2">
+                        <label class="form-label">Oficina</label>
+                        <select class="form-control" @bind="Cuenta.IdOficina" @bind:after="CargarCatalogoOficinas">
+                            @foreach(var el in oficinas)
+                            {
+                                <option value="@el.Id" >@el.Nombre</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-12 my-2">
+                        <label class="form-label">Localidad</label>
+                        <select class="form-control h3" @bind="Cuenta.IdLocalidad">
+                            @foreach(var el in localidades)
+                            {
+                                <option value="@el.Id_Poblacion">@el.Descripcion</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-12 my-2">
+                        <label class="form-label">Cuenta</label>
+                        <InputNumber class="form-control" @bind-Value="Cuenta.Cuenta"/>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <div class="d-flex align-items-center">
+                            <button type="button" class="btn btn-info" style="width: 280px;" @onclick="ObtenerRazonSocial">Obtener Razon Social</button>
+                            <input type="text" class="form-control shadow-none" @bind="razonSocial" disabled="true" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-end justify-content-end">
+                <button type="button" class="btn btn-lg btn-success px-4" @onclick="OnSaveClick">
+                    <i class="fa fa-save"></i>
+                    Guardar
+                </button>
+            </div>
+        </Content>
+    </VentanaSecundaria>
+}
+
+@code
+{
+    [Inject]
+    public SicemService SicemService {get;set;}
+
+    [Parameter]
+    public bool Visible {get;set;} = false;
+
+    [Parameter]
+    public string Titulo {get;set;} = "Nuevo Registro";
+
+    [Parameter]
+    public PagoCentOprGrupo Cuenta {get;set;}
+
+    [Parameter]
+    public EventCallback<PagoCentOprGrupo> CerrarVentana {get;set;}
+
+    private IEnumerable<double> filas = new double[]{240, 40};
+    private IEnumerable<double> columnas = new double[]{400};
+
+    private IEnumerable<IEnlace> oficinas = [];
+
+    private IEnumerable<Sicem_Localidad> localidades = [];
+
+    private string razonSocial = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        if(Visible)
+        {
+            this.oficinas = SicemService.ObtenerEnlaces();
+
+            if(Cuenta == null)
+            {
+                Cuenta = new PagoCentOprGrupo
+                {
+                    Id = 0,
+                    IdGrupo = 0,
+                    IdOficina = 6,
+                    IdLocalidad = 1,
+                    Cuenta = 0,
+                    IdPadron = 0
+                };
+            }
+
+            this.localidades = SicemService.ObtenerCatalogoLocalidades(Cuenta.IdOficina).ToList();
+
+            razonSocial = string.Empty;
+        }
+    }
+
+    private async Task CargarCatalogoOficinas()
+    {
+        Cuenta.IdLocalidad = 0; // Clear the localidad
+        this.localidades = SicemService.ObtenerCatalogoLocalidades(Cuenta.IdOficina).ToList();
+        await Task.CompletedTask;
+    }
+
+    private async Task ObtenerRazonSocial()
+    {
+        var enlace = SicemService.ObtenerEnlaces(Cuenta.IdOficina).FirstOrDefault();
+        if(enlace == null)
+        {
+            return;
+        }
+
+        var arquosRepo = new ArquosRepositorie(enlace);
+        var cuentaInfo = arquosRepo.ObtenerInfoCuenta(Cuenta.Cuenta).Where(e => e.IdLocalidad == Cuenta.IdLocalidad ).FirstOrDefault();
+        if(cuentaInfo != null)
+        {
+            this.razonSocial = cuentaInfo.RazonSocial;
+        }
+        else
+        {
+            this.razonSocial = "* Cuenta no encontrada";
+        }
+    }
+
+    private async Task HandleVentanaClosing()
+    {
+        if(CerrarVentana.HasDelegate)
+        {
+            await CerrarVentana.InvokeAsync(null);
+        }
+    }
+
+    private async Task OnSaveClick()
+    {
+        if(CerrarVentana.HasDelegate)
+        {
+            await CerrarVentana.InvokeAsync(Cuenta);
+        }
+    }
+
+}

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Sicem_Blazor.Models;
 
@@ -67,6 +68,25 @@ public class PagosCentralizadosService(ILogger<PagosCentralizadosService> lg, Si
         this.context.PagoCentCatGrupos.Update(grupo);
         this.context.SaveChanges();
         this.logger.LogWarning("Grupo Id:{id} actualiado", grupo.Id);
+    }
+
+    public PagoCentOprGrupo AgregarGrupoCuenta(int grupoId, PagoCentOprGrupo cuenta)
+    {
+        var g = this.context.PagoCentCatGrupos
+            .Where(e => e.FechaEliminacion == null)
+            .Where(e => e.Id == grupoId)
+            .FirstOrDefault();
+
+        if(g == null)
+        {
+            throw new ArgumentException("El grupo no existe o no esta disponible", "grupoId");
+        }
+
+        cuenta.IdGrupo = g.Id;
+        this.context.PagoCentOprGrupos.Add(cuenta);
+        this.context.SaveChanges();
+
+        return cuenta;
     }
 
 }

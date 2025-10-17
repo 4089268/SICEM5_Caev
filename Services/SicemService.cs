@@ -295,7 +295,15 @@ namespace Sicem_Blazor.Services {
             }
             return tmpList.ToArray();
         }   
-        public Sicem_Localidad[] ObtenerCatalogoLocalidades(int id_oficina){
+        public Sicem_Localidad[] ObtenerCatalogoLocalidades(int id_oficina)
+        {
+            // * verify if the office is On
+            var enlace = this.ObtenerEnlaces(id_oficina);
+            if(!CheckOfficeConnected(enlace.First()))
+            {
+                return Array.Empty<Sicem_Localidad>();
+            }
+
             var tmpList = new List<Sicem_Localidad>();
             var _query = "Select id_poblacion, descripcion, id_sucursal, sb, sectores, inactivo From[Padron].[Cat_Poblaciones]";
             var _ruta = ObtenerEnlaces(id_oficina).FirstOrDefault();

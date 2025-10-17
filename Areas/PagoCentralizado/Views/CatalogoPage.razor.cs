@@ -14,9 +14,9 @@ public partial class CatalogoPage : ComponentBase
 {
     [Inject]
     public ILogger<CatalogoPage> Logger { get; set; }
-    
+
     [Inject]
-    public PagosCentralizadosService PagosCentralizadosService1 {get; set;}
+    public PagosCentralizadosService PagosCentralizadosService1 { get; set; }
 
     [Inject]
     public IMatToaster Toaster { get; set; }
@@ -26,8 +26,10 @@ public partial class CatalogoPage : ComponentBase
 
     private List<PagoCentCatGrupo> ListaGrupos { get; set; } = new();
 
-    private bool isBusy = false;
-    
+    private PagoCentCatGrupo elementoSeleccionado = null;
+
+    public bool IsBusy { get; set; } = false;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if(firstRender)
@@ -38,9 +40,9 @@ public partial class CatalogoPage : ComponentBase
 
     public async Task ObtenerGrupos()
     {
-        isBusy = true;
+        IsBusy = true;
         await Task.Delay(100);
-            
+
         try
         {
             ListaGrupos = this.PagosCentralizadosService1.ObtenerGrupos().ToList();
@@ -53,12 +55,12 @@ public partial class CatalogoPage : ComponentBase
         }
         finally
         {
-            isBusy = false;
+            IsBusy = false;
             StateHasChanged();
         }
 
     }
-    
+
     public async Task AgregarGrupoClick()
     {
         var nombreGrupo = await DialogService.PromptAsync("Capture el nombre del nuevo grupo.");
@@ -74,10 +76,17 @@ public partial class CatalogoPage : ComponentBase
             ListaGrupos.Add(grupo);
             StateHasChanged();
         }
-        catch (System.Exception ex)
+        catch(System.Exception ex)
         {
             Logger.LogError(ex, "Erro al agregar el nuevo grupo");
             this.Toaster.Add("Error al agregar el nuevo grupo, comuníquese con el administrador.", MatToastType.Danger);
         }
+    }
+
+    public async Task ListaGrupoClick(PagoCentCatGrupo grupo)
+    {
+        this.elementoSeleccionado = grupo;
+        await Task.CompletedTask;
+        StateHasChanged();
     }
 }

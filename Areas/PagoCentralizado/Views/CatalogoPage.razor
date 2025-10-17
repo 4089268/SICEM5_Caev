@@ -10,7 +10,7 @@
         </div>
         
         <div class="col-12 border rounded bg-white p-2 d-flex align-items-center">
-            <button class="btn btn-success px-4 py-2" onclick="@AgregarGrupoClick">
+            <button class="btn btn-success px-4 py-2 btn-lg" onclick="@AgregarGrupoClick">
                 <i class="fa fa-plus mr-2" />
                 Nuevo Grupo
             </button>
@@ -20,7 +20,7 @@
             <div class="d-flex flex-column h-100 w-100 overflow-auto">
                 @foreach(var grupo in ListaGrupos)
                 {
-                    <button type="button" class="btn btn-white text-left rounded shadow-sm p-4 cursor-pointer">
+                    <button type="button" class="btn btn-white text-left rounded shadow-sm p-4 cursor-pointer" @onclick="@((e) => ListaGrupoClick(grupo))">
                         <h4><i class="fa fa-group text-muted"></i> @grupo.Descripcion</h4>
                     </button>
                 }
@@ -33,12 +33,13 @@
             </div>
         </div>
 
-        <div class="col-8 border rounded bg-white p-2 d-flex align-items-center" style="height: calc(100% - 11rem);">
+        <div class="col-8 border rounded bg-white p-2 d-flex" style="height: calc(100% - 11rem);">
+            <CatalogoGrupoDetails Grupo="@elementoSeleccionado" />
         </div>
     </div>
 </div>
 
-<BusyIndicator Busy="@isBusy" ContentText="Cargando datos..." />
+<BusyIndicator Busy="@IsBusy" ContentText="Cargando datos..." />
 
 <style>
     label.mat-text-field

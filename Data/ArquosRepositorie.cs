@@ -10,8 +10,49 @@ using Sicem_Blazor.Facturacion.Data;
 namespace Sicem_Blazor.Data {
     public class ArquosRepositorie {
         public IEnlace enlace {get; private set;}
-        public ArquosRepositorie(IEnlace e){
+        public ArquosRepositorie(IEnlace e)
+        {
             this.enlace = e;
+        }
+        
+        public IEnumerable<dynamic> ObtenerInfoCuenta(int idCuenta)
+        {
+            var response = new List<dynamic>();
+
+            try
+            {
+                using(var conexion = new SqlConnection(enlace.GetConnectionString()))
+                {
+                    conexion.Open();
+                    var query = "Select id_padron, id_cuenta, id_localidad, razon_social From [Padron].[Cat_Padron] Where id_cuenta = @idCuenta";
+                    var sqlCommand = new SqlCommand(query, conexion)
+                    {
+                        CommandType = CommandType.Text
+                    };
+                    sqlCommand.Parameters.AddWithValue("@idCuenta", idCuenta);
+                    
+                    using(var reader = sqlCommand.ExecuteReader())
+                    {
+                        while(reader.Read())
+                        {
+                            response.Add( new
+                            {
+                                IdPadron = ConvertUtils.ParseInteger(reader["id_padron"]),
+                                IdCuenta = ConvertUtils.ParseInteger(reader["id_cuenta"]),
+                                IdLocalidad = ConvertUtils.ParseInteger(reader["id_localidad"]),
+                                RazonSocial = reader["razon_social"].ToString()
+                            });
+                        }
+                    }
+                    conexion.Close();
+                }
+            }
+            catch(Exception err)
+            {
+                Console.WriteLine($">> Error al obtener el listado de facturas de la oficina {enlace.Nombre}\n\tError:{err.Message}\n\tStacktrace:{err.StackTrace}");
+            }
+            return response;
+
         }
 
         public IEnumerable<Factura> ObtenerFacturas(int ano, int mes, int sb, int sec){

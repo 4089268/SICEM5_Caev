@@ -24,7 +24,7 @@ public partial class CatalogoGrupoDetails
     public ILogger<CatalogoGrupoDetails> Logger { get; set; }
 
     [Parameter]
-    public PagoCentCatGrupo Grupo {get; set;}
+    public PagoCentCatGrupo Grupo { get; set; }
 
     SfGrid<PagoCentOprGrupo> Grid { get; set; }
     public List<PagoCentOprGrupo> Data
@@ -37,7 +37,8 @@ public partial class CatalogoGrupoDetails
             }
             return Grupo.OprGrupos.ToList();
         }
-        set {
+        set
+        {
             if(Grupo == null)
             {
                 return;
@@ -54,6 +55,9 @@ public partial class CatalogoGrupoDetails
     public PagoCentOprGrupo cuentaSeleccionada = null;
     private bool ventanaSecundariaVisible = false;
     private string ventanaSecundariaTitle = "Nueva Cuenta";
+
+    private string tituloGrupo = string.Empty;
+    private bool btnActualizarTitulo = false;
 
 
     public async Task AgregarCuentaClick()
@@ -73,6 +77,24 @@ public partial class CatalogoGrupoDetails
             return;
         }
 
+        if(grupoCuenta.Id > 0) // Actualizar oprGrupo
+        {
+            try
+            {
+                var oprGrupo = this.PagosCentralizadosService1.ActualizarGrupoCuenta(Grupo.Id, grupoCuenta);
+                this.Grupo.OprGrupos.Add(oprGrupo);
+                StateHasChanged();
+            }
+            catch(Exception ex)
+            {
+                Logger.LogError(ex, "Error al actualizar el elemento.");
+                MatToaster.Add(ex.Message, MatToastType.Danger);
+            }
+
+            return;
+        }
+
+        // Agregar nuevo oprGrupo
         try
         {
             var oprGrupo = this.PagosCentralizadosService1.AgregarGrupoCuenta(Grupo.Id, grupoCuenta);
@@ -90,5 +112,52 @@ public partial class CatalogoGrupoDetails
     public void RowSelectHandler(RowSelectEventArgs<PagoCentOprGrupo> args)
     {
         cuentaSeleccionada = args.Data;
+    }
+
+    private async Task EditarCuenta(PagoCentOprGrupo oprGrupo)
+    {
+        this.cuentaSeleccionada = oprGrupo;
+        this.ventanaSecundariaTitle = "Editar Cuenta";
+        this.ventanaSecundariaVisible = true;
+        await Task.CompletedTask;
+    }
+
+    private async Task TitleChanged()
+    {
+        if(Grupo.Descripcion != tituloGrupo)
+        {
+            btnActualizarTitulo = true;
+            await Task.CompletedTask;
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        tituloGrupo = Grupo?.Descripcion ?? string.Empty;
+        btnActualizarTitulo = false;
+    }
+
+    private void ActualizarTituloGrupo()
+    {
+        this.Grupo.Descripcion = tituloGrupo.Trim();
+        try
+        {
+            PagosCentralizadosService1.ActualizarGrupo(this.Grupo);
+            MatToaster.Add("Titulo del grupo actualizado.", MatToastType.Success);
+            StateHasChanged();
+        }
+        catch(Exception ex)
+        {
+            Logger.LogError(ex, "Error al actualizar el titulo del grupo");
+            MatToaster.Add(ex.Message, MatToastType.Danger);
+        }
+
+        btnActualizarTitulo = false;
+    }
+    
+    private void CancelarActualizarTitulo()
+    {
+        tituloGrupo = Grupo?.Descripcion ?? string.Empty;
+        btnActualizarTitulo = false;
     }
 }

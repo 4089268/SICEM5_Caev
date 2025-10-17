@@ -10,7 +10,14 @@
             <div class="col-12 p-3">
                 <div class="mb-3">
                     <label for="tbtitle" class="form-label w-100 h5">Titulo</label>
-                    <input id="tbtitle" type="text" class="h4 p-2 w-50" value="@Grupo.Descripcion" />
+                    <div class="d-flex align-items-center">
+                        <input id="tbtitle" type="text" class="h4 p-2 w-50" @bind="@tituloGrupo" @bind:after="TitleChanged" />
+                        @if(btnActualizarTitulo)
+                        {
+                            <button type="button" class="mx-2 btn btn-lg btn-success" @onclick="ActualizarTituloGrupo">Actualizar</button>
+                            <button type="button" class="mx-2 btn btn-lg btn-danger" @onclick="CancelarActualizarTitulo">Cancelar</button>
+                        }
+                    </div>
                 </div>
                 
             </div>
@@ -32,7 +39,7 @@
                             @{
                                 var data = (context as PagoCentOprGrupo);
                                 <div class="d-flex align-items-center">
-                                    <button type="button" class="btn btn-lg mx-1 btn-info">Editar</button>
+                                    <button type="button" class="btn btn-lg mx-1 btn-info" @onclick="((e) => EditarCuenta(data))">Editar</button>
                                     <button type="button" class="btn btn-lg mx-1 btn-danger">Eliminar</button>
                                 </div>
                             }

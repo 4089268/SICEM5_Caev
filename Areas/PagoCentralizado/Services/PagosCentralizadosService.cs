@@ -16,6 +16,7 @@ public class PagosCentralizadosService(ILogger<PagosCentralizadosService> lg, Si
     {
         return this.context.PagoCentCatGrupos
             .Where(e => e.FechaEliminacion == null)
+            .Include(e => e.OprGrupos)
             .ToList();
     }
 
@@ -70,23 +71,41 @@ public class PagosCentralizadosService(ILogger<PagosCentralizadosService> lg, Si
         this.logger.LogWarning("Grupo Id:{id} actualiado", grupo.Id);
     }
 
-    public PagoCentOprGrupo AgregarGrupoCuenta(int grupoId, PagoCentOprGrupo cuenta)
+    public PagoCentOprGrupo AgregarGrupoCuenta(int grupoId, PagoCentOprGrupo oprGrupo)
     {
-        var g = this.context.PagoCentCatGrupos
+        var grupo = this.context.PagoCentCatGrupos
             .Where(e => e.FechaEliminacion == null)
             .Where(e => e.Id == grupoId)
             .FirstOrDefault();
 
-        if(g == null)
+        if(grupo == null)
         {
             throw new ArgumentException("El grupo no existe o no esta disponible", "grupoId");
         }
 
-        cuenta.IdGrupo = g.Id;
-        this.context.PagoCentOprGrupos.Add(cuenta);
+        oprGrupo.IdGrupo = grupo.Id;
+        this.context.PagoCentOprGrupos.Add(oprGrupo);
         this.context.SaveChanges();
 
-        return cuenta;
+        return oprGrupo;
+    }
+
+    public PagoCentOprGrupo ActualizarGrupoCuenta(int grupoId, PagoCentOprGrupo oprGrupo)
+    {
+        var grupo = this.context.PagoCentCatGrupos
+            .Where(e => e.FechaEliminacion == null)
+            .Where(e => e.Id == grupoId)
+            .FirstOrDefault();
+
+        if(grupo == null)
+        {
+            throw new ArgumentException("El grupo no existe o no esta disponible", "grupoId");
+        }
+
+        this.context.PagoCentOprGrupos.Update(oprGrupo);
+        this.context.SaveChanges();
+        
+        return oprGrupo;
     }
 
 }

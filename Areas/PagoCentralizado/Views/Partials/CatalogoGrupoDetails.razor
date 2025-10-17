@@ -14,8 +14,14 @@
                         <input id="tbtitle" type="text" class="h4 p-2 w-50" @bind="@tituloGrupo" @bind:after="TitleChanged" />
                         @if(btnActualizarTitulo)
                         {
-                            <button type="button" class="mx-2 btn btn-lg btn-success" @onclick="ActualizarTituloGrupo">Actualizar</button>
-                            <button type="button" class="mx-2 btn btn-lg btn-danger" @onclick="CancelarActualizarTitulo">Cancelar</button>
+                            <button type="button" class="mx-2 btn btn-lg btn-success" @onclick="ActualizarTituloGrupo">
+                                <i class="fa fa-save mr-1 me-1"></i>
+                                Actualizar
+                            </button>
+                            <button type="button" class="mx-2 btn btn-lg btn-danger" @onclick="CancelarActualizarTitulo">
+                                <i class="fa fa-close mr-1 me-1"></i>
+                                Cancelar
+                            </button>
                         }
                     </div>
                 </div>
@@ -23,7 +29,10 @@
             </div>
 
             <div class="col-12 p-3 d-flex align-items-center">
-                <button type="button" class="btn btn-lg h3 mx-1 btn-success" @onclick="@((e) => AgregarCuentaClick())">Agregar</button>
+                <button type="button" class="btn btn-lg h3 mx-1 btn-success" @onclick="@((e) => AgregarCuentaClick())">
+                    <i class="fa fa-plus mr-1 me-1"></i>
+                    Agregar Cuenta
+                </button>
             </div>
 
             <div class="col-12">
@@ -39,8 +48,12 @@
                             @{
                                 var data = (context as PagoCentOprGrupo);
                                 <div class="d-flex align-items-center">
-                                    <button type="button" class="btn btn-lg mx-1 btn-info" @onclick="((e) => EditarCuenta(data))">Editar</button>
-                                    <button type="button" class="btn btn-lg mx-1 btn-danger">Eliminar</button>
+                                    <button type="button" class="btn btn-lg mx-1 rounded-pill btn-outline-info" @onclick="((e) => EditarCuenta(data))">
+                                        <i class="fa fa-pencil mr-1 me-1"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-lg mx-1 rounded-pill btn-outline-danger">
+                                        <i class="fa fa-trash-alt mr-1 me-1"></i>
+                                    </button>
                                 </div>
                             }
                             </Template>

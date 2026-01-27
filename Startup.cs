@@ -35,6 +35,7 @@ using Sicem_Blazor.SeguimientoCobros.Data;
 using Sicem_Blazor.Boletines.Services;
 
 using Sicem_Blazor.PagoCentralizado.Services;
+using Sicem_Blazor.CFDI.Services;
 
 
 namespace Sicem_Blazor {
@@ -91,6 +92,7 @@ namespace Sicem_Blazor {
             services.AddScoped<NotificacionesTemplateService>();
             services.AddScoped<PonteAlCorrienteService>();
             services.AddScoped<IBoletinService, BoletinService>();
+            services.AddScoped<FacturaService>();
             services.AddRecaudacionServices();
             services.AddWhatsappService(Configuration);
             services.AddPagoLineaServices(Configuration);

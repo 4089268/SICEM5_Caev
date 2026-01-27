@@ -36,6 +36,8 @@
     <PackageReference Include="System.ServiceModel.Federation" Version="4.10.*" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Areas/CFDI/Models/" />
+    <Folder Include="Areas/CFDI/Services/" />
     <Folder Include="Models\Entities\Arquos\" />
   </ItemGroup>
   <ItemGroup>

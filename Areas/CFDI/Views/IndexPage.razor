@@ -62,11 +62,9 @@
                             var data = (context as ResumenFactura);
                             if (data.Id > 0 && data.Id < 90) {
                                 <div class="d-flex p-1">
-                                    @*
-                                    <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Analitico" disabled="@(data.Estatus != ResumenOficinaEstatus.Completado )" @onclick=@( e => Analitico_Click(data) )>
-                                        <i class="fa fa-chart-line" aria-hidden="true"></i>
+                                    <button type="button" class="btn btn-primary btn-sm mx-1" data-toggle="tooltip" data-placement="top" title="Detalle Facturas" @onclick="@(e => VentanaDetalle_Click(data))">
+                                        <i class="fa fa-bookmark" aria-hidden="true"></i>
                                     </button>
-                                    *@
                                 </div>
                             }
                         }
@@ -81,3 +79,16 @@
 
 @* ****** Dialogos y ventanas secundarias ****** *@
 <BusyIndicator Busy="@busyDialog" ContentText="Cargando datos...." />
+<CascadingValue Value="@f1" Name="fechaDesde">
+    <CascadingValue Value="@f2" Name="fechaHasta">
+        @if(vtnDetalleFacturasVisible)
+        {
+            <DetalleFacturasVtn
+                Titulo="Detalle Facturas"
+                CerrarModal="@((e) => vtnDetalleFacturasVisible = false)"
+                DatosGrid="@DetalleFacturaData.ToList()"
+                Enlace="@EnlaceSeleccionado"
+            />
+        }
+    </CascadingValue>
+</CascadingValue>

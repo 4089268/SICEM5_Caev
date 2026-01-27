@@ -1,0 +1,444 @@
+﻿@namespace Sicem_Blazor.CFDI.Pages
+@using Newtonsoft.Json
+@using Syncfusion.Blazor.Grids
+@using Sicem_Blazor.CFDI.Services
+@using Sicem_Blazor.CFDI.Models
+@inject NavigationManager NavManager
+@inject FacturaService FacturasService
+@inject IJSRuntime JSRuntime
+@inject IMatToaster Toaster
+@inject SicemService sicemService
+
+<VentanaSecundaria Titulo="@Titulo" Filas="@filas" Columnas="@columnas" CerrarVentana="@OnCerrar_Click">
+    <Content>
+        <div class="d-flex flex-wrap border rounded bg-white p-2 my-1" style="grid-area: 1/1/2/3; overflow-x:auto;">
+
+            @*
+            <div class="d-flex align-items-center mr-2 my-1">
+                <div class="h4 mr-2">Estatus: </div>
+                <ComboBox Options="@CatalogoEstatus" InitValue="-1" OnSelected="@(e => this.EstatusSeleccionado = e)" Width="200" />
+            </div>
+
+            <div class="d-flex align-items-center mr-4 my-1">
+                <div class="h4 mr-2">Forma de Pago: </div>
+                <ComboBox Options="@CatalogoPagos" InitValue="-1" OnSelected="@(e => this.MetodoPagoSeleccionado = e)" Width="200" />
+            </div>
+
+            <div class="d-flex align-items-center mr-4 my-1">
+                <div class="h4 mr-2">Regimen: </div>
+                <ComboBox Options="@CatalogoRegimen" InitValue="-1" OnSelected="@(e => this.RegimenSeleccionado = e)" Width="200" />
+            </div>
+
+            <div class="d-flex align-items-center mr-4 my-1">
+                <div class="h4 mr-2">Tipo Comprobante: </div>
+                <ComboBox Options="@CatalogoTipoComprobantes" InitValue="-1" OnSelected="@(e => this.TipoComprobanteSeleccionado = e)" Width="200" />
+            </div>
+
+            <div class="d-flex align-items-center mr-4 my-1 py-2">
+                <div class="h4 mr-2">Porcentaje IVA: </div>
+                <ComboBox Options="@CatalogoPorcentajesIva" InitValue="-1" OnSelected="@(e => this.PorcentajeIvaSeleccionado = e)" Width="200" />
+            </div>
+            *@
+
+            <button class="button bg-success px-4 mr-4 my-1 py-2" @onclick="ExportarExcel_Click">
+                <i class="fa fa-file-excel mr-2"></i>
+                <span>Exportar Excel</span>
+            </button>
+
+            <button class="button bg-success px-4 mr-4 my-1" @onclick="DescargarTodoArchivosXml">
+                <i class="fa fa-download mr-2"></i>
+                <span>Descargar Facturas</span>
+            </button>
+
+        </div>
+
+        <div class="border rounded bg-white p-2 my-1" style="@(RegistroSeleccionado==null?"grid-area:2/1/3/3;":"grid-area:2/1/3/2")">
+            
+            <div style="height:4rem;">
+                <input class="my-2 px-3 py-2" style="width:30rem;" type="text" placeholder="RFC, Razon Social, Email, Regimen, etc." @bind-value="@TextSearch" @onkeyup="@OnSearchKeyUp" />
+            </div>
+            
+            <div style="height:calc(100% - 6.5rem);">
+                <SfGrid @ref="DataGrid" DataSource="@DatosGrid_Filtrado" TValue="Factura" AllowResizing="true" AllowSorting="true" AllowFiltering="false"
+                    AllowExcelExport="true" Height="100%" Width="100%" EnableHover="true">
+                    <GridEvents RowDeselected="OnGridRecord_UnSelected" RowSelected="OnGridRecord_Selected" TValue="Factura"></GridEvents>
+                    <GridColumns>
+                        <GridColumn Field="@nameof(Factura.UUID)" HeaderText="Folio Fiscal" TextAlign="TextAlign.Center" Width="180" />
+                        <GridColumn Field="@nameof(Factura.Rfc)" HeaderText="RFC" TextAlign="TextAlign.Left" Width="110" />
+                        <GridColumn Field="@nameof(Factura.RazonSocial)" HeaderText="Razon Social" TextAlign="TextAlign.Left" Width="190" />
+                        <GridColumn Field="@nameof(Factura.Email)" HeaderText="Email" TextAlign="TextAlign.Left" Width="160" />
+                        <GridColumn Field="@nameof(Factura.Estatus)" HeaderText="Estatus" TextAlign="TextAlign.Center" Width="90" Format="n0" />
+                        <GridColumn Field="@nameof(Factura.Folio)" HeaderText="Folio" TextAlign="TextAlign.Center" Width="180" />
+                        <GridColumn Field="@nameof(Factura.Subtotal)" HeaderText="SubTotal" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(Factura.Iva)" HeaderText="Iva" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(Factura.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(Factura.FormaPago)" HeaderText="Forma de Pago" TextAlign="TextAlign.Left" Width="160" />
+                        <GridColumn Field="@nameof(Factura.ClaveRegimen)" HeaderText="Regimen" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Factura.Genero)" HeaderText="Genero" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Factura.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Center" Width="140" />
+                        <GridColumn Field="@nameof(Factura.Cancelo)" HeaderText="Cancelo" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Factura.FechaCancelo)" HeaderText="Fecha Cancelacion" TextAlign="TextAlign.Center" Width="140" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
+
+            <div class="d-flex align-items-center" style="height:2rem;">
+                <div class="px-2">Total Registros: @GetTotalRegistros().ToString("n0")</div>
+                <div class="px-2">Subtotal: @GetSubtotalSaldo().ToString("c2")</div>
+                <div class="px-2">IVA: @GetIVASaldo().ToString("c2")</div>
+                <div class="px-2">Total: @GetTotalSaldo().ToString("c2")</div>
+            </div>
+
+        </div>
+
+        @if(RegistroSeleccionado != null)
+        {
+            <div class="div-det-factua border rounded bg-white p-2 ml-1" style="grid-area: 2/2/3/3;">
+                <div class="h3">@RegistroSeleccionado.RazonSocial</div>
+                <br/>
+                <div class="h4">RFC:</div>
+                <div class="h5 px-2">@RegistroSeleccionado.Rfc</div>
+                <br/>
+                <div class="h4">Folio Fiscal:</div>
+                <div class="h5 px-2">@RegistroSeleccionado.UUID</div>
+                <br/>
+                <div class="h4">Genero:</div>
+                <div class="h5 px-2">@RegistroSeleccionado.Genero</div>
+                <br/>
+                <div class="h4">Fecha:</div>
+                <div class="h5 px-2">@RegistroSeleccionado.Fecha</div>
+                <br/>
+
+                @if(RegistroSeleccionado.IdEstatus == 65)
+                {
+                    <div class="h4">Cancelo:</div>
+                    <div class="h5 px-2">@RegistroSeleccionado.Cancelo</div>
+                    <br/>
+                    <div class="h4">Fecha Cancelo:</div>
+                    <div class="h5 px-2">@((RegistroSeleccionado.FechaCancelo??new DateTime()).ToString("dd MMMM yyyy HH:mm"))</div>
+                    <br/>
+                }
+
+                @if( RegistroSeleccionado.ObervacionA.Trim().Length > 1)
+                {
+                    <div class="h4"> Comentarios: </div>
+                    <textarea class="mx-2" style="resize:none; height: 10rem; width: calc(100% - 1rem);" readonly="true"> @RegistroSeleccionado.ObervacionA </textarea>
+                    <br/>
+                }
+
+                <div class="grd-conceptos mt-3">
+                    @if(CargandoConceptos)
+                    {
+                        <div class="d-flex flex-column justify-content-center align-items-center w-100" style="height:5rem;">
+                            <div class="h4"> Cargando Conceptos </div>
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only"></span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="h4">Conceptos Facturados</div>
+                        <SfGrid DataSource="@ConceptosFacturados">
+                            <GridColumns>
+                                <GridColumn Field="@nameof(ConceptoFactura.Concepto)" HeaderText="Concepto" TextAlign="TextAlign.Left" ClipMode="ClipMode.EllipsisWithTooltip"/>
+                                <GridColumn Field="@nameof(ConceptoFactura.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Format="c2"/>
+                                <GridColumn Field="@nameof(ConceptoFactura.Iva)" HeaderText="Iva" TextAlign="TextAlign.Right" Format="c2"/>
+                                <GridColumn Field="@nameof(ConceptoFactura.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Format="c2"/>
+                            </GridColumns>
+                        </SfGrid>
+                    }
+                </div>
+
+                <div class="w-100 mt-4">
+                    <button class="button mx-auto px-4 py-2" @onclick="@(e => DescargarArchivoXML())">
+                        <i class="fa fa-download mr-2"></i>
+                        <span>Descargar Factura XML</span>
+                    </button>
+                </div>
+            </div>
+        }
+
+    </Content>
+</VentanaSecundaria>
+
+@code
+{
+
+    [CascadingParameter]
+    public DateTime fechaDesde {get;set;}
+    
+    [CascadingParameter]
+    public DateTime fechaHasta {get;set;}
+    
+    [Parameter]
+    public IEnlace Enlace {get;set;}
+
+    [Parameter]
+    public string Titulo {get;set;} = "Detalle Facturas";
+    
+    [Parameter]
+    public EventCallback CerrarModal {get;set;}
+    
+    [Parameter]
+    public List<Factura> DatosGrid {get;set;}
+
+    private double[] filas = new double[]{ -1, 0.80 };
+    private double[] columnas = new double[]{ 0.7, .25 };
+
+    private SfGrid<Factura> DataGrid { get; set; }
+    private List<Factura> DatosGrid_Filtrado
+    {
+        get {
+            var d = DatosGrid;
+            if(EstatusSeleccionado >= 0){
+                d = d.Where(item => item.IdEstatus == EstatusSeleccionado).ToList();
+            }
+            if(MetodoPagoSeleccionado >= 0){
+                d = d.Where( item => item.IdFormaPago == MetodoPagoSeleccionado).ToList();
+            }
+            if(RegimenSeleccionado >= 0){
+                d = d.Where( item => item.IdClaveRegimen == RegimenSeleccionado).ToList();
+            }
+            if(TipoComprobanteSeleccionado >= 0){
+                d = d.Where( item => item.IdTipoComprobante == TipoComprobanteSeleccionado).ToList();
+            }
+            
+            switch(PorcentajeIvaSeleccionado)
+            {
+                case 1:
+                    d = d.Where( item => System.Math.Round((item.Iva / item.Subtotal),2) * 100 == 8 ).ToList();
+                    break;
+
+                case 2:
+                    d = d.Where( item => System.Math.Round((item.Iva / item.Subtotal),2) * 100 == 16 ).ToList();
+                    break;
+            }
+
+            return d;
+        }
+    }
+    private Factura RegistroSeleccionado {get;set;} = null;
+    private List<ConceptoFactura> ConceptosFacturados {get;set;}
+    private bool CargandoConceptos {get;set;} = true;
+    private string TextSearch {get;set;} = "";
+
+    private Dictionary<int,string> CatalogoEstatus {get;set;}
+    private Dictionary<int,string> CatalogoPagos {get;set;}
+    private Dictionary<int,string> CatalogoRegimen {get;set;}
+    private Dictionary<int,string> CatalogoTipoComprobantes {get;set;}
+    private Dictionary<int,string> CatalogoPorcentajesIva {
+        get {
+            var _d = new Dictionary<int, string>();
+            _d.Add(-1, "TODOS");
+            _d.Add(1, "8%");
+            _d.Add(2, "16%");
+            return _d;
+        }
+    }
+
+    private int EstatusSeleccionado = -1;
+    private int MetodoPagoSeleccionado = -1;
+    private int RegimenSeleccionado = -1;
+    private int TipoComprobanteSeleccionado = -1;
+    private int PorcentajeIvaSeleccionado = -1;
+
+
+    protected override void OnParametersSet()
+    {
+        if(DatosGrid == null)
+        {
+            OnCerrar_Click();
+        }
+        else
+        {
+            GenerarCatalogos();
+        }
+    }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if(firstRender){
+            StateHasChanged();
+        }
+    }
+    private void OnCerrar_Click(){
+        CerrarModal.InvokeAsync();
+    }
+
+    private void ExportarExcel_Click()
+    {
+        DataGrid.ExportToExcelAsync();
+    }
+
+    private async Task OnGridRecord_Selected(RowSelectEventArgs<Factura> args){
+        if(args.Data != null){
+            RegistroSeleccionado = args.Data;
+            await CargarConceptos();
+        }
+    }
+    private void OnGridRecord_UnSelected(RowDeselectEventArgs<Factura> args){
+        RegistroSeleccionado = null;
+    }
+
+    private async Task CargarConceptos()
+    {
+        if(RegistroSeleccionado == null)
+        {
+            return;
+        }
+
+        this.CargandoConceptos = true;
+        await Task.Delay(200);
+
+        var _idCFDI = RegistroSeleccionado.IdCFDI;
+        this.ConceptosFacturados = FacturasService.ObtenerConceptosFactura(Enlace, _idCFDI).ToList();
+        
+        await Task.Delay(200);
+        this.CargandoConceptos = false;
+    }
+
+    private void GenerarCatalogos()
+    {
+        @* CatalogoEstatus = new Dictionary<int,string>();
+        CatalogoEstatus.Add(-1, "TODOS");
+        this.DatosGrid.GroupBy(item => item.IdEstatus).ToList().ForEach( group => {
+            var _id = group.Key;
+            var _des = group.First().Estatus.ToUpper();
+            CatalogoEstatus.Add(_id, _des);
+        });
+
+        CatalogoPagos = new Dictionary<int,string>();
+        CatalogoPagos.Add(-1, "TODOS");
+        DatosGrid.GroupBy(item => item.IdFormaPago).ToList().ForEach( group => {
+            var _id = group.Key;
+            var _des = group.First().FormaPago.ToUpper();
+            CatalogoPagos.Add(_id, _des);
+        });
+
+        CatalogoRegimen = new Dictionary<int, string>();
+        CatalogoRegimen.Add(-1, "TODOS");
+        DatosGrid.GroupBy( item => item.IdClaveRegimen).ToList().ForEach(group => {
+            var _id = group.Key;
+            var _desc = group.First().ClaveRegimen.ToUpper();
+            CatalogoRegimen.Add( _id, _desc);
+        });
+
+        CatalogoTipoComprobantes = new Dictionary<int, string>();
+        CatalogoTipoComprobantes.Add(-1, "TODOS");
+        DatosGrid.GroupBy( item => item.IdTipoComprobante).ToList().ForEach(group => {
+            var _id = group.Key;
+            var _desc = group.First().TipoComprobante.ToUpper();
+            CatalogoTipoComprobantes.Add( _id, _desc);
+        }); *@
+    }
+
+    private async Task DescargarArchivoXML()
+    {
+        Toaster.Add("No implementado", MatToastType.Info);
+        await Task.CompletedTask;
+        @* if(RegistroSeleccionado == null)
+        {
+            return;
+        }
+
+        var _bytes = System.Text.Encoding.UTF8.GetBytes(RegistroSeleccionado.FileXml);
+        var _fileB64 = System.Convert.ToBase64String(_bytes);
+
+        var options = new Dictionary<string, object>();
+        options.Add("byteArray", _fileB64);
+        options.Add("fileName", $"factura_{RegistroSeleccionado.Rfc}_{RegistroSeleccionado.UUID}.xml");
+        options.Add("contentType","text/xml");
+
+        await JSRuntime.InvokeVoidAsync("DownloadFileFromBytes", options); *@
+    }
+
+    private async Task DescargarTodoArchivosXml()
+    {
+        Toaster.Add("No implementado", MatToastType.Info);
+        await Task.CompletedTask;
+        @* var listaItems = new List<Dictionary<string, object>>();
+        
+        foreach( var fact in DatosGrid_Filtrado){
+            var _newDict = new Dictionary<string, object>();
+            var _bytes = System.Text.Encoding.UTF8.GetBytes(fact.FileXml);
+            var _fileB64 = System.Convert.ToBase64String(_bytes);
+            _newDict.Add("data", _fileB64);
+            _newDict.Add("nombre", fact.RazonSocial + "_" + fact.UUID );
+            listaItems.Add(_newDict);
+        }
+
+        var _jsonContent = JsonConvert.SerializeObject(listaItems);
+
+        var client = new HttpClient();
+        var content = new StringContent(_jsonContent.ToString(), System.Text.Encoding.UTF8, "application/json");
+        var responseHttp = client.PostAsync( sicemService.ObtenerDireccionApi() + "/Facturas/DescargarArchivo" , content ).Result;
+        
+        if(responseHttp.IsSuccessStatusCode){
+            var _bytes2 = await responseHttp.Content.ReadAsByteArrayAsync();
+            var options = new Dictionary<string, object>();
+            var _nameZip = $"facturas_{Enlace.Nombre}_{DateTime.Now.ToString("dd-MM-yyyy-HHmmss")}.zip";
+            options.Add("byteArray", System.Convert.ToBase64String(_bytes2));
+            options.Add("fileName", _nameZip);
+            options.Add("contentType","application/zip");
+            await JSRuntime.InvokeVoidAsync("DownloadFileFromBytes", options);
+        }else{
+            Toaster.Add("Error al geneara los archivos", MatToastType.Danger);
+        } *@
+    }
+    private async Task OnSearchKeyUp(KeyboardEventArgs e)
+    {
+        if(e.Key == "Enter"){
+            await this.DataGrid.SearchAsync(TextSearch);
+        }
+    }
+
+    private int GetTotalRegistros()
+    {
+        if(DataGrid == null){
+            return 0;
+        }
+        var result = 0;
+        var task = Task.Factory.StartNew( async () => {
+            result = (await DataGrid.GetCurrentViewRecordsAsync()).Count();
+        });
+        task.Wait();
+        return result;
+    }
+    private decimal GetSubtotalSaldo()
+    {
+        if(DataGrid == null){
+            return 0m;
+        }
+        var result = 0m;
+        var task = Task.Factory.StartNew( async () => {
+            result = (await DataGrid.GetCurrentViewRecordsAsync()).Sum(item => item.Subtotal);
+        });
+        task.Wait();
+        return result;
+    }
+    private decimal GetIVASaldo()
+    {
+        if(DataGrid == null){
+            return 0m;
+        }
+        var result = 0m;
+        var task = Task.Factory.StartNew( async () => {
+            result = (await DataGrid.GetCurrentViewRecordsAsync()).Sum(item => item.Iva);
+        });
+        task.Wait();
+        return result;
+    }
+    private decimal GetTotalSaldo()
+    {
+        if(DataGrid == null){
+            return 0m;
+        }
+        var result = 0m;
+        var task = Task.Factory.StartNew( async () => {
+            result = (await DataGrid.GetCurrentViewRecordsAsync()).Sum(item => item.Total);
+        });
+        task.Wait();
+        return result;
+    }
+
+}

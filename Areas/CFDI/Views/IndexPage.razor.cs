@@ -35,6 +35,10 @@ public partial class IndexPage
     private DateTime f1, f2;
     private int Subsistema, Sector;
 
+    private bool vtnDetalleFacturasVisible = false;
+    private IEnumerable<Factura> DetalleFacturaData {get;set;}
+    private IEnlace EnlaceSeleccionado {get;set;}
+    
     protected override void OnInitialized()
     {
         var _now = DateTime.Now;
@@ -174,4 +178,27 @@ public partial class IndexPage
         await this.dataGrid.ExportToExcelAsync(_options);
     }
 
+
+    private async Task VentanaDetalle_Click(ResumenFactura data)
+    {
+        if(vtnDetalleFacturasVisible)
+        {
+            return;
+        }
+        busyDialog = true;
+        await Task.Delay(200);
+
+        DetalleFacturaData = await this.FacturaService1.ObtenerFacturasOficina(data.Enlace, f1, f2);
+
+        if(DetalleFacturaData.Count() > 0)
+        {
+            EnlaceSeleccionado = data.Enlace;
+            vtnDetalleFacturasVisible = true;
+        }else{
+            Toaster.Add("No hay datos disponibles", MatToastType.Danger);
+        }
+
+        await Task.Delay(200);
+        busyDialog = false;
+    }
 }

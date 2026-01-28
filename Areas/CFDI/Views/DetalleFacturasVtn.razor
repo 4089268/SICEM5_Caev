@@ -93,7 +93,7 @@
 
         @if(RegistroSeleccionado != null)
         {
-            <div class="div-det-factua border rounded bg-white p-2 ml-1" style="grid-area: 2/2/3/3;">
+            <div class="overflow-auto border rounded bg-white p-2 ml-1" style="grid-area: 2/2/3/3;">
                 <div class="h3">@RegistroSeleccionado.RazonSocial</div>
                 <br/>
                 <div class="h4">RFC:</div>
@@ -183,7 +183,7 @@
     [Parameter]
     public List<Factura> DatosGrid {get;set;}
 
-    private double[] filas = new double[]{ -1, 0.80 };
+    private double[] filas = new double[]{ 55, 0.75 };
     private double[] columnas = new double[]{ 0.7, .25 };
 
     private SfGrid<Factura> DataGrid { get; set; }

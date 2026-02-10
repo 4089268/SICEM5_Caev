@@ -22,7 +22,7 @@ public class FacturaService
     {
         ResumenFactura _result = new ResumenFactura
         {
-            Estatus = Data.Contracts.ResumenOficinaEstatus.Error,
+            Estatus = Data.Contracts.ResumenOficinaEstatus.Completado,
             Enlace = enlace
         };
 
@@ -68,7 +68,6 @@ public class FacturaService
                         _result.SubTotal = ConvertUtils.ParseDecimal(_reader["subtotal"]);
                         _result.Iva = ConvertUtils.ParseDecimal(_reader["iva"]);
                         _result.Total = ConvertUtils.ParseDecimal(_reader["total"]);
-                        _result.Estatus = Data.Contracts.ResumenOficinaEstatus.Completado;
                     }
                 }
                 _connection.Close();

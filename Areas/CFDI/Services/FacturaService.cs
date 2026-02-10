@@ -259,49 +259,96 @@ public class FacturaService
     }
 
     public IEnumerable<ConceptoFactura> ObtenerConceptosFactura(IEnlace enlace, int id_cfdi)
+    {
+        var _result = new List<ConceptoFactura>();
+
+        try
         {
-            var _result = new List<ConceptoFactura>();
-
-            try
+            var _query = @"SELECT d.*
+                FROM CFDI.Opr_DetCfdis as d
+                Inner join CFDI.Opr_Cfdis as a on d.id_cfdi = a.id_cfdi 
+                Where d.id_cfdi = Case When @idCfdi = -1 Then d.id_cfdi Else @idCfdi End
+                Order by iva, CASE WHEN concepto like 'REZ.%' THEN 2 WHEN concepto like 'ABONO%' THEN 1 ELSE 0 END,id_concepto";
+            _query = _query.Replace("@idCfdi", id_cfdi.ToString());
+            
+            using( var _connection = new SqlConnection(enlace.GetConnectionString()))
             {
-                var _query = @"SELECT d.*
-                    FROM CFDI.Opr_DetCfdis as d
-                    Inner join CFDI.Opr_Cfdis as a on d.id_cfdi = a.id_cfdi 
-                    Where d.id_cfdi = Case When @idCfdi = -1 Then d.id_cfdi Else @idCfdi End
-                    Order by iva, CASE WHEN concepto like 'REZ.%' THEN 2 WHEN concepto like 'ABONO%' THEN 1 ELSE 0 END,id_concepto";
-                _query = _query.Replace("@idCfdi", id_cfdi.ToString());
-                
-                using( var _connection = new SqlConnection(enlace.GetConnectionString()))
+                _connection.Open();
+
+                var _command = new SqlCommand(_query, _connection);
+                using(SqlDataReader _reader = _command.ExecuteReader())
                 {
-                    _connection.Open();
-
-                    var _command = new SqlCommand(_query, _connection);
-                    using(SqlDataReader _reader = _command.ExecuteReader())
+                    while(_reader.Read())
                     {
-                        while(_reader.Read())
-                        {
-                            var _newItem = new ConceptoFactura();
-                            _newItem.IdCFDI = ConvertUtils.ParseInteger(_reader["id_cfdi"].ToString());
-                            _newItem.IdConcepto = ConvertUtils.ParseInteger(_reader["id_concepto"].ToString());
-                            _newItem.Concepto = _reader["concepto"].ToString();
-                            _newItem.Subtotal = ConvertUtils.ParseDecimal(_reader["subtotal"].ToString());
-                            _newItem.Iva = ConvertUtils.ParseDecimal(_reader["iva"].ToString());
-                            _newItem.Total = ConvertUtils.ParseDecimal(_reader["total"].ToString());
-                            _newItem.ClaveProdServ = _reader["ClaveProdServ"].ToString();
-                            _newItem.ClaveUnidad = _reader["ClaveUnidad"].ToString();
-                            _newItem.Cantidad = _reader["cantidad"].ToString();
-                            _result.Add(_newItem);
-                        }
+                        var _newItem = new ConceptoFactura();
+                        _newItem.IdCFDI = ConvertUtils.ParseInteger(_reader["id_cfdi"].ToString());
+                        _newItem.IdConcepto = ConvertUtils.ParseInteger(_reader["id_concepto"].ToString());
+                        _newItem.Concepto = _reader["concepto"].ToString();
+                        _newItem.Subtotal = ConvertUtils.ParseDecimal(_reader["subtotal"].ToString());
+                        _newItem.Iva = ConvertUtils.ParseDecimal(_reader["iva"].ToString());
+                        _newItem.Total = ConvertUtils.ParseDecimal(_reader["total"].ToString());
+                        _newItem.ClaveProdServ = _reader["ClaveProdServ"].ToString();
+                        _newItem.ClaveUnidad = _reader["ClaveUnidad"].ToString();
+                        _newItem.Cantidad = _reader["cantidad"].ToString();
+                        _result.Add(_newItem);
                     }
-                    _connection.Close();
                 }
+                _connection.Close();
+            }
 
-                return _result;
-            }
-            catch(Exception err)
-            {
-                logger.LogError(err, $"Error al obtener el resumen de facturas del enalce ({enlace.ToString()})");
-                return new ConceptoFactura[] { };
-            }
+            return _result;
         }
+        catch(Exception err)
+        {
+            logger.LogError(err, $"Error al obtener el resumen de facturas del enalce ({enlace.ToString()})");
+            return new ConceptoFactura[] { };
+        }
+    }
+
+
+    public IEnumerable<ClienteCFDI> RealizarConsulta(IEnlace enlace, string rfc, string razonSocial)
+    {
+        var results = new List<ClienteCFDI>();
+        var query = @"
+            WITH UltimaFactura AS (
+                SELECT
+                    C.*,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY C.rfc, C.razon_social, C.cp_receptor
+                        ORDER BY C.fecha DESC
+                    ) AS rn
+                FROM [CFDI].[Opr_Cfdis] C
+                WHERE (C.rfc = @rfc OR C.razon_social LIKE '%' + @razonSocial + '%')
+            )
+            SELECT
+                C.rfc,
+                C.razon_social,
+                R.descripcion AS regimenFiscal,
+                U.descripcion AS usoCFDI,
+                C.cp_receptor,
+                C.email AS correo,
+                C.fecha AS ultimaFactura
+            FROM UltimaFactura C
+            LEFT JOIN [CFDI].[Cat_UsosCFDI] U ON C.id_usocfdi = U.clave
+            LEFT JOIN [CFDI].[Cat_RegimenFiscal] R ON R.id_claveregimen = C.id_claveregimen
+            WHERE C.rn = 1;";
+
+        using(var sqlConnection = new SqlConnection(enlace.GetConnectionString()))
+        {
+            sqlConnection.Open();
+            var sqlCommand = new SqlCommand(query, sqlConnection);
+            sqlCommand.Parameters.AddWithValue("@rfc", rfc);
+            sqlCommand.Parameters.AddWithValue("@razonSocial", razonSocial);
+            using(SqlDataReader reader = sqlCommand.ExecuteReader())
+            {
+                while(reader.Read())
+                {
+                    results.Add(ClienteCFDI.FromDataReader(enlace, reader));
+                }
+            }
+            sqlConnection.Close();
+        }
+
+        return results;
+    }
 }

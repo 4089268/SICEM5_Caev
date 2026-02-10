@@ -1,0 +1,79 @@
+@page "/CFDI/Busqueda"
+@namespace Sicem_Blazor.CFDI.Pages
+@using System.IO
+@using Microsoft.Extensions.Configuration
+@using Syncfusion.Blazor.Navigations
+@using Sicem_Blazor.Data.KML
+@using Sicem_Blazor.AnalisisInformacion.Models
+
+<div class="d-flex flex-column w-100 h-100">
+
+    <div class="title-page" style="text-transform:uppercase;">Búsqueda Clientes CFDI</div>
+
+    <div class="border rounded bg-white p-2" style="height: calc(100% - 45px);" >
+        <div class="d-flex align-items-center p-4">
+            <div class="mx-2">
+                <label>Razón Social</label>
+                <input class="px-1 py-2 ml-2 me-2" type="text" @bind-value="@razonSocial" />
+            </div>
+
+            <div class="mx-2">
+                <label>RFC</label>
+                <input class="px-1 py-2 ml-2 me-2" type="text" @bind-value="@rfc" />
+            </div>
+
+            <div class="button px-4 py-2 mx-3" @onclick="RealizarConsulta">
+                <i class="fa fa-binoculars mr-2"></i>
+                <label class="mb-0">Realizar Búsqueda</label>
+            </div>
+        </div>
+
+        <div class="p-2 d-flex align-items-center">
+            <div class="button px-3 py-2 bg-success mr-4" @onclick="ExportarExcel_Click" >
+                <i class="fa fa-file-excel mr-2"></i>
+                <span>Exportar Resultados</span>
+            </div>
+        </div>
+    
+        <div class="m-2 w-100 ns-small" style="height: calc(100% - 106px)">
+            <SfGrid @ref="DataGrid" DataSource="@datosGrid" AllowGrouping="true"
+                TValue="ClienteCFDI" AllowResizing="true" AllowSorting="true" AllowPaging="@enableGridPaging" AllowExcelExport="true"
+                Height="100%" Width="100%" EnableHover="true" RowHeight="14"
+            >
+                <GridGroupSettings Columns="@(new string[] {"Oficina"})" ShowDropArea="false">
+                    <CaptionTemplate>
+                        @{
+                            var order = (context as CaptionTemplateContext);
+                            <div>OFICINA @order.Key - @order.Count.ToString("n0") clientes</div>
+                        }
+                    </CaptionTemplate>
+                </GridGroupSettings>
+                <GridPageSettings PageSize="100"></GridPageSettings>
+                <GridColumns>
+                    <GridColumn HeaderText="" TextAlign="TextAlign.Center" Width="90">
+                        <Template>
+                            @{
+                                var data = (context as CatPadron);
+                                <div class="d-flex px-2">
+                                    <button type="button" class="btn btn-primary btn-sm bg-success border-success mr-2" data-toggle="tooltip" data-placement="top" title="Llamar">
+                                        <i class="fa fa-phone" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(ClienteCFDI.Rfc)" HeaderText="RFC" TextAlign="TextAlign.Center" Width="140" />
+                    <GridColumn Field="@nameof(ClienteCFDI.RazonSocial)" HeaderText="Razón Social" TextAlign="TextAlign.Left" Width="210" />
+                    <GridColumn Field="@nameof(ClienteCFDI.RegimenFiscal)" HeaderText="Régimen Fiscal" TextAlign="TextAlign.Center" Width="200" />
+                    <GridColumn Field="@nameof(ClienteCFDI.UsoCfdi)" HeaderText="Uso CFDI" TextAlign="TextAlign.Center" Width="180" ClipMode="ClipMode.EllipsisWithTooltip" />
+                    <GridColumn Field="@nameof(ClienteCFDI.CpReceptor)" HeaderText="CP Receptor" TextAlign="TextAlign.Left" Width="180" />
+                    <GridColumn Field="@nameof(ClienteCFDI.Correo)" HeaderText="Correo" TextAlign="TextAlign.Center" Width="180" />
+                    <GridColumn Field="@nameof(ClienteCFDI.UltimaFactura)" HeaderText="Última Factura" TextAlign="TextAlign.Left" Width="120" Format="d" />
+                    <GridColumn Field="@nameof(ClienteCFDI.Oficina)" HeaderText="Oficina" TextAlign="TextAlign.Left" Width="170" />
+                </GridColumns>
+            </SfGrid>
+        </div>
+    </div>
+</div>
+
+<BusyIndicator Busy="cargando" ContentText="Realizando la búsqueda..." />

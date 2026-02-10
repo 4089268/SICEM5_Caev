@@ -147,9 +147,21 @@
         </MatNavSubMenu>
         }
 
-        <MatNavItem Title="Consulta CFDI" Href="/CFDI">
-            <MatIcon Icon="ballot"/>&nbsp;Consulta CFDI's
-        </MatNavItem>
+        <MatNavSubMenu>
+            <MatNavSubMenuHeader Title="Consulta CFDI">
+                <MatNavItem AllowSelection="false">
+                    <MatIcon Icon="ballot"/>&nbsp;Consulta CFDI's
+                </MatNavItem>
+            </MatNavSubMenuHeader>
+            <MatNavSubMenuList>
+                <MatNavItem Title="Catalogo Grupos" Href="/CFDI">
+                    <MatIcon Icon="ballot"/>&nbsp;Consulta CFDI'S
+                </MatNavItem>
+                <MatNavItem Title="Catalogo Grupos" Href="/CFDI/Busqueda">
+                    <MatIcon Icon="search"/>&nbsp;Busqueda Clientes
+                </MatNavItem>
+            </MatNavSubMenuList>
+        </MatNavSubMenu>
 
         <MatDivider></MatDivider>
 
@@ -161,7 +173,7 @@
 
     </MatNavMenu>
 
-</div>j
+</div>
 @code {
     [Parameter] public EventCallback MenuItemClick {get;set;}
 

@@ -11,6 +11,8 @@ using MatBlazor;
 using Sicem_Blazor.Services;
 using Sicem_Blazor.Data;
 using Sicem_Blazor.CFDI.Services;
+using Sicem_Blazor.CFDI.Models;
+using Sicem_Blazor.Models;
 
 namespace Sicem_Blazor.CFDI.Pages;
 public partial class BusquedaAvanzadaCFDIPage
@@ -30,26 +32,22 @@ public partial class BusquedaAvanzadaCFDIPage
     [Inject]
     public FacturaService FacturaService1 {get;set;}
 
-    private SfGrid<ClienteCFDI> DataGrid {get;set;} = default;
-    private List<ClienteCFDI> datosGrid = new();
+    private SfGrid<Factura> DataGrid {get;set;} = default;
+    private List<Factura> datosGrid = new();
     private bool cargando = false;
-    private bool mostrarResultados = true;
-    private bool enableGridPaging = false;
-
+    private DateTime desde = DateTime.Now.AddDays(-1);
+    private DateTime hasta = DateTime.Now;
     private string rfc = string.Empty;
     private string razonSocial = string.Empty;
+    private string busyIndicatorText = "Realizando la búsqueda...";
+
+    private IEnumerable<Ruta> oficinas = default;
+    private bool[] oficinasFinalizadas = default;
 
     private async Task RealizarConsulta()
     {
         if(cargando)
         {
-            return;
-        }
-
-        // * Validar datos
-        if (string.IsNullOrWhiteSpace(this.rfc) && string.IsNullOrEmpty(razonSocial))
-        {
-            MatToaster.Add("Debe ingresar el RFC o la Razón Social", MatToastType.Danger);
             return;
         }
 
@@ -65,8 +63,13 @@ public partial class BusquedaAvanzadaCFDIPage
         this.cargando = true;
         await Task.Delay(200);
 
-        var oficinas = SicemService1.ObtenerEnlaces().Where(e => e.Inactivo != true).ToList();
-        this.datosGrid = new List<ClienteCFDI>();
+        oficinas = SicemService1.ObtenerEnlaces().Where(e => e.Inactivo != true).ToList();
+        var _maxIdOficinas = oficinas.OrderByDescending(o => o.Id).First().Id + 1;
+        oficinasFinalizadas = new bool[_maxIdOficinas];
+        this.busyIndicatorText = string.Format("Realizando la búsqueda: {0} de {1}", 0, oficinas.Count() );
+        StateHasChanged();
+
+        this.datosGrid = new List<Factura>();
 
         // * realizar consulta
         var tareas = oficinas.Select(ofi => ConsultarOficina(ofi, this.rfc, this.razonSocial)).ToList();
@@ -77,13 +80,13 @@ public partial class BusquedaAvanzadaCFDIPage
 
         this.datosGrid = datosCombinados;
 
-        this.mostrarResultados = true;
         this.cargando = false;
         StateHasChanged();
     }
 
-    private async Task<IEnumerable<ClienteCFDI>> ConsultarOficina(IEnlace enlace, string rfc, string razonSocial)
+    private async Task<IEnumerable<Factura>> ConsultarOficina(IEnlace enlace, string rfc, string razonSocial)
     {
+        IEnumerable<Factura> response = null;
         try
         {
             if(!this.SicemService1.CheckOfficeConnected(enlace))
@@ -91,32 +94,32 @@ public partial class BusquedaAvanzadaCFDIPage
                 throw new KeyNotFoundException("La oficina no esta disponible");
             }
 
-            var data = this.FacturaService1.RealizarConsulta(enlace, rfc, razonSocial);
-            return data;
+            response = this.FacturaService1.RealizarConsulta(enlace, desde, hasta, rfc, razonSocial);
         }
         catch(Exception ex)
         {
             this.Logger.LogError(ex, "Error al realizar la consulta de cientes CFDI de la oficina {oficina}: {message}", enlace.Nombre, ex.Message);
-            return Array.Empty<ClienteCFDI>();
+            response = Array.Empty<Factura>();
         }
+
+        lock(this.oficinasFinalizadas)
+        {
+            this.oficinasFinalizadas[enlace.Id] = true;
+            this.busyIndicatorText = string.Format("Realizando la búsqueda: {0} de {1}", oficinasFinalizadas.Where(e => e).Count(), oficinas.Count() );
+        }
+        await InvokeAsync(StateHasChanged);
+        return response;
     }
 
     private async Task ExportarExcel_Click()
     {
-        // cargando = true;
-        // await Task.Delay(100);
-
-        // var _tmpFolder = Configuration.GetValue<string>("TempFolder");
-        // var _exportador = new ExportarExcel<CatPadron>(DatosGrid, new Uri(_tmpFolder) );
-        // var _archivo = _exportador.GenerarExcel();
-
-        // if(!String.IsNullOrEmpty(_archivo)){
-        //     var _endPointDownload = Configuration.GetSection("AppSettings").GetValue<string>("Direccion_Api");
-        //     var _targetUrl = $"{_endPointDownload}/download/{_archivo}";
-        //     await JSRuntime.InvokeVoidAsync("OpenNewTabUrl", _targetUrl);
-        // }
-        
-        // await Task.Delay(500);
-        // cargando = false;
+        cargando = true;
+        await Task.Delay(100);
+        var props = new ExcelExportProperties
+        {
+            FileName = string.Format("Facturas_del_{0}_al_desde_{1}_{2}.xlsx", desde.ToString("yyyyMMdd"), hasta.ToString("yyyyMMdd"), Guid.NewGuid().ToString("n"))
+        };
+        await this.DataGrid.ExportToExcelAsync(props);
+        cargando = false;
     }
 }

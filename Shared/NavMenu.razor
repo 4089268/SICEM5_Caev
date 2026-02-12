@@ -147,6 +147,8 @@
         </MatNavSubMenu>
         }
 
+        @if(OpcionesDisponibles.Contains(21))
+        {
         <MatNavSubMenu>
             <MatNavSubMenuHeader Title="Consulta CFDI'S">
                 <MatNavItem AllowSelection="false">
@@ -162,6 +164,7 @@
                 </MatNavItem>
             </MatNavSubMenuList>
         </MatNavSubMenu>
+        }
 
         <MatDivider></MatDivider>
 

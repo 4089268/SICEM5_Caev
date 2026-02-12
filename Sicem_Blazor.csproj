@@ -24,7 +24,7 @@
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.12.0" />
     <PackageReference Include="SharpKml.Core" Version="5.2.0" />
     <PackageReference Include="SixLabors.Fonts" Version="2.0.6" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.8" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.4" />
     <PackageReference Include="Syncfusion.Blazor" Version="19.2.0.44" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
@@ -45,4 +45,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);BL0005;BL0006;BL0007</NoWarn>
+  </PropertyGroup>
 </Project>

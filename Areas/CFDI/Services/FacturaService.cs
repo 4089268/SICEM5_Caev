@@ -178,7 +178,7 @@ public class FacturaService
                 {
                     while (reader.Read())
                     {
-                        _result.Add(Factura.FromDataReader(reader));
+                        _result.Add(Factura.FromDataReader(enlace, reader));
                     }
                 }
                 sqlConnection.Close();
@@ -343,7 +343,7 @@ public class FacturaService
             {
                 while(reader.Read())
                 {
-                    results.Add(Factura.FromDataReader(reader));
+                    results.Add(Factura.FromDataReader(enlace, reader));
                 }
             }
             sqlConnection.Close();

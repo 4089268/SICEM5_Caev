@@ -72,9 +72,14 @@ public class Factura
     public string ObervacionC { get; set; }
     public string DescripcionConceptos {get;set;}
 
-    public static Factura FromDataReader(IDataReader reader)
+    public Factura(IEnlace enalce)
     {
-        var factura = new Factura();
+        this.Enlace = enalce;
+    }
+
+    public static Factura FromDataReader(IEnlace enlace, IDataReader reader)
+    {
+        var factura = new Factura(enlace);
         var tmpInt = 0;
         var tmpDoub = 0.0;
         var tmpDec = 0m;

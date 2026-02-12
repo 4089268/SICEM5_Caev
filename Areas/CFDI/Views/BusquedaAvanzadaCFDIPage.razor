@@ -6,12 +6,9 @@
 @using Syncfusion.Blazor.Navigations
 
 <div class="d-flex flex-column w-100 h-100">
-
     <div class="title-page" style="text-transform:uppercase;">BUSQUEDA AVANZADA CFDI'S</div>
-
-    <div class="border rounded bg-white p-2" style="height: calc(100% - 45px);" >
-        <div class="d-flex align-items-center p-4">
-            
+    <div class="border rounded bg-white p-2" style="height: calc(100% - 45px); display: grid; grid-template-rows: 50px 40px calc(100% - 92px); grid-template-columns: calc(100% - 446px) 440px;">
+        <div class="d-flex align-items-center p-4" style="grid-area:1/1/2/3;">
             <div class="mx-2">
                 <label>Desde</label>
                 <input type="date" class="px-1 py-2 ml-2 me-2" style="width:110px;" @bind-value="@desde">
@@ -38,39 +35,110 @@
             </div>
         </div>
 
-        <div class="p-2 d-flex align-items-center">
+        <div class="p-2 d-flex align-items-center" style="grid-area:2/1/3/3;">
             <div class="button px-3 py-2 bg-success mr-4" @onclick="ExportarExcel_Click" >
                 <i class="fa fa-file-excel mr-2"></i>
                 <span>Exportar Resultados</span>
             </div>
         </div>
-    
-        <div class="m-2 w-100 ns-small" style="height: calc(100% - 106px)">
-            <SfGrid @ref="DataGrid" DataSource="@datosGrid" TValue="Factura"
-                AllowResizing="true" AllowSorting="true" AllowPaging="true" AllowExcelExport="true"
-                Height="100%" Width="100%" EnableHover="true" RowHeight="14"
-            >
-                <GridPageSettings PageSize="100"></GridPageSettings>
-                <GridColumns>
-                    <GridColumn Field="@nameof(Factura.Oficina)" HeaderText="Oficina" TextAlign="TextAlign.Center" Width="180" />
-                    <GridColumn Field="@nameof(Factura.UUID)" HeaderText="Folio Fiscal" TextAlign="TextAlign.Center" Width="180" />
-                    <GridColumn Field="@nameof(Factura.Rfc)" HeaderText="RFC" TextAlign="TextAlign.Left" Width="110" />
-                    <GridColumn Field="@nameof(Factura.RazonSocial)" HeaderText="Razon Social" TextAlign="TextAlign.Left" Width="190" />
-                    <GridColumn Field="@nameof(Factura.Email)" HeaderText="Email" TextAlign="TextAlign.Left" Width="160" />
-                    <GridColumn Field="@nameof(Factura.Estatus)" HeaderText="Estatus" TextAlign="TextAlign.Center" Width="90" Format="n0" />
-                    <GridColumn Field="@nameof(Factura.Folio)" HeaderText="Folio" TextAlign="TextAlign.Center" Width="180" />
-                    <GridColumn Field="@nameof(Factura.Subtotal)" HeaderText="SubTotal" TextAlign="TextAlign.Right" Width="120" Format="c2" />
-                    <GridColumn Field="@nameof(Factura.Iva)" HeaderText="Iva" TextAlign="TextAlign.Right" Width="120" Format="c2" />
-                    <GridColumn Field="@nameof(Factura.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="120" Format="c2" />
-                    <GridColumn Field="@nameof(Factura.FormaPago)" HeaderText="Forma de Pago" TextAlign="TextAlign.Left" Width="160" />
-                    <GridColumn Field="@nameof(Factura.ClaveRegimen)" HeaderText="Regimen" TextAlign="TextAlign.Left" Width="180" />
-                    <GridColumn Field="@nameof(Factura.Genero)" HeaderText="Genero" TextAlign="TextAlign.Left" Width="180" />
-                    <GridColumn Field="@nameof(Factura.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Center" Width="140" />
-                    <GridColumn Field="@nameof(Factura.Cancelo)" HeaderText="Cancelo" TextAlign="TextAlign.Left" Width="180" />
-                    <GridColumn Field="@nameof(Factura.FechaCancelo)" HeaderText="Fecha Cancelacion" TextAlign="TextAlign.Center" Width="140" />
-                </GridColumns>
-            </SfGrid>
+        
+        <div class="border rounded bg-white p-2" style="@(RegistroSeleccionado==null?"grid-area:3/1/4/3;":"grid-area:3/1/4/2")">
+            <div class="m-2 w-100 ns-small" style="height: 100%">
+                <SfGrid @ref="DataGrid" DataSource="@datosGrid" TValue="Factura"
+                    AllowResizing="true" AllowSorting="true" AllowPaging="true" AllowExcelExport="true"
+                    Height="100%" Width="100%" EnableHover="true" RowHeight="20"
+                >
+                    <GridEvents RowDeselected="OnGridRecord_UnSelected" RowSelected="OnGridRecord_Selected" TValue="Factura"></GridEvents>
+                    <GridPageSettings PageSize="100"></GridPageSettings>
+                    <GridColumns>
+                        <GridColumn Field="@nameof(Factura.Oficina)" HeaderText="Oficina" TextAlign="TextAlign.Center" Width="180" />
+                        <GridColumn Field="@nameof(Factura.UUID)" HeaderText="Folio Fiscal" TextAlign="TextAlign.Center" Width="180" />
+                        <GridColumn Field="@nameof(Factura.Rfc)" HeaderText="RFC" TextAlign="TextAlign.Left" Width="110" />
+                        <GridColumn Field="@nameof(Factura.RazonSocial)" HeaderText="Razon Social" TextAlign="TextAlign.Left" Width="190" />
+                        <GridColumn Field="@nameof(Factura.Email)" HeaderText="Email" TextAlign="TextAlign.Left" Width="160" />
+                        <GridColumn Field="@nameof(Factura.Estatus)" HeaderText="Estatus" TextAlign="TextAlign.Center" Width="90" Format="n0" />
+                        <GridColumn Field="@nameof(Factura.Folio)" HeaderText="Folio" TextAlign="TextAlign.Center" Width="180" />
+                        <GridColumn Field="@nameof(Factura.Subtotal)" HeaderText="SubTotal" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(Factura.Iva)" HeaderText="Iva" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(Factura.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Width="120" Format="c2" />
+                        <GridColumn Field="@nameof(Factura.FormaPago)" HeaderText="Forma de Pago" TextAlign="TextAlign.Left" Width="160" />
+                        <GridColumn Field="@nameof(Factura.ClaveRegimen)" HeaderText="Regimen" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Factura.Genero)" HeaderText="Genero" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Factura.Fecha)" HeaderText="Fecha" TextAlign="TextAlign.Center" Width="140" />
+                        <GridColumn Field="@nameof(Factura.Cancelo)" HeaderText="Cancelo" TextAlign="TextAlign.Left" Width="180" />
+                        <GridColumn Field="@nameof(Factura.FechaCancelo)" HeaderText="Fecha Cancelacion" TextAlign="TextAlign.Center" Width="140" />
+                    </GridColumns>
+                </SfGrid>
+            </div>
         </div>
+        
+        @if(RegistroSeleccionado != null)
+        {
+            <div class="overflow-auto border rounded bg-white p-2 ml-1" style="grid-area: 3/2/4/3;">
+                <div class="h3">@RegistroSeleccionado.RazonSocial</div>
+                <br/>
+                <div class="h4">RFC:</div>
+                <div class="h5 px-2">@RegistroSeleccionado.Rfc</div>
+                <br/>
+                <div class="h4">Folio Fiscal:</div>
+                <div class="h5 px-2">@RegistroSeleccionado.UUID</div>
+                <br/>
+                <div class="h4">Genero:</div>
+                <div class="h5 px-2">@RegistroSeleccionado.Genero</div>
+                <br/>
+                <div class="h4">Fecha:</div>
+                <div class="h5 px-2">@RegistroSeleccionado.Fecha</div>
+                <br/>
+
+                @if(RegistroSeleccionado.IdEstatus == 65)
+                {
+                    <div class="h4">Cancelo:</div>
+                    <div class="h5 px-2">@RegistroSeleccionado.Cancelo</div>
+                    <br/>
+                    <div class="h4">Fecha Cancelo:</div>
+                    <div class="h5 px-2">@((RegistroSeleccionado.FechaCancelo??new DateTime()).ToString("dd MMMM yyyy HH:mm"))</div>
+                    <br/>
+                }
+
+                @if( RegistroSeleccionado.ObervacionA.Trim().Length > 1)
+                {
+                    <div class="h4"> Comentarios: </div>
+                    <textarea class="mx-2" style="resize:none; height: 6rem; width: calc(100% - 1rem);" readonly="true"> @RegistroSeleccionado.ObervacionA </textarea>
+                    <br/>
+                }
+
+                <div class="grd-conceptos mt-3">
+                    @if(CargandoConceptos)
+                    {
+                        <div class="d-flex flex-column justify-content-center align-items-center w-100" style="height:5rem;">
+                            <div class="h4"> Cargando Conceptos </div>
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only"></span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="h4">Conceptos Facturados</div>
+                        <SfGrid DataSource="@ConceptosFacturados">
+                            <GridColumns>
+                                <GridColumn Field="@nameof(ConceptoFactura.Concepto)" HeaderText="Concepto" TextAlign="TextAlign.Left" ClipMode="ClipMode.EllipsisWithTooltip"/>
+                                <GridColumn Field="@nameof(ConceptoFactura.Subtotal)" HeaderText="Subtotal" TextAlign="TextAlign.Right" Format="c2"/>
+                                <GridColumn Field="@nameof(ConceptoFactura.Iva)" HeaderText="Iva" TextAlign="TextAlign.Right" Format="c2"/>
+                                <GridColumn Field="@nameof(ConceptoFactura.Total)" HeaderText="Total" TextAlign="TextAlign.Right" Format="c2"/>
+                            </GridColumns>
+                        </SfGrid>
+                    }
+                </div>
+
+                @* <div class="w-100 mt-4">
+                    <button class="button mx-auto px-4 py-2" @onclick="@(e => DescargarArchivoXML())">
+                        <i class="fa fa-download mr-2"></i>
+                        <span>Descargar Factura XML</span>
+                    </button>
+                </div> *@
+            </div>
+        }
     </div>
 </div>
 

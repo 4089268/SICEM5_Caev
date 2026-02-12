@@ -40,7 +40,9 @@ public partial class BusquedaAvanzadaCFDIPage
     private string rfc = string.Empty;
     private string razonSocial = string.Empty;
     private string busyIndicatorText = "Realizando la búsqueda...";
-
+    private Factura RegistroSeleccionado {get;set;} = null;
+    private bool CargandoConceptos {get;set;} = true;
+    private List<ConceptoFactura> ConceptosFacturados {get;set;}
     private IEnumerable<Ruta> oficinas = default;
     private bool[] oficinasFinalizadas = default;
 
@@ -109,6 +111,35 @@ public partial class BusquedaAvanzadaCFDIPage
         }
         await InvokeAsync(StateHasChanged);
         return response;
+    }
+
+    private async Task OnGridRecord_Selected(RowSelectEventArgs<Factura> args)
+    {
+        if(args.Data != null){
+            RegistroSeleccionado = args.Data;
+            await CargarConceptos();
+        }
+    }
+    private void OnGridRecord_UnSelected(RowDeselectEventArgs<Factura> args)
+    {
+        RegistroSeleccionado = null;
+    }
+
+    private async Task CargarConceptos()
+    {
+        if(RegistroSeleccionado == null)
+        {
+            return;
+        }
+
+        this.CargandoConceptos = true;
+        await Task.Delay(200);
+
+        var _idCFDI = RegistroSeleccionado.IdCFDI;
+        this.ConceptosFacturados = this.FacturaService1.ObtenerConceptosFactura(RegistroSeleccionado.Enlace, _idCFDI).ToList();
+        
+        await Task.Delay(200);
+        this.CargandoConceptos = false;
     }
 
     private async Task ExportarExcel_Click()

@@ -73,9 +73,25 @@ namespace Sicem_Blazor.PagoLinea.Views
             this.Subsistema = e.Subsistema;
             this.Sector = e.Sector;
 
-            resumeIncomeMonth = await this.PagoLineaService.GetResumeMonth(f1.Year, f1.Month);
-            this.DataOffices = resumeIncomeMonth.Offices.OrderBy(item => item.OfficeName).ToList();
-
+            try
+            {
+                resumeIncomeMonth = await this.PagoLineaService.GetResumeMonth(f1.Year, f1.Month);
+                this.DataOffices = resumeIncomeMonth.Offices.OrderBy(item => item.OfficeName).ToList();
+            }
+            catch(UnauthorizedAccessException err)
+            {
+                this.Logger.LogError(err, "Unauthorized access");
+                Toaster.Add("No hay permisos para acceder a esta información, comuniquese con el administrador.", MatToastType.Warning);
+                NavManager.NavigateTo("/");
+                return;
+            }
+            catch(Exception err)
+            {
+                this.Logger.LogError(err, "Fail at retrive the data");
+                Toaster.Add("Error al obtener el resumen de ingresos.", MatToastType.Danger);
+                NavManager.NavigateTo("/");
+                return;
+            }
 
             // * generate the chart data
             DatosGraficaImporte = this.DataOffices.Select(item => new ChartItem {

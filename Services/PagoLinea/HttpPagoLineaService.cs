@@ -26,6 +26,13 @@ public class HttpPagoLineaService : HttpClient
         this._logger = logger;
     }
 
+    /// <summary>
+    /// Obtiene el resumen de ingresos del mes
+    /// </summary>
+    /// <param name="year"></param>
+    /// <param name="month"></param>
+    /// <returns></returns>
+    /// <exception cref="UnauthorizedAccessException"></exception>
     public async Task<ResumeMonth> GetResumeMonth(int year, int month)
     {
         _logger.LogInformation("Attempt to get the resumen of the month {month}-{year}", year, month);
@@ -48,10 +55,13 @@ public class HttpPagoLineaService : HttpClient
             var data = await response.Content.ReadFromJsonAsync<ResumeMonth>();
             return data;
         }
-        catch(Exception ex)
+        catch(HttpRequestException httpEx)
         {
-            this._logger.LogError(ex, "Fail at get the resumen of the month: {message}", ex.Message);
-            return null;
+            if(httpEx.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                throw new UnauthorizedAccessException();
+            }
+            throw;
         }
     }
 

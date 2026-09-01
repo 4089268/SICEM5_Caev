@@ -322,14 +322,14 @@ public class FacturaService
                 cross apply (
                     select sub=sum(subtotal), iva=sum(iva) from CFDI.Opr_DetCfdis as d where d.id_cfdi=c.id_cfdi
                 ) as dt
-            Where CONVERT(char(8), c.fecha_insert ,112) BETWEEN @desde and @hasta
+            Where CONVERT(char(8), c.fecha_timbrado ,112) BETWEEN @desde and @hasta
                 AND ( (ISNULL(@rfc,'') = '' AND ISNULL(@razonSocial,'') = '')
                     OR (ISNULL(@rfc,'') <> '' AND ISNULL(@razonSocial,'') = '' AND c.rfc = @rfc)
                     OR (ISNULL(@rfc,'') = '' AND ISNULL(@razonSocial,'') <> '' AND c.razon_social LIKE '%' + @razonSocial + '%')
                     OR (ISNULL(@rfc,'') <> '' AND ISNULL(@razonSocial,'') <> ''
                     AND (c.rfc = @rfc OR c.razon_social LIKE '%' + @razonSocial + '%'))
                 )
-            Order by fecha_insert desc";
+            Order by fecha_timbrado desc";
 
         using(var sqlConnection = new SqlConnection(enlace.GetConnectionString()))
         {
